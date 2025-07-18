@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+We want to create a simple attendance app with two parts: - One part for the teachers with limited access authorities - Another part for the manager with all the admin properties I will upload images and screenshots of the desired UI, implement the same exact shapes and frontend/UI as the images I upload. Note that the app will be a web based app for now but the teachers will mainly use it through mobile screens, while managers will use it only through PC and full-size screens.
+Start by planning before any implementation. Think step-by-step break complex tasks into sub-tasks and show reasoning for complex tasks. Show reasoning for each step and don't proceed to the next step without testing the already implemented step. 
