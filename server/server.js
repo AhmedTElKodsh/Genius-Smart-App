@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 
 // Import routes
+const authRoutes = require('./routes/auth');
 const teachersRoutes = require('./routes/teachers');
 const requestsRoutes = require('./routes/requests');
 const departmentsRoutes = require('./routes/departments');
@@ -18,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'], // Frontend URLs
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'http://localhost:5173'], // Frontend URLs
   credentials: true
 }));
 app.use(morgan('combined')); // Logging
@@ -26,6 +27,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/teachers', teachersRoutes);
 app.use('/api/requests', requestsRoutes);
 app.use('/api/departments', departmentsRoutes);

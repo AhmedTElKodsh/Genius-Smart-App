@@ -1,0 +1,50 @@
+[
+  {
+    "id": "MGR001",
+    "email": "admin@geniussmart.edu",
+    "password": "admin123",
+    "name": "Ahmed Al-Mansoori",
+    "role": "School Administrator",
+    "department": "Administration",
+    "permissions": ["all"],
+    "createdAt": "2024-01-15",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR002", 
+    "email": "principal@geniussmart.edu",
+    "password": "principal2024",
+    "name": "Fatima Al-Zahra",
+    "role": "Principal",
+    "department": "Administration", 
+    "permissions": ["teachers", "attendance", "reports"],
+    "createdAt": "2024-01-15",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR003",
+    "email": "hr@geniussmart.edu", 
+    "password": "hr123456",
+    "name": "Omar Hassan",
+    "role": "HR Manager",
+    "department": "Human Resources",
+    "permissions": ["teachers", "requests"], 
+    "createdAt": "2024-02-01",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR004",
+    "email": "academic@geniussmart.edu",
+    "password": "academic2024", 
+    "name": "Layla Mohamed",
+    "role": "Academic Director",
+    "department": "Academics",
+    "permissions": ["teachers", "attendance", "departments"],
+    "createdAt": "2024-02-15", 
+    "lastLogin": null,
+    "isActive": true
+  }
+] 

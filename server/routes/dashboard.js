@@ -31,125 +31,70 @@ const readAllData = () => {
 router.get('/overview', (req, res) => {
   try {
     const { teachers, attendance, requests, departments } = readAllData();
-    const currentMonth = req.query.month || 'May';
-    const currentYear = parseInt(req.query.year) || 2024;
+    const { startDate, endDate, department } = req.query;
     
-    // Filter current month data
-    const currentAttendance = attendance.filter(record => 
-      record.month === currentMonth && record.year === currentYear
-    );
+    // Filter data based on query parameters
+    let filteredTeachers = teachers;
+    let filteredRequests = requests;
+    let filteredAttendance = attendance;
     
-    // Teacher Statistics
-    const totalTeachers = teachers.length;
-    const activeTeachers = teachers.filter(t => t.status === 'Active').length;
-    const fullTimeTeachers = teachers.filter(t => t.workType === 'Full-time').length;
-    const partTimeTeachers = teachers.filter(t => t.workType === 'Part-time').length;
+    // Filter by department if specified
+    if (department) {
+      filteredTeachers = teachers.filter(t => t.department === department);
+      const teacherIds = filteredTeachers.map(t => t.id);
+      filteredRequests = requests.filter(r => teacherIds.includes(r.teacherId));
+      filteredAttendance = attendance.filter(a => teacherIds.includes(a.teacherId));
+    }
     
-    // Attendance Statistics
-    const totalWorkingDays = currentAttendance.reduce((sum, record) => sum + record.totalWorkingDays, 0);
-    const totalAttendedDays = currentAttendance.reduce((sum, record) => sum + record.attendedDays, 0);
-    const overallAttendanceRate = totalWorkingDays > 0 ? 
-      Math.round((totalAttendedDays / totalWorkingDays) * 100) : 0;
-    const totalHours = currentAttendance.reduce((sum, record) => sum + record.totalHours, 0);
-    const totalOvertimeHours = currentAttendance.reduce((sum, record) => sum + record.overtimeHours, 0);
+    // Request Statistics (for analytics cards)
+    const requestStats = {
+      permittedLeaves: filteredRequests.filter(r => r.type === 'permitted_leaves').length,
+      unpermittedLeaves: filteredRequests.filter(r => r.type === 'unpermitted_leaves').length,
+      authorizedAbsence: filteredRequests.filter(r => r.type === 'authorized_absence').length,
+      unauthorizedAbsence: filteredRequests.filter(r => r.type === 'unauthorized_absence').length,
+      overtime: filteredRequests.filter(r => r.type === 'overtime').length,
+      lateIn: filteredRequests.filter(r => r.type === 'late_in').length,
+    };
     
-    // Request Statistics
-    const totalRequests = requests.length;
-    const pendingRequests = requests.filter(r => r.status === 'Pending').length;
-    const recentRequests = requests.filter(r => {
-      const requestDate = new Date(r.date);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return requestDate >= thirtyDaysAgo;
-    }).length;
+    // Age Distribution
+    const currentYear = new Date().getFullYear();
+    const ageDistribution = {
+      under24: 0,
+      between24And32: 0,
+      above32: 0,
+      total: filteredTeachers.length
+    };
     
-    // Performance Metrics
-    const excellentPerformers = currentAttendance.filter(record => record.attendanceRate >= 95).length;
-    const goodPerformers = currentAttendance.filter(record => record.attendanceRate >= 85 && record.attendanceRate < 95).length;
-    const needsAttention = currentAttendance.filter(record => record.attendanceRate < 75).length;
+    filteredTeachers.forEach(teacher => {
+      if (teacher.age) {
+        if (teacher.age < 24) {
+          ageDistribution.under24++;
+        } else if (teacher.age >= 24 && teacher.age <= 32) {
+          ageDistribution.between24And32++;
+        } else {
+          ageDistribution.above32++;
+        }
+      }
+    });
     
-    // Top Performers
-    const topPerformers = currentAttendance
-      .map(record => {
-        const teacher = teachers.find(t => t.id === record.teacherId);
-        return {
-          teacher: teacher ? teacher.name : 'Unknown',
-          department: teacher ? teacher.department : 'Unknown',
-          attendanceRate: record.attendanceRate,
-          totalHours: record.totalHours
-        };
-      })
-      .sort((a, b) => b.attendanceRate - a.attendanceRate)
-      .slice(0, 5);
+    // Weekly Attendance (mock data for now)
+    const weeklyAttendance = [
+      { day: 'Sun', onTime: Math.floor(filteredTeachers.length * 0.8), late: Math.floor(filteredTeachers.length * 0.15), absent: Math.floor(filteredTeachers.length * 0.05) },
+      { day: 'Mon', onTime: Math.floor(filteredTeachers.length * 0.85), late: Math.floor(filteredTeachers.length * 0.1), absent: Math.floor(filteredTeachers.length * 0.05) },
+      { day: 'Tue', onTime: Math.floor(filteredTeachers.length * 0.82), late: Math.floor(filteredTeachers.length * 0.13), absent: Math.floor(filteredTeachers.length * 0.05) },
+      { day: 'Wed', onTime: Math.floor(filteredTeachers.length * 0.87), late: Math.floor(filteredTeachers.length * 0.08), absent: Math.floor(filteredTeachers.length * 0.05) },
+      { day: 'Thu', onTime: Math.floor(filteredTeachers.length * 0.83), late: Math.floor(filteredTeachers.length * 0.12), absent: Math.floor(filteredTeachers.length * 0.05) },
+    ];
     
-    // Department Performance
-    const departmentPerformance = departments.map(dept => {
-      const deptTeachers = teachers.filter(t => t.department === dept.name);
-      const deptAttendance = currentAttendance.filter(record => 
-        deptTeachers.some(t => t.id === record.teacherId)
-      );
-      
-      const deptWorkingDays = deptAttendance.reduce((sum, record) => sum + record.totalWorkingDays, 0);
-      const deptAttendedDays = deptAttendance.reduce((sum, record) => sum + record.attendedDays, 0);
-      const attendanceRate = deptWorkingDays > 0 ? 
-        Math.round((deptAttendedDays / deptWorkingDays) * 100) : 0;
-      
-      return {
-        department: dept.name,
-        arabicName: dept.arabicName,
-        teacherCount: deptTeachers.length,
-        attendanceRate
-      };
-    }).sort((a, b) => b.attendanceRate - a.attendanceRate);
-    
-    // Recent Activity (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentActivity = requests
-      .filter(r => new Date(r.date) >= sevenDaysAgo)
-      .map(r => {
-        const teacher = teachers.find(t => t.id === r.teacherId);
-        return {
-          type: 'request',
-          date: r.date,
-          teacher: teacher ? teacher.name : 'Unknown',
-          department: teacher ? teacher.department : 'Unknown',
-          action: r.type,
-          status: r.status
-        };
-      })
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 10);
+    // Total teachers for overall stats
+    const totalTeachers = filteredTeachers.length;
     
     res.json({
       success: true,
-      data: {
-        period: `${currentMonth} ${currentYear}`,
-        summary: {
-          totalTeachers,
-          activeTeachers,
-          fullTimeTeachers,
-          partTimeTeachers,
-          overallAttendanceRate,
-          totalHours,
-          totalOvertimeHours,
-          pendingRequests,
-          recentRequests
-        },
-        performance: {
-          excellent: excellentPerformers,
-          good: goodPerformers,
-          needsAttention: needsAttention,
-          topPerformers: topPerformers
-        },
-        departments: {
-          total: departments.length,
-          performance: departmentPerformance.slice(0, 6) // Top 6 departments
-        },
-        activity: {
-          recent: recentActivity
-        }
-      },
+      requestStats: requestStats,
+      ageDistribution: ageDistribution,
+      weeklyAttendance: weeklyAttendance,
+      totalTeachers: totalTeachers,
       message: 'Dashboard overview retrieved successfully'
     });
     

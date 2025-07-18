@@ -267,14 +267,37 @@ const ManagerSignin: React.FC = () => {
   const onSubmit = async (data: SigninFormData) => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Manager signin attempt:', data);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/manager/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Store auth token and manager info
+        localStorage.setItem('authToken', result.data.token);
+        localStorage.setItem('managerInfo', JSON.stringify(result.data.manager));
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        // Show error message
+        alert(result.message || 'Invalid email or password');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login failed. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
-      // For demo purposes, accept any valid email/password
-      alert('Sign in successful! (Demo mode)');
-      // Future: Navigate to manager dashboard
-    }, 1500);
+    }
   };
 
   const handleForgotPassword = () => {
