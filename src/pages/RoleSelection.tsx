@@ -35,37 +35,27 @@ const LogoContainer = styled.div`
 `;
 
 const Logo = styled.img`
-  max-width: 180px;
+  max-width: 320px;
   width: 100%;
   height: auto;
   object-fit: contain;
   
   @media (max-width: 768px) {
-    max-width: 120px;
+    max-width: 200px;
   }
 `;
 
 const BrandTitle = styled.h1`
   color: var(--secondary-color);
-  font-size: var(--title-32-size);
+  font-size: 52px;
   font-weight: var(--title-32-weight);
   line-height: var(--title-32-line-height);
   text-align: center;
   margin-bottom: var(--spacing-md);
   
   @media (max-width: 768px) {
-    font-size: 24px;
+    font-size: 40px;
   }
-`;
-
-const BrandSubtitle = styled.p`
-  color: var(--secondary-color);
-  font-size: var(--paragraph-18-size);
-  font-weight: var(--paragraph-18-weight);
-  text-align: center;
-  opacity: 0.8;
-  max-width: 300px;
-  line-height: 1.4;
 `;
 
 const SelectionSection = styled.div`
@@ -160,12 +150,9 @@ const RoleSelection: React.FC = () => {
     <Container>
       <BrandingSection>
         <LogoContainer>
-          <Logo src="/logo-page.png" alt="Genius Smart Education Logo" />
+          <Logo src="/light-logo-page.png" alt="Genius Smart Education Logo" />
         </LogoContainer>
         <BrandTitle>Genius Smart</BrandTitle>
-        <BrandSubtitle>
-          Advanced Education Management System for Modern Institutions
-        </BrandSubtitle>
       </BrandingSection>
       
       <SelectionSection>

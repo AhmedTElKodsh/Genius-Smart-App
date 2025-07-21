@@ -20,34 +20,16 @@ const LogoSection = styled.div`
   border-bottom: 1px solid #e1e7ec;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
 `;
 
 const LogoImage = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
 `;
 
-const LogoText = styled.div`
-  h3 {
-    font-family: 'Poppins', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: #141F25;
-    margin: 0;
-    line-height: 1.2;
-  }
-  
-  p {
-    font-family: 'Poppins', sans-serif;
-    font-size: 12px;
-    font-weight: 400;
-    color: #666;
-    margin: 0;
-    line-height: 1.2;
-  }
-`;
+
 
 const Navigation = styled.nav`
   flex: 1;
@@ -158,10 +140,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher }) => {
     <SidebarContainer>
       <LogoSection>
         <LogoImage src="/logo-page.png" alt="Genius Smart Education" />
-        <LogoText>
-          <h3>Genius</h3>
-          <p>Smart Education</p>
-        </LogoText>
       </LogoSection>
 
       <Navigation>

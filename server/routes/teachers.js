@@ -41,11 +41,11 @@ router.get('/', (req, res) => {
     // Apply filters
     let filteredTeachers = teachers;
     
-    const { department, workType, status, search } = req.query;
+    const { subject, workType, status, search } = req.query;
     
-    if (department) {
+    if (subject) {
       filteredTeachers = filteredTeachers.filter(teacher => 
-        teacher.department.toLowerCase() === department.toLowerCase()
+        teacher.subject.toLowerCase() === subject.toLowerCase()
       );
     }
     
@@ -108,6 +108,144 @@ router.get('/', (req, res) => {
       success: false,
       error: 'Failed to retrieve teachers',
       details: error.message
+    });
+  }
+});
+
+// Get teachers reports with attendance and request data
+router.get('/reports', (req, res) => {
+  try {
+    const { subject, startDate, endDate } = req.query;
+    
+    // Load data files
+    const teachers = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/teachers.json'), 'utf8'));
+    const requests = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/requests.json'), 'utf8'));
+    const attendance = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/attendance.json'), 'utf8'));
+
+    // Filter teachers by subject if specified
+    let filteredTeachers = teachers.filter(teacher => teacher.status === 'Active');
+    if (subject) {
+      filteredTeachers = filteredTeachers.filter(teacher => teacher.subject === subject);
+    }
+
+    // Parse date range
+    const start = startDate ? new Date(startDate) : new Date('2025-01-01');
+    const end = endDate ? new Date(endDate) : new Date();
+
+    // Helper function to count working days between dates (excluding weekends)
+    const countWorkingDays = (startDate, endDate) => {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      let count = 0;
+      const current = new Date(start);
+      
+      while (current <= end) {
+        // Skip weekends (Saturday = 6, Sunday = 0)
+        const day = current.getDay();
+        if (day !== 0 && day !== 6) { // Not Sunday or Saturday
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return count;
+    };
+
+    // Helper function to calculate days from date range string
+    const calculateDaysFromDateRange = (startDateStr, endDateStr) => {
+      const start = new Date(startDateStr);
+      const end = new Date(endDateStr);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
+      return diffDays;
+    };
+
+    // Generate reports for each teacher
+    const reportsData = filteredTeachers.map(teacher => {
+      // Filter attendance for this teacher within date range
+      const teacherAttendance = attendance.filter(record => {
+        const recordDate = new Date(record.date);
+        return record.teacherId === teacher.id && 
+               recordDate >= start && 
+               recordDate <= end;
+      });
+
+      // Filter requests for this teacher within date range
+      const teacherRequests = requests.filter(request => {
+        const requestStart = new Date(request.startDate);
+        const requestEnd = new Date(request.endDate);
+        return request.teacherId === teacher.id && 
+               ((requestStart >= start && requestStart <= end) ||
+                (requestEnd >= start && requestEnd <= end) ||
+                (requestStart <= start && requestEnd >= end));
+      });
+
+      // Calculate attendance statistics
+      const presentDays = teacherAttendance.filter(record => 
+        record.status === 'PRESENT' || record.status === 'LATE'
+      ).length;
+      
+      const totalWorkingDays = countWorkingDays(start, end);
+      const attendsRatio = `${presentDays}/${totalWorkingDays}d`;
+
+      // Count different types of requests by summing up the days
+      const requestCounts = {
+        permittedLeaves: 0,
+        unpermittedLeaves: 0,
+        authorizedAbsence: 0,
+        unauthorizedAbsence: 0
+      };
+
+      // Count approved requests within date range
+      teacherRequests.forEach(request => {
+        if (request.status === 'APPROVED') {
+          const days = calculateDaysFromDateRange(request.startDate, request.endDate);
+          
+          switch (request.type) {
+            case 'PERMITTED_LEAVES':
+              requestCounts.permittedLeaves += days;
+              break;
+            case 'UNPERMITTED_LEAVES':
+              requestCounts.unpermittedLeaves += days;
+              break;
+            case 'AUTHORIZED_ABSENCE':
+              requestCounts.authorizedAbsence += days;
+              break;
+            case 'UNAUTHORIZED_ABSENCE':
+              requestCounts.unauthorizedAbsence += days;
+              break;
+          }
+        }
+      });
+
+      return {
+        id: teacher.id,
+        name: teacher.name,
+        workType: teacher.workType,
+        subject: teacher.subject,
+        attends: attendsRatio,
+        permittedLeaves: requestCounts.permittedLeaves,
+        unpermittedLeaves: requestCounts.unpermittedLeaves,
+        authorizedAbsence: requestCounts.authorizedAbsence,
+        unauthorizedAbsence: requestCounts.unauthorizedAbsence
+      };
+    });
+
+    res.json({
+      success: true,
+      data: reportsData,
+      total: reportsData.length,
+      dateRange: {
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0]
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching teacher reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch teacher reports',
+      error: error.message
     });
   }
 });

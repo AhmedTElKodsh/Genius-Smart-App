@@ -1,0 +1,1 @@
+{"success":true,"message":"Reports endpoint working","data":[{"id":"test-1","name":"Test Teacher 1","workType":"Full-time","attends":"15/20d","permittedLeaves":2,"unpermittedLeaves":0,"authorizedAbsence":1,"unauthorizedAbsence":0}]}

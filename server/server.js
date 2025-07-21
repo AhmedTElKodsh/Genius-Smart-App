@@ -8,9 +8,10 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const teachersRoutes = require('./routes/teachers');
 const requestsRoutes = require('./routes/requests');
-const departmentsRoutes = require('./routes/departments');
+const subjectsRoutes = require('./routes/subjects');
 const dashboardRoutes = require('./routes/dashboard');
 const attendanceRoutes = require('./routes/attendance');
+const managerRoutes = require('./routes/manager');
 
 // Initialize Express app
 const app = express();
@@ -30,9 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/teachers', teachersRoutes);
 app.use('/api/requests', requestsRoutes);
-app.use('/api/departments', departmentsRoutes);
+app.use('/api/subjects', subjectsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/manager', managerRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -43,6 +45,8 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0'
   });
 });
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

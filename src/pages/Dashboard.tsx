@@ -131,7 +131,7 @@ interface DashboardData {
   }[];
 }
 
-interface Department {
+interface SubjectData {
   id: string;
   name: string;
   arabicName: string;
@@ -147,31 +147,32 @@ const Dashboard: React.FC = () => {
   });
   
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [departments, setDepartments] = useState<Subject[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch departments for the subject dropdown
+  // Fetch subjects for the subject dropdown
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchSubjects = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/departments');
-        if (!response.ok) throw new Error('Failed to fetch departments');
+        const response = await fetch('http://localhost:5000/api/subjects');
+        if (!response.ok) throw new Error('Failed to fetch subjects');
         
-        const departmentsData: Department[] = await response.json();
-        const subjectOptions: Subject[] = departmentsData.map(dept => ({
-          value: dept.name,
-          label: dept.name,
-          arabicName: dept.arabicName
+        const result = await response.json();
+        const subjectsData: SubjectData[] = result.data || result;
+        const subjectOptions: Subject[] = subjectsData.map(subj => ({
+          value: subj.name,
+          label: subj.name,
+          arabicName: subj.arabicName
         }));
         
-        setDepartments(subjectOptions);
+        setSubjects(subjectOptions);
       } catch (err) {
-        console.error('Error fetching departments:', err);
+        console.error('Error fetching subjects:', err);
       }
     };
 
-    fetchDepartments();
+    fetchSubjects();
   }, []);
 
   // Fetch dashboard data based on filters
@@ -184,7 +185,7 @@ const Dashboard: React.FC = () => {
         // Build query parameters
         const params = new URLSearchParams();
         if (selectedSubject) {
-          params.append('department', selectedSubject);
+          params.append('subject', selectedSubject);
         }
         params.append('startDate', format(dateRange.startDate, 'yyyy-MM-dd'));
         params.append('endDate', format(dateRange.endDate, 'yyyy-MM-dd'));
@@ -198,12 +199,12 @@ const Dashboard: React.FC = () => {
         // Transform the data to match our component interface
         const transformedData: DashboardData = {
           analytics: {
-            permitted_leaves: dashboardOverview.requestStats.permittedLeaves || 0,
-            unpermitted_leaves: dashboardOverview.requestStats.unpermittedLeaves || 0,
-            authorized_absence: dashboardOverview.requestStats.authorizedAbsence || 0,
-            unauthorized_absence: dashboardOverview.requestStats.unauthorizedAbsence || 0,
+            permitted_leaves: dashboardOverview.requestStats.permitted_leaves || 0,
+            unpermitted_leaves: dashboardOverview.requestStats.unpermitted_leaves || 0,
+            authorized_absence: dashboardOverview.requestStats.authorized_absence || 0,
+            unauthorized_absence: dashboardOverview.requestStats.unauthorized_absence || 0,
             overtime: dashboardOverview.requestStats.overtime || 0,
-            late_arrival: dashboardOverview.requestStats.lateIn || 0,
+            late_arrival: dashboardOverview.requestStats.late_arrival || 0,
           },
           ageDistribution: {
             under24: dashboardOverview.ageDistribution?.under24 || 0,
@@ -282,10 +283,10 @@ const Dashboard: React.FC = () => {
           
           <HeaderControls>
             <SubjectDropdown
-              subjects={departments}
+              subjects={subjects}
               selectedSubject={selectedSubject}
               onSubjectChange={setSelectedSubject}
-              placeholder="Subjects"
+              placeholder="All Subjects"
             />
             
             <DateRangePicker

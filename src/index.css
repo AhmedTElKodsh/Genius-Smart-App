@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 /* Reset and base styles */
 * {
   margin: 0;
@@ -91,8 +93,6 @@ body {
   --z-index-popover: 1060;
   --z-index-tooltip: 1070;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;

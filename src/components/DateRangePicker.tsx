@@ -238,27 +238,26 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getThisWeekRange = (): DateRange => {
+  const getThisWeekRange = (): { start: Date; end: Date } => {
     const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 0 }); // Sunday
-    const end = endOfWeek(now, { weekStartsOn: 0 });
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6); // 7 days before (including today = 7 days total)
+    const end = now;
     
     return {
-      startDate: start,
-      endDate: end,
-      label: 'This Week'
+      start: startOfDay(start),
+      end: endOfDay(end)
     };
   };
 
-  const getThisMonthRange = (): DateRange => {
+  const getThisMonthRange = (): { start: Date; end: Date } => {
     const now = new Date();
     const start = startOfMonth(now);
     const end = now; // Up to today, not end of month
     
     return {
-      startDate: start,
-      endDate: end,
-      label: 'This Month'
+      start: startOfDay(start),
+      end: endOfDay(end)
     };
   };
 
@@ -267,14 +266,12 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     
     if (tab === 'week') {
       const range = getThisWeekRange();
-      onChange(range);
-      setSelectedStart(range.startDate);
-      setSelectedEnd(range.endDate);
+      setSelectedStart(range.start);
+      setSelectedEnd(range.end);
     } else if (tab === 'month') {
       const range = getThisMonthRange();
-      onChange(range);
-      setSelectedStart(range.startDate);
-      setSelectedEnd(range.endDate);
+      setSelectedStart(range.start);
+      setSelectedEnd(range.end);
     } else {
       // Custom - reset selection
       setSelectedStart(null);
@@ -287,8 +284,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
       return;
     }
 
-    if (activeTab !== 'custom') return;
-
+    // Allow manual date selection on all tabs
     if (!selectedStart || (selectedStart && selectedEnd)) {
       // Start new selection
       setSelectedStart(day);
@@ -306,11 +302,17 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
   };
 
   const handleDone = () => {
-    if (activeTab === 'custom' && selectedStart && selectedEnd) {
+    if (selectedStart && selectedEnd) {
+      const labels = {
+        week: 'This Week',
+        month: 'This Month',
+        custom: 'Custom'
+      };
+      
       const range: DateRange = {
         startDate: selectedStart,
         endDate: selectedEnd,
-        label: 'Custom'
+        label: labels[activeTab]
       };
       onChange(range);
     }
@@ -412,7 +414,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
           {renderCalendar()}
         </CalendarContainer>
 
-        {activeTab === 'custom' && (
+        {(selectedStart || selectedEnd) && (
           <RangeDisplay>
             <span>{formatDateRange()}</span>
             <span>›</span>

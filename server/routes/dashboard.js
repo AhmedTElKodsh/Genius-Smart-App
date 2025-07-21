@@ -6,7 +6,7 @@ const path = require('path');
 const teachersFilePath = path.join(__dirname, '..', 'data', 'teachers.json');
 const attendanceFilePath = path.join(__dirname, '..', 'data', 'attendance.json');
 const requestsFilePath = path.join(__dirname, '..', 'data', 'requests.json');
-const departmentsFilePath = path.join(__dirname, '..', 'data', 'departments.json');
+const subjectsFilePath = path.join(__dirname, '..', 'data', 'subjects.json');
 
 // Helper functions
 const readAllData = () => {
@@ -15,14 +15,14 @@ const readAllData = () => {
       teachers: JSON.parse(fs.readFileSync(teachersFilePath, 'utf8')),
       attendance: JSON.parse(fs.readFileSync(attendanceFilePath, 'utf8')),
       requests: JSON.parse(fs.readFileSync(requestsFilePath, 'utf8')),
-      departments: JSON.parse(fs.readFileSync(departmentsFilePath, 'utf8'))
+      subjects: JSON.parse(fs.readFileSync(subjectsFilePath, 'utf8'))
     };
   } catch (error) {
     return {
       teachers: [],
       attendance: [],
       requests: [],
-      departments: []
+      subjects: []
     };
   }
 };
@@ -30,34 +30,45 @@ const readAllData = () => {
 // GET /api/dashboard/overview - Get comprehensive dashboard overview
 router.get('/overview', (req, res) => {
   try {
-    const { teachers, attendance, requests, departments } = readAllData();
-    const { startDate, endDate, department } = req.query;
+    const { teachers, attendance, requests, subjects } = readAllData();
+    const { startDate, endDate, subject } = req.query;
     
     // Filter data based on query parameters
     let filteredTeachers = teachers;
     let filteredRequests = requests;
     let filteredAttendance = attendance;
     
-    // Filter by department if specified
-    if (department) {
-      filteredTeachers = teachers.filter(t => t.department === department);
+    // Filter by subject if specified
+    if (subject) {
+      filteredTeachers = teachers.filter(t => t.subject === subject);
       const teacherIds = filteredTeachers.map(t => t.id);
       filteredRequests = requests.filter(r => teacherIds.includes(r.teacherId));
       filteredAttendance = attendance.filter(a => teacherIds.includes(a.teacherId));
     }
     
-    // Request Statistics (for analytics cards)
-    const requestStats = {
-      permittedLeaves: filteredRequests.filter(r => r.type === 'permitted_leaves').length,
-      unpermittedLeaves: filteredRequests.filter(r => r.type === 'unpermitted_leaves').length,
-      authorizedAbsence: filteredRequests.filter(r => r.type === 'authorized_absence').length,
-      unauthorizedAbsence: filteredRequests.filter(r => r.type === 'unauthorized_absence').length,
-      overtime: filteredRequests.filter(r => r.type === 'overtime').length,
-      lateIn: filteredRequests.filter(r => r.type === 'late_in').length,
+    // Helper function to calculate age from birthdate
+    const calculateAge = (birthdate) => {
+      const today = new Date();
+      const birth = new Date(birthdate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age;
     };
     
-    // Age Distribution
-    const currentYear = new Date().getFullYear();
+    // Request Statistics (for analytics cards) - using correct data types
+    const requestStats = {
+      permitted_leaves: filteredRequests.filter(r => r.type === 'PERMITTED_LEAVES').length,
+      unpermitted_leaves: filteredRequests.filter(r => r.type === 'UNPERMITTED_LEAVES').length,
+      authorized_absence: filteredRequests.filter(r => r.type === 'AUTHORIZED_ABSENCE').length,
+      unauthorized_absence: filteredRequests.filter(r => r.type === 'UNAUTHORIZED_ABSENCE').length,
+      overtime: filteredRequests.filter(r => r.type === 'OVERTIME').length,
+      late_arrival: filteredRequests.filter(r => r.type === 'LATE_IN').length,
+    };
+    
+    // Age Distribution using real birthdates
     const ageDistribution = {
       under24: 0,
       between24And32: 0,
@@ -66,10 +77,11 @@ router.get('/overview', (req, res) => {
     };
     
     filteredTeachers.forEach(teacher => {
-      if (teacher.age) {
-        if (teacher.age < 24) {
+      if (teacher.birthdate) {
+        const age = calculateAge(teacher.birthdate);
+        if (age < 24) {
           ageDistribution.under24++;
-        } else if (teacher.age >= 24 && teacher.age <= 32) {
+        } else if (age >= 24 && age <= 32) {
           ageDistribution.between24And32++;
         } else {
           ageDistribution.above32++;
@@ -77,14 +89,46 @@ router.get('/overview', (req, res) => {
       }
     });
     
-    // Weekly Attendance (mock data for now)
-    const weeklyAttendance = [
-      { day: 'Sun', onTime: Math.floor(filteredTeachers.length * 0.8), late: Math.floor(filteredTeachers.length * 0.15), absent: Math.floor(filteredTeachers.length * 0.05) },
-      { day: 'Mon', onTime: Math.floor(filteredTeachers.length * 0.85), late: Math.floor(filteredTeachers.length * 0.1), absent: Math.floor(filteredTeachers.length * 0.05) },
-      { day: 'Tue', onTime: Math.floor(filteredTeachers.length * 0.82), late: Math.floor(filteredTeachers.length * 0.13), absent: Math.floor(filteredTeachers.length * 0.05) },
-      { day: 'Wed', onTime: Math.floor(filteredTeachers.length * 0.87), late: Math.floor(filteredTeachers.length * 0.08), absent: Math.floor(filteredTeachers.length * 0.05) },
-      { day: 'Thu', onTime: Math.floor(filteredTeachers.length * 0.83), late: Math.floor(filteredTeachers.length * 0.12), absent: Math.floor(filteredTeachers.length * 0.05) },
-    ];
+    // Helper function to get requests by day of week within date range
+    const getRequestsByDay = (startDate, endDate) => {
+      const start = startDate ? new Date(startDate) : new Date('2024-04-01');
+      const end = endDate ? new Date(endDate) : new Date();
+      
+      return filteredRequests.filter(request => {
+        const requestDate = new Date(request.date);
+        return requestDate >= start && requestDate <= end;
+      });
+    };
+    
+    // Filter requests by date range
+    const dateFilteredRequests = getRequestsByDay(startDate, endDate);
+    
+    // Calculate Weekly Attendance based on actual data
+    const weeklyAttendance = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'].map(day => {
+      const dayIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'].indexOf(day);
+      
+      // Count requests by type for this day of week
+      const dayRequests = dateFilteredRequests.filter(request => {
+        const requestDate = new Date(request.date);
+        return requestDate.getDay() === dayIndex;
+      });
+      
+      // Calculate attendance categories
+      const lateCount = dayRequests.filter(r => r.type === 'LATE_IN').length;
+      const absentCount = dayRequests.filter(r => 
+        r.type === 'AUTHORIZED_ABSENCE' || r.type === 'UNAUTHORIZED_ABSENCE'
+      ).length;
+      
+      // On-time = Total teachers - Late - Absent (but ensure it's not negative)
+      const onTimeCount = Math.max(0, filteredTeachers.length - lateCount - absentCount);
+      
+      return {
+        day: day,
+        onTime: onTimeCount,
+        late: lateCount,
+        absent: absentCount
+      };
+    });
     
     // Total teachers for overall stats
     const totalTeachers = filteredTeachers.length;

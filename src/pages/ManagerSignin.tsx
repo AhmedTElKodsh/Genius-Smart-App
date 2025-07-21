@@ -42,34 +42,34 @@ const LogoContainer = styled.div`
 `;
 
 const Logo = styled.img`
-  max-width: 120px;
+  max-width: 320px;
   width: 100%;
   height: auto;
   object-fit: contain;
   
   @media (max-width: 768px) {
-    max-width: 80px;
+    max-width: 200px;
   }
 `;
 
 const BrandTitle = styled.h1`
   color: var(--secondary-color);
-  font-size: var(--font-size-xl);
+  font-size: 52px;
   font-weight: var(--font-weight-semibold);
   text-align: center;
   margin-bottom: var(--spacing-sm);
   
   @media (max-width: 768px) {
-    font-size: var(--font-size-lg);
+    font-size: 40px;
   }
 `;
 
 const BrandSubtitle = styled.p`
   color: var(--secondary-color);
-  font-size: var(--font-size-sm);
+  font-size: 18px;
   text-align: center;
   opacity: 0.8;
-  max-width: 250px;
+  max-width: 280px;
   line-height: 1.4;
 `;
 
@@ -312,7 +312,7 @@ const ManagerSignin: React.FC = () => {
     <Container>
       <BrandingSection>
         <LogoContainer>
-          <Logo src="/logo-page.png" alt="Genius Smart Education Logo" />
+          <Logo src="/light-logo-page.png" alt="Genius Smart Education Logo" />
         </LogoContainer>
         <BrandTitle>Genius Smart</BrandTitle>
         <BrandSubtitle>

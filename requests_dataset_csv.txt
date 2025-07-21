@@ -1,0 +1,132 @@
+Name,Request Type,Duration,Applied Date,Reason,Result
+teacher1-Management,Early Leave,23 July 2025,21 July 2025,Medical appointment,
+teacher1-Management,Early Leave,30 July 2025,28 July 2025,Personal matters,
+teacher1-Management,Absence,25 July - 25 July 2025,23 July 2025,Family emergency,
+teacher2-Management,Early Leave,22 July 2025,20 July 2025,Bank appointment,
+teacher1-Quran,Early Leave,21 July 2025,19 July 2025,Doctor visit,
+teacher1-Quran,Early Leave,26 July 2025,24 July 2025,Child school meeting,
+teacher1-Quran,Early Leave,31 July 2025,29 July 2025,Personal errands,
+teacher1-Quran,Absence,28 July - 28 July 2025,26 July 2025,Religious obligations,
+teacher2-Quran,Early Leave,24 July 2025,22 July 2025,Dental appointment,
+teacher2-Quran,Early Leave,29 July 2025,27 July 2025,Family visit,
+teacher2-Quran,Absence,30 July - 30 July 2025,28 July 2025,Sick leave,
+teacher1-Arabic,Early Leave,22 July 2025,18 June 2025,Government office visit,
+teacher1-Arabic,Early Leave,25 July 2025,15 June 2025,Car maintenance,
+teacher1-Arabic,Early Leave,28 July 2025,20 June 2025,Personal appointment,
+teacher1-Arabic,Early Leave,31 July 2025,25 June 2025,Home repair service,
+teacher2-Arabic,Early Leave,27 July 2025,20 July 2025,Medical checkup,
+teacher1-Math,Early Leave,21 July 2025,05 May 2025,University meeting,
+teacher1-Math,Early Leave,23 July 2025,10 May 2025,Legal consultation,
+teacher1-Math,Early Leave,26 July 2025,15 May 2025,Property viewing,
+teacher1-Math,Early Leave,29 July 2025,20 May 2025,Insurance matters,
+teacher1-Math,Early Leave,31 July 2025,25 May 2025,Travel arrangements,
+teacher1-Math,Absence,24 July - 24 July 2025,12 May 2025,Child illness,
+teacher2-Math,Early Leave,22 July 2025,18 June 2025,Utility service,
+teacher2-Math,Early Leave,30 July 2025,22 June 2025,Parent-teacher conference,
+teacher1-English,Early Leave,23 July 2025,02 June 2025,Specialist appointment,
+teacher1-English,Early Leave,26 July 2025,08 June 2025,Wedding preparation,
+teacher1-English,Early Leave,30 July 2025,18 June 2025,House moving,
+teacher2-English,Early Leave,24 July 2025,19 July 2025,Eye exam,
+teacher2-English,Early Leave,27 July 2025,20 July 2025,Passport renewal,
+teacher2-English,Early Leave,29 July 2025,18 July 2025,Job interview,
+teacher2-English,Early Leave,31 July 2025,17 July 2025,Family celebration,
+teacher2-English,Absence,25 July - 25 July 2025,16 July 2025,Surgery recovery,
+teacher1-Science,Early Leave,22 July 2025,15 July 2025,Lab equipment delivery,
+teacher1-Science,Absence,28 July - 28 July 2025,14 July 2025,Conference attendance,
+teacher2-Science,Early Leave,23 July 2025,19 July 2025,Research meeting,
+teacher2-Science,Early Leave,26 July 2025,12 July 2025,Equipment training,
+teacher2-Science,Early Leave,30 July 2025,16 July 2025,Workshop participation,
+teacher2-Science,Absence,31 July - 31 July 2025,18 July 2025,Professional development,
+teacher1-Art,Early Leave,21 July 2025,05 May 2025,Art supply shopping,
+teacher1-Art,Early Leave,23 July 2025,08 May 2025,Gallery visit,
+teacher1-Art,Early Leave,25 July 2025,12 May 2025,Exhibition setup,
+teacher1-Art,Early Leave,27 July 2025,15 May 2025,Artist workshop,
+teacher1-Art,Early Leave,29 July 2025,20 May 2025,Studio rental,
+teacher1-Art,Early Leave,31 July 2025,19 July 2025,Portfolio review,
+teacher1-Programming,Early Leave,22 July 2025,01 June 2025,Software update training,
+teacher1-Programming,Early Leave,24 July 2025,05 June 2025,Tech conference,
+teacher1-Programming,Early Leave,26 July 2025,08 June 2025,Client meeting,
+teacher1-Programming,Early Leave,28 July 2025,12 June 2025,Code review session,
+teacher1-Programming,Early Leave,30 July 2025,18 June 2025,System maintenance,
+teacher1-Programming,Early Leave,31 July 2025,22 June 2025,Database backup,
+teacher1-Programming,Early Leave,25 July 2025,25 June 2025,Network setup,
+teacher1-Programming,Absence,23 July - 24 July 2025,15 June 2025,Programming bootcamp,
+teacher2-Programming,Early Leave,27 July 2025,14 July 2025,Hardware upgrade,
+teacher2-Programming,Early Leave,29 July 2025,17 July 2025,Cybersecurity seminar,
+teacher1-Social studies,Early Leave,24 July 2025,28 May 2025,Historical research,
+teacher2-Social studies,Early Leave,21 July 2025,03 June 2025,Community meeting,
+teacher2-Social studies,Early Leave,23 July 2025,07 June 2025,Cultural event,
+teacher2-Social studies,Early Leave,26 July 2025,11 June 2025,Museum visit,
+teacher2-Social studies,Early Leave,28 July 2025,20 June 2025,Local government session,
+teacher2-Social studies,Early Leave,31 July 2025,24 June 2025,Social work volunteer,
+teacher1-Fitness,Early Leave,21 July 2025,30 May 2025,Sports equipment purchase,
+teacher1-Fitness,Early Leave,23 July 2025,02 June 2025,Fitness certification,
+teacher1-Fitness,Early Leave,25 July 2025,05 June 2025,Gym facility inspection,
+teacher1-Fitness,Early Leave,27 July 2025,08 June 2025,Athletic competition,
+teacher1-Fitness,Early Leave,29 July 2025,15 June 2025,Physical therapy,
+teacher1-Fitness,Early Leave,30 July 2025,20 June 2025,Sports clinic,
+teacher1-Fitness,Early Leave,31 July 2025,22 June 2025,Nutrition workshop,
+teacher1-Fitness,Early Leave,26 July 2025,18 July 2025,Training course,
+teacher1-Fitness,Absence,22 July - 24 July 2025,12 June 2025,Sports tournament,
+teacher2-Fitness,Early Leave,28 July 2025,20 July 2025,Coaching seminar,
+teacher2-Fitness,Early Leave,24 July 2025,10 July 2025,Equipment maintenance,
+teacher2-Fitness,Early Leave,30 July 2025,16 July 2025,Health screening,
+teacher2-Fitness,Absence,25 July - 25 July 2025,15 July 2025,Athletic event,
+teacher1-Scouting,Early Leave,21 July 2025,28 May 2025,Scout leader meeting,
+teacher1-Scouting,Early Leave,23 July 2025,02 June 2025,Camping preparation,
+teacher1-Scouting,Early Leave,25 July 2025,06 June 2025,Badge ceremony,
+teacher1-Scouting,Early Leave,27 July 2025,10 June 2025,Outdoor activity planning,
+teacher1-Scouting,Early Leave,29 July 2025,14 June 2025,Safety training,
+teacher1-Scouting,Early Leave,30 July 2025,18 June 2025,Community service,
+teacher1-Scouting,Early Leave,31 July 2025,22 June 2025,Adventure planning,
+teacher1-Scouting,Early Leave,26 July 2025,19 July 2025,Leadership workshop,
+teacher1-Scouting,Early Leave,28 July 2025,17 July 2025,Merit badge evaluation,
+teacher2-Scouting,Early Leave,24 July 2025,08 June 2025,Scout camp setup,
+teacher2-Scouting,Absence,22 July - 24 July 2025,12 June 2025,Regional scout gathering,
+teacher1-Nanny,Early Leave,21 July 2025,29 May 2025,Child development course,
+teacher1-Nanny,Early Leave,22 July 2025,01 June 2025,Pediatric first aid,
+teacher1-Nanny,Early Leave,24 July 2025,04 June 2025,Nutrition seminar,
+teacher1-Nanny,Early Leave,25 July 2025,08 June 2025,Safety certification,
+teacher1-Nanny,Early Leave,26 July 2025,12 June 2025,Psychology workshop,
+teacher1-Nanny,Early Leave,28 July 2025,16 June 2025,Behavioral training,
+teacher1-Nanny,Early Leave,29 July 2025,20 June 2025,Health checkup,
+teacher1-Nanny,Early Leave,30 July 2025,18 July 2025,Educational material shopping,
+teacher1-Nanny,Early Leave,31 July 2025,19 July 2025,Parent consultation,
+teacher1-Nanny,Early Leave,27 July 2025,17 July 2025,Activity planning,
+teacher1-Nanny,Absence,23 July - 26 July 2025,10 June 2025,Childcare conference,
+teacher2-Nanny,Early Leave,22 July 2025,28 May 2025,Medical examination,
+teacher2-Nanny,Early Leave,25 July 2025,12 June 2025,Training workshop,
+teacher2-Nanny,Early Leave,28 July 2025,18 June 2025,Family therapy session,
+teacher2-Nanny,Early Leave,31 July 2025,20 July 2025,Child assessment meeting,25 April 2025,Medical examination
+teacher2-Nanny,Early Leave,14 June 2025,08 May 2025,Training workshop
+teacher2-Nanny,Early Leave,22 June 2025,16 May 2025,Family therapy session
+teacher2-Nanny,Early Leave,27 June 2025,25 May 2025,Child assessment meetingFitness,Early Leave,05 June 2025,03 June 2025
+teacher2-Fitness,Early Leave,14 June 2025,12 June 2025
+teacher2-Fitness,Early Leave,26 June 2025,24 June 2025
+teacher2-Fitness,Absence,20 June - 20 June 2025,18 June 2025
+teacher1-Scouting,Early Leave,03 June 2025,01 June 2025
+teacher1-Scouting,Early Leave,09 June 2025,07 June 2025
+teacher1-Scouting,Early Leave,15 June 2025,13 June 2025
+teacher1-Scouting,Early Leave,21 June 2025,19 June 2025
+teacher1-Scouting,Early Leave,25 June 2025,23 June 2025
+teacher1-Scouting,Early Leave,27 June 2025,25 June 2025
+teacher1-Scouting,Early Leave,29 June 2025,27 June 2025
+teacher1-Scouting,Early Leave,30 June 2025,28 June 2025
+teacher1-Scouting,Early Leave,28 June 2025,26 June 2025
+teacher2-Scouting,Early Leave,12 June 2025,10 June 2025
+teacher2-Scouting,Absence,18 June - 20 June 2025,16 June 2025
+teacher1-Nanny,Early Leave,02 June 2025,31 May 2025
+teacher1-Nanny,Early Leave,07 June 2025,05 June 2025
+teacher1-Nanny,Early Leave,11 June 2025,09 June 2025
+teacher1-Nanny,Early Leave,16 June 2025,14 June 2025
+teacher1-Nanny,Early Leave,20 June 2025,18 June 2025
+teacher1-Nanny,Early Leave,23 June 2025,21 June 2025
+teacher1-Nanny,Early Leave,26 June 2025,24 June 2025
+teacher1-Nanny,Early Leave,28 June 2025,26 June 2025
+teacher1-Nanny,Early Leave,29 June 2025,27 June 2025
+teacher1-Nanny,Early Leave,30 June 2025,28 June 2025
+teacher1-Nanny,Absence,13 June - 17 June 2025,11 June 2025
+teacher2-Nanny,Early Leave,04 June 2025,02 June 2025
+teacher2-Nanny,Early Leave,14 June 2025,12 June 2025
+teacher2-Nanny,Early Leave,22 June 2025,20 June 2025
+teacher2-Nanny,Early Leave,27 June 2025,25 June 2025
