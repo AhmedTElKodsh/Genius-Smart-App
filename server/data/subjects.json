@@ -1,122 +1,82 @@
 [
   {
-    "id": "dc7bb00f-658d-4cb2-b9a3-55b5424cf918",
+    "id": 1,
     "name": "Management",
-    "arabicName": "الإدارة",
-    "description": "Management Department - Excellence in management education",
-    "headOfDepartment": "64fa759a-4d97-428c-b5d3-c196a98aba84",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 10
   },
   {
-    "id": "e4f6f320-8edf-48ee-9b2b-57722a9f1ee9",
+    "id": 2,
     "name": "Quran",
-    "arabicName": "القرآن الكريم",
-    "description": "Quran Department - Excellence in quran education",
-    "headOfDepartment": "7287482a-9235-4d83-afcc-ec8830a434a9",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 3
   },
   {
-    "id": "ebceda3c-cc5e-4036-849c-4e865bf1d0fa",
+    "id": 3,
     "name": "Arabic",
-    "arabicName": "اللغة العربية",
-    "description": "Arabic Department - Excellence in arabic education",
-    "headOfDepartment": "6fcfc5da-fc2a-45c7-97f9-e813d9b5e8b5",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 3
   },
   {
-    "id": "6edc9bd3-e82b-4357-8f4c-aff73531bed1",
-    "name": "Math",
-    "arabicName": "الرياضيات",
-    "description": "Math Department - Excellence in math education",
-    "headOfDepartment": "3a5d2a92-4027-49ab-a1b1-65ba4efdc9ff",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
-  },
-  {
-    "id": "bfdf74dd-3cf5-4138-aecc-cc14b20d0749",
+    "id": 4,
     "name": "English",
-    "arabicName": "اللغة الإنجليزية",
-    "description": "English Department - Excellence in english education",
-    "headOfDepartment": "6cadc80c-3e89-4c7f-b0cb-2e2163059948",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 3
   },
   {
-    "id": "6900b284-b275-4ebe-968b-7e02e106d405",
+    "id": 5,
+    "name": "Math",
+    "teacherCount": 1
+  },
+  {
+    "id": 6,
     "name": "Science",
-    "arabicName": "العلوم",
-    "description": "Science Department - Excellence in science education",
-    "headOfDepartment": "bc9f9f1f-9a99-4c21-b384-b2970baec9ad",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 2
   },
   {
-    "id": "637b266a-c3bf-47a0-8e3e-f5d96e9ddc37",
+    "id": 7,
     "name": "Art",
-    "arabicName": "الفنون",
-    "description": "Art Department - Excellence in art education",
-    "headOfDepartment": "99c453fa-3abe-4e7d-a2cf-fb039a50cfff",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 1
   },
   {
-    "id": "c70f26e6-5da4-4e66-bd07-74af7bc8dd5c",
+    "id": 8,
     "name": "Programming",
-    "arabicName": "البرمجة",
-    "description": "Programming Department - Excellence in programming education",
-    "headOfDepartment": "3c385533-68e3-472e-8723-b0ef386af3af",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 1
   },
   {
-    "id": "03f9ffa4-c85f-4425-927c-881dca234001",
-    "name": "Social studies",
-    "arabicName": "الدراسات الاجتماعية",
-    "description": "Social studies Department - Excellence in social studies education",
-    "headOfDepartment": "5996e5af-84b8-4dae-bcdb-d3919953750c",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "id": 9,
+    "name": "Physical Education",
+    "teacherCount": 1
   },
   {
-    "id": "752ee39e-f555-41b1-bcd7-de8bbf74a2aa",
-    "name": "Fitness",
-    "arabicName": "التربية البدنية",
-    "description": "Fitness Department - Excellence in fitness education",
-    "headOfDepartment": "f3f1ab3e-4278-43b3-8451-a6b0520d5f43",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
-  },
-  {
-    "id": "1f726648-d6b2-4943-bca8-9d498a8309f3",
+    "id": 10,
     "name": "Scouting",
-    "arabicName": "الكشافة",
-    "description": "Scouting Department - Excellence in scouting education",
-    "headOfDepartment": "9425896c-07fb-45af-aab4-c58289c3fb16",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "teacherCount": 1
   },
   {
-    "id": "971bf783-f1d7-43b5-b531-649a2840dba7",
-    "name": "Nanny",
-    "arabicName": "رعاية الأطفال",
-    "description": "Nanny Department - Excellence in nanny education",
-    "headOfDepartment": "abfbb715-5399-4b63-bdb7-696e3d115c5a",
-    "teacherCount": 2,
-    "createdAt": "2025-07-18T09:32:51.364Z",
-    "updatedAt": "2025-07-18T09:32:51.364Z"
+    "id": 11,
+    "name": "Class Teacher",
+    "teacherCount": 1
+  },
+  {
+    "id": 12,
+    "name": "Social Studies",
+    "teacherCount": 1
+  },
+  {
+    "id": 13,
+    "name": "General Support",
+    "teacherCount": 1
+  },
+  {
+    "id": 14,
+    "name": "Childcare",
+    "teacherCount": 3
+  },
+  {
+    "id": 15,
+    "name": "Canteen",
+    "teacherCount": 1
+  },
+  {
+    "id": 16,
+    "name": "Security",
+    "teacherCount": 1
   }
 ]

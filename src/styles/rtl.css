@@ -1,0 +1,321 @@
+/* RTL Support for Arabic Language */
+
+/* Global RTL styles */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+/* Flex direction adjustments for RTL */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row;
+}
+
+/* Margin and padding adjustments */
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* Text alignment utilities */
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+/* Border radius adjustments */
+[dir="rtl"] .rounded-l {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+[dir="rtl"] .rounded-r {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+/* Form input adjustments */
+[dir="rtl"] input[type="text"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="password"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+/* Sidebar adjustments for RTL */
+[dir="rtl"] .sidebar {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .main-content {
+  margin-left: 0;
+  margin-right: 240px;
+}
+
+/* Navigation adjustments */
+[dir="rtl"] .nav-item {
+  padding-left: 0;
+  padding-right: 16px;
+}
+
+/* Modal and dialog adjustments */
+[dir="rtl"] .modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-close {
+  left: 16px;
+  right: auto;
+}
+
+/* Table adjustments */
+[dir="rtl"] .table {
+  direction: rtl;
+}
+
+[dir="rtl"] .table th:first-child {
+  text-align: right;
+}
+
+[dir="rtl"] .table th:last-child {
+  text-align: left;
+}
+
+/* Button group adjustments */
+[dir="rtl"] .btn-group .btn:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+[dir="rtl"] .btn-group .btn:last-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+/* Dropdown adjustments */
+[dir="rtl"] .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+/* Grid adjustments */
+[dir="rtl"] .grid {
+  direction: rtl;
+}
+
+/* Search and filter adjustments */
+[dir="rtl"] .search-input {
+  padding-left: 40px;
+  padding-right: 16px;
+}
+
+[dir="rtl"] .search-icon {
+  left: auto;
+  right: 12px;
+}
+
+/* Pagination adjustments */
+[dir="rtl"] .pagination .prev {
+  order: 2;
+}
+
+[dir="rtl"] .pagination .next {
+  order: 1;
+}
+
+/* Card adjustments */
+[dir="rtl"] .card {
+  text-align: right;
+}
+
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+/* Dashboard card adjustments */
+[dir="rtl"] .dashboard-card .icon {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .dashboard-card .content {
+  padding-left: 0;
+  padding-right: 60px;
+}
+
+/* Teacher card adjustments */
+[dir="rtl"] .teacher-card {
+  text-align: right;
+}
+
+[dir="rtl"] .teacher-card .avatar {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .teacher-card .content {
+  padding-left: 0;
+  padding-right: 60px;
+}
+
+/* Form adjustments */
+[dir="rtl"] .form-group {
+  text-align: right;
+}
+
+[dir="rtl"] .form-label {
+  text-align: right;
+}
+
+[dir="rtl"] .form-grid {
+  direction: rtl;
+}
+
+/* Tab adjustments */
+[dir="rtl"] .tabs {
+  direction: rtl;
+}
+
+[dir="rtl"] .tab {
+  margin-left: 8px;
+  margin-right: 0;
+}
+
+[dir="rtl"] .tab:first-child {
+  margin-left: 0;
+}
+
+/* Notification adjustments */
+[dir="rtl"] .notification {
+  text-align: right;
+}
+
+[dir="rtl"] .notification .icon {
+  left: auto;
+  right: 16px;
+}
+
+/* Breadcrumb adjustments */
+[dir="rtl"] .breadcrumb {
+  direction: rtl;
+}
+
+[dir="rtl"] .breadcrumb-separator::before {
+  content: "\\";
+}
+
+/* Icon adjustments */
+[dir="rtl"] .icon-arrow-left {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .icon-arrow-right {
+  transform: scaleX(-1);
+}
+
+/* Specific component adjustments */
+[dir="rtl"] .teacher-subject {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .action-buttons {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .stats-grid {
+  direction: rtl;
+}
+
+/* Font adjustments for Arabic */
+[dir="rtl"] * {
+  font-family: 'Segoe UI', 'Tahoma', 'Arabic UI Display', 'Arabic UI Text', 
+               'Times New Roman', 'Courier New', serif;
+}
+
+/* Ensure proper text direction for mixed content */
+[dir="rtl"] .ltr-content {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="ltr"] .rtl-content {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Animation adjustments */
+[dir="rtl"] .slide-left {
+  animation: slideRight 0.3s ease-in-out;
+}
+
+[dir="rtl"] .slide-right {
+  animation: slideLeft 0.3s ease-in-out;
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  [dir="rtl"] .sidebar {
+    right: -240px;
+  }
+  
+  [dir="rtl"] .sidebar.open {
+    right: 0;
+  }
+  
+  [dir="rtl"] .main-content {
+    margin-right: 0;
+  }
+}
+
+/* Print adjustments */
+@media print {
+  [dir="rtl"] * {
+    direction: rtl !important;
+    text-align: right !important;
+  }
+} 

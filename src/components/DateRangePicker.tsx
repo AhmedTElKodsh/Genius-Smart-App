@@ -18,13 +18,15 @@ import {
   isToday,
   isFuture
 } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const PickerContainer = styled.div`
   position: relative;
   display: inline-block;
 `;
 
-const PickerButton = styled.button`
+const PickerButton = styled.button<{ $isRTL?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -32,11 +34,12 @@ const PickerButton = styled.button`
   background: #ffffff;
   border: 1px solid #e1e7ec;
   border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
   color: #141F25;
   cursor: pointer;
   transition: all 0.2s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
   
   &:hover {
     border-color: #D6B10E;
@@ -47,38 +50,42 @@ const PickerButton = styled.button`
   }
 `;
 
-const DropdownContainer = styled.div<{ $isOpen: boolean }>`
+const DropdownContainer = styled.div<{ $isOpen: boolean; $isRTL?: boolean }>`
   position: absolute;
   top: 100%;
-  right: 0;
+  right: ${props => props.$isRTL ? 'auto' : '0'};
+  left: ${props => props.$isRTL ? '0' : 'auto'};
   z-index: 1000;
   background: #ffffff;
   border: 1px solid #e1e7ec;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  min-width: 320px;
+  padding: 16px;
+  min-width: 280px;
+  max-width: 300px;
   display: ${props => props.$isOpen ? 'block' : 'none'};
   margin-top: 8px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const TabContainer = styled.div`
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-bottom: 16px;
 `;
 
-const Tab = styled.button<{ $isActive: boolean }>`
+const Tab = styled.button<{ $isActive: boolean; $isRTL?: boolean }>`
   padding: 8px 16px;
   background: ${props => props.$isActive ? '#D6B10E' : 'transparent'};
   color: ${props => props.$isActive ? '#ffffff' : '#666'};
   border: none;
   border-radius: 6px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
   
   &:hover {
     background: ${props => props.$isActive ? '#D6B10E' : '#f5f5f5'};
@@ -86,7 +93,7 @@ const Tab = styled.button<{ $isActive: boolean }>`
 `;
 
 const CalendarContainer = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 `;
 
 const CalendarHeader = styled.div`
@@ -96,8 +103,8 @@ const CalendarHeader = styled.div`
   margin-bottom: 16px;
 `;
 
-const MonthYear = styled.h3`
-  font-family: 'Poppins', sans-serif;
+const MonthYear = styled.h3<{ $isRTL?: boolean }>`
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   font-weight: 600;
   color: #141F25;
@@ -128,9 +135,9 @@ const CalendarGrid = styled.div`
   gap: 4px;
 `;
 
-const DayHeader = styled.div`
+const DayHeader = styled.div<{ $isRTL?: boolean }>`
   text-align: center;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 12px;
   font-weight: 500;
   color: #666;
@@ -152,6 +159,9 @@ const DayCell = styled.button<{
   font-size: 14px;
   cursor: ${props => props.$isFuture || props.$isOtherMonth ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   background: ${props => {
     if (props.$isSelected) return '#D6B10E';
@@ -176,7 +186,7 @@ const DayCell = styled.button<{
   }
 `;
 
-const RangeDisplay = styled.div`
+const RangeDisplay = styled.div<{ $isRTL?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,27 +195,36 @@ const RangeDisplay = styled.div`
   border: 1px solid #D6B10E;
   border-radius: 8px;
   margin-bottom: 16px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
   color: #666;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
-const DoneButton = styled.button`
-  width: 100%;
-  padding: 12px;
+const DoneButton = styled.button<{ $isRTL?: boolean }>`
+  width: auto;
+  min-width: 100px;
+  padding: 10px 24px;
   background: #D6B10E;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
   
   &:hover {
     background: #c4a00d;
   }
+`;
+
+const DoneButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
 `;
 
 export interface DateRange {
@@ -220,6 +239,10 @@ interface DateRangePickerProps {
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) => {
+  const { t, language } = useLanguage();
+  const isRTL = language === 'ar';
+  const locale = isRTL ? ar : undefined;
+  
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'week' | 'month' | 'custom'>('month');
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -304,9 +327,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
   const handleDone = () => {
     if (selectedStart && selectedEnd) {
       const labels = {
-        week: 'This Week',
-        month: 'This Month',
-        custom: 'Custom'
+        week: t('common.thisWeek'),
+        month: t('common.thisMonth'),
+        custom: t('common.custom')
       };
       
       const range: DateRange = {
@@ -326,11 +349,12 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+    const dayHeaders = t('datePicker.dayHeaders') as string[];
     
     return (
       <CalendarGrid>
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-          <DayHeader key={day}>{day}</DayHeader>
+        {dayHeaders.map((day, index) => (
+          <DayHeader key={index} $isRTL={isRTL}>{day}</DayHeader>
         ))}
         {days.map(day => {
           const isSelected = selectedStart && selectedEnd && 
@@ -362,68 +386,73 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
 
   const formatDateRange = () => {
     if (selectedStart && selectedEnd) {
-      return `${format(selectedStart, 'd MMM')} - ${format(selectedEnd, 'd MMM')}`;
+      return `${format(selectedStart, 'd MMM', { locale })} - ${format(selectedEnd, 'd MMM', { locale })}`;
     } else if (selectedStart) {
-      return `${format(selectedStart, 'd MMM')} - Select end date`;
+      return `${format(selectedStart, 'd MMM', { locale })} - ${t('datePicker.selectEndDate')}`;
     }
-    return 'Select date range';
+    return t('datePicker.selectDateRange');
   };
 
   return (
     <PickerContainer ref={containerRef}>
-      <PickerButton onClick={() => setIsOpen(!isOpen)}>
+      <PickerButton $isRTL={isRTL} onClick={() => setIsOpen(!isOpen)}>
         <span className="icon">📅</span>
-        {value.label === 'Custom' ? 
-          `${format(value.startDate, 'd MMM yyyy')} - ${format(value.endDate, 'd MMM yyyy')}` :
+        {value.label === t('common.custom') ? 
+          `${format(value.startDate, 'd MMM yyyy', { locale })} - ${format(value.endDate, 'd MMM yyyy', { locale })}` :
           value.label
         }
       </PickerButton>
       
-      <DropdownContainer $isOpen={isOpen}>
+      <DropdownContainer $isOpen={isOpen} $isRTL={isRTL}>
         <TabContainer>
           <Tab 
             $isActive={activeTab === 'week'} 
+            $isRTL={isRTL}
             onClick={() => handleTabChange('week')}
           >
-            This week
+            {t('common.thisWeek')}
           </Tab>
           <Tab 
             $isActive={activeTab === 'month'} 
+            $isRTL={isRTL}
             onClick={() => handleTabChange('month')}
           >
-            This Month
+            {t('common.thisMonth')}
           </Tab>
           <Tab 
             $isActive={activeTab === 'custom'} 
+            $isRTL={isRTL}
             onClick={() => handleTabChange('custom')}
           >
-            Custom
+            {t('common.custom')}
           </Tab>
         </TabContainer>
 
         <CalendarContainer>
           <CalendarHeader>
             <NavButton onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-              ‹
+              {isRTL ? '›' : '‹'}
             </NavButton>
-            <MonthYear>{format(currentMonth, 'MMMM yyyy')}</MonthYear>
+            <MonthYear $isRTL={isRTL}>{format(currentMonth, 'MMMM yyyy', { locale })}</MonthYear>
             <NavButton onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-              ›
+              {isRTL ? '‹' : '›'}
             </NavButton>
           </CalendarHeader>
           {renderCalendar()}
         </CalendarContainer>
 
         {(selectedStart || selectedEnd) && (
-          <RangeDisplay>
+          <RangeDisplay $isRTL={isRTL}>
             <span>{formatDateRange()}</span>
-            <span>›</span>
+            <span>{isRTL ? '‹' : '›'}</span>
           </RangeDisplay>
         )}
 
-        <DoneButton onClick={handleDone}>
-          Done
-        </DoneButton>
+        <DoneButtonContainer>
+          <DoneButton $isRTL={isRTL} onClick={handleDone}>
+            {t('common.done')}
+          </DoneButton>
+        </DoneButtonContainer>
       </DropdownContainer>
     </PickerContainer>
   );

@@ -70,7 +70,7 @@ function saveManagerData(manager) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     
-    fs.writeFileSync(filePath, JSON.stringify(manager, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(manager, null, 2), 'utf8');
     console.log('Manager profile saved successfully');
     
   } catch (error) {
@@ -82,7 +82,7 @@ function saveManagerData(manager) {
 const createEmailTransporter = () => {
   // For demo purposes, using a test configuration
   // In production, use actual SMTP settings
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: 'smtp.gmail.com', // Replace with actual SMTP host
     port: 587,
     secure: false,

@@ -1,22 +1,25 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 
-const SidebarContainer = styled.div`
+const SidebarContainer = styled.div<{ $isRTL: boolean }>`
   width: 240px;
   height: 100vh;
   background: #ffffff;
-  border-right: 1px solid #e1e7ec;
+  border-right: ${props => props.$isRTL ? 'none' : '1px solid #e1e7ec'};
+  border-left: ${props => props.$isRTL ? '1px solid #e1e7ec' : 'none'};
   display: flex;
   flex-direction: column;
   position: fixed;
-  left: 0;
+  left: ${props => props.$isRTL ? 'auto' : '0'};
+  right: ${props => props.$isRTL ? '0' : 'auto'};
   top: 0;
   z-index: 100;
 `;
 
 const LogoSection = styled.div`
-  padding: 24px 20px;
+  padding: 32px 20px;
   border-bottom: 1px solid #e1e7ec;
   display: flex;
   align-items: center;
@@ -24,19 +27,17 @@ const LogoSection = styled.div`
 `;
 
 const LogoImage = styled.img`
-  width: 80px;
-  height: 80px;
+  width: 150px;
+  height: 120px;
   object-fit: contain;
 `;
-
-
 
 const Navigation = styled.nav`
   flex: 1;
   padding: 20px 0;
 `;
 
-const NavItem = styled.button<{ $isActive?: boolean }>`
+const NavItem = styled.button<{ $isActive?: boolean; $isRTL: boolean }>`
   width: 100%;
   display: flex;
   align-items: center;
@@ -45,12 +46,13 @@ const NavItem = styled.button<{ $isActive?: boolean }>`
   background: ${props => props.$isActive ? '#D6B10E' : 'transparent'};
   color: ${props => props.$isActive ? '#ffffff' : '#666'};
   border: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   font-weight: 500;
-  text-align: left;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
   cursor: pointer;
   transition: all 0.2s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
   
   &:hover {
     background: ${props => props.$isActive ? '#D6B10E' : '#f5f5f5'};
@@ -63,21 +65,24 @@ const NavItem = styled.button<{ $isActive?: boolean }>`
     display: flex;
     align-items: center;
     justify-content: center;
+    order: ${props => props.$isRTL ? '2' : '0'};
   }
 `;
 
-const AddTeacherButton = styled.button`
+const AddTeacherButton = styled.button<{ $isRTL: boolean }>`
   margin: 20px;
   padding: 12px 16px;
   background: #D6B10E;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
   
   &:hover {
     background: #c4a00d;
@@ -85,7 +90,7 @@ const AddTeacherButton = styled.button`
   }
 `;
 
-const LogoutButton = styled.button`
+const LogoutButton = styled.button<{ $isRTL: boolean }>`
   display: flex;
   align-items: center;
   gap: 12px;
@@ -94,12 +99,13 @@ const LogoutButton = styled.button`
   background: transparent;
   color: #dc3545;
   border: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   font-weight: 500;
-  text-align: left;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
   cursor: pointer;
   transition: all 0.2s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
   
   &:hover {
     background: #fee;
@@ -111,6 +117,7 @@ const LogoutButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
+    order: ${props => props.$isRTL ? '2' : '0'};
   }
 `;
 
@@ -121,6 +128,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, isRTL } = useLanguage();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -137,52 +145,56 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher }) => {
   };
 
   return (
-    <SidebarContainer>
+    <SidebarContainer $isRTL={isRTL}>
       <LogoSection>
-        <LogoImage src="/logo-page.png" alt="Genius Smart Education" />
+        <LogoImage src="/logo-page.png" alt={t('brand.education')} />
       </LogoSection>
 
       <Navigation>
         <NavItem 
           $isActive={isActive('/dashboard')} 
+          $isRTL={isRTL}
           onClick={() => handleNavigation('/dashboard')}
         >
           <span className="icon">📊</span>
-          Dashboard
+          {t('nav.dashboard')}
         </NavItem>
         
         <NavItem 
           $isActive={isActive('/teachers')} 
+          $isRTL={isRTL}
           onClick={() => handleNavigation('/teachers')}
         >
           <span className="icon">👥</span>
-          Teachers
+          {t('nav.teachers')}
         </NavItem>
         
         <NavItem 
           $isActive={isActive('/requests')} 
+          $isRTL={isRTL}
           onClick={() => handleNavigation('/requests')}
         >
           <span className="icon">📄</span>
-          Requests
+          {t('nav.requests')}
         </NavItem>
         
         <NavItem 
           $isActive={isActive('/settings')} 
+          $isRTL={isRTL}
           onClick={() => handleNavigation('/settings')}
         >
           <span className="icon">⚙️</span>
-          Settings
+          {t('nav.settings')}
         </NavItem>
       </Navigation>
 
-      <AddTeacherButton onClick={onAddTeacher}>
-        Add a New Teacher +
+      <AddTeacherButton $isRTL={isRTL} onClick={onAddTeacher}>
+        {t('nav.addTeacher')}
       </AddTeacherButton>
 
-      <LogoutButton onClick={handleLogout}>
+      <LogoutButton $isRTL={isRTL} onClick={handleLogout}>
         <span className="icon">🚪</span>
-        Log out
+        {t('nav.logout')}
       </LogoutButton>
     </SidebarContainer>
   );

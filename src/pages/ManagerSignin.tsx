@@ -13,6 +13,9 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   background-color: var(--background-color);
+  /* Ensure LTR direction for English content */
+  direction: ltr;
+  text-align: left;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -53,7 +56,7 @@ const Logo = styled.img`
 `;
 
 const BrandTitle = styled.h1`
-  color: var(--secondary-color);
+  color: white;
   font-size: 52px;
   font-weight: var(--font-weight-semibold);
   text-align: center;
@@ -65,7 +68,7 @@ const BrandTitle = styled.h1`
 `;
 
 const BrandSubtitle = styled.p`
-  color: var(--secondary-color);
+  color: white;
   font-size: 18px;
   text-align: center;
   opacity: 0.8;
@@ -221,6 +224,7 @@ const SubmitButton = styled.button<{ isLoading?: boolean }>`
   cursor: ${props => props.isLoading ? 'not-allowed' : 'pointer'};
   transition: var(--transition-fast);
   opacity: ${props => props.isLoading ? 0.7 : 1};
+  text-align: center;
 
   &:hover:not(:disabled) {
     background-color: var(--secondary-color);

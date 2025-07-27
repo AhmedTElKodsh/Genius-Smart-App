@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Profile Translation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .teacher-card { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .arabic { direction: rtl; font-family: 'Tajawal', sans-serif; }
+        .subject { color: #DAA520; font-weight: bold; }
+        .work-type { color: #666; }
+        .toggle-btn { 
+            margin: 10px 5px; 
+            padding: 8px 16px; 
+            background: #DAA520; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teacher Profile Translation Test</h1>
+    
+    <div>
+        <button class="toggle-btn" onclick="setLanguage('en')">English</button>
+        <button class="toggle-btn" onclick="setLanguage('ar')">Arabic (العربية)</button>
+    </div>
+
+    <div id="teachers-container"></div>
+
+    <script>
+        // Sample teacher data from the system
+        const teachers = [
+            { name: "Ahmed Hassan", subject: "Management", workType: "Full-time" },
+            { name: "Math Teacher", subject: "Math", workType: "Part-time" },
+            { name: "Quran Teacher", subject: "Quran", workType: "Full-time" },
+            { name: "Programming Teacher", subject: "Programming", workType: "Contract" },
+            { name: "Arabic Teacher", subject: "Arabic", workType: "Full-time" },
+            { name: "Fitness Teacher", subject: "Fitness", workType: "Part-time" }
+        ];
+
+        // Translation data (same as in the actual app)
+        const translations = {
+            en: {
+                teacherInfo: {
+                    teacherTitle: "Teacher",
+                    subjects: {
+                        Management: "Management",
+                        Math: "Math",
+                        Quran: "Quran",
+                        Programming: "Programming",
+                        Arabic: "Arabic",
+                        Fitness: "Fitness"
+                    },
+                    workTypes: {
+                        "Full-time": "Full-time",
+                        "Part-time": "Part-time",
+                        "Contract": "Contract"
+                    }
+                }
+            },
+            ar: {
+                teacherInfo: {
+                    teacherTitle: "المعلم",
+                    subjects: {
+                        Management: "الإدارة",
+                        Math: "الرياضيات",
+                        Quran: "القرآن",
+                        Programming: "البرمجة",
+                        Arabic: "اللغة العربية",
+                        Fitness: "اللياقة البدنية"
+                    },
+                    workTypes: {
+                        "Full-time": "دوام كامل",
+                        "Part-time": "دوام جزئي",
+                        "Contract": "عقد"
+                    }
+                }
+            }
+        };
+
+        let currentLanguage = 'en';
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            renderTeachers();
+        }
+
+        function getTranslatedSubject(subject) {
+            const t = translations[currentLanguage];
+            return t.teacherInfo.subjects[subject] || subject;
+        }
+
+        function getTranslatedWorkType(workType) {
+            const t = translations[currentLanguage];
+            return t.teacherInfo.workTypes[workType] || workType;
+        }
+
+        function getTeacherTitle() {
+            const t = translations[currentLanguage];
+            return t.teacherInfo.teacherTitle;
+        }
+
+        function renderTeachers() {
+            const container = document.getElementById('teachers-container');
+            const isRTL = currentLanguage === 'ar';
+            
+            container.innerHTML = '';
+            
+            teachers.forEach(teacher => {
+                const teacherCard = document.createElement('div');
+                teacherCard.className = `teacher-card ${isRTL ? 'arabic' : ''}`;
+                
+                const displayName = isRTL ? `${getTeacherTitle()} ${teacher.name}` : teacher.name;
+                const translatedSubject = getTranslatedSubject(teacher.subject);
+                const translatedWorkType = getTranslatedWorkType(teacher.workType);
+                
+                teacherCard.innerHTML = `
+                    <h3>${displayName}</h3>
+                    <div class="subject">${translatedSubject}</div>
+                    <div class="work-type">${translatedWorkType}</div>
+                    <small>Original: ${teacher.subject} | ${teacher.workType}</small>
+                `;
+                
+                container.appendChild(teacherCard);
+            });
+        }
+
+        // Initial render
+        renderTeachers();
+    </script>
+</body>
+</html> 

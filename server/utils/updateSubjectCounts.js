@@ -47,7 +47,7 @@ Object.keys(subjectCounts).forEach(subjectName => {
 });
 
 // Save updated subjects
-fs.writeFileSync(subjectsPath, JSON.stringify(updatedSubjects, null, 2));
+  fs.writeFileSync(subjectsPath, JSON.stringify(updatedSubjects, null, 2), 'utf8');
 
 console.log('✅ Subject counts updated successfully!');
 console.log(`📊 Updated ${updatedSubjects.length} subjects`); 

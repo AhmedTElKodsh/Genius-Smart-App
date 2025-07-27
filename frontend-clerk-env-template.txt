@@ -1,0 +1,15 @@
+# Frontend Environment Variables for Clerk
+# Copy this content to .env.local in the root directory
+
+# Clerk Configuration
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_publishable_key_here
+
+# Backend API URL
+VITE_API_URL=http://localhost:5000/api
+
+# Instructions:
+# 1. Go to your Clerk dashboard
+# 2. Navigate to API Keys section  
+# 3. Copy the "Publishable Key" (starts with pk_test_ or pk_live_)
+# 4. Create .env.local file in root directory
+# 5. Paste this content and update the key 

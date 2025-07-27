@@ -119,13 +119,13 @@ function processRequestsData() {
     }
     
     // Write the processed data
-    fs.writeFileSync(outputPath, JSON.stringify(pendingRequests, null, 2));
+    fs.writeFileSync(outputPath, JSON.stringify(pendingRequests, null, 2), 'utf8');
     
     console.log(`Requests data saved to: ${outputPath}`);
     
     // Also create a backup of all requests (including processed ones)
     const allRequestsPath = path.join(__dirname, '../data/all_requests.json');
-    fs.writeFileSync(allRequestsPath, JSON.stringify(requests, null, 2));
+    fs.writeFileSync(allRequestsPath, JSON.stringify(requests, null, 2), 'utf8');
     
     return pendingRequests;
     

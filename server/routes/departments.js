@@ -35,6 +35,20 @@ const readAttendance = () => {
   }
 };
 
+// Helper function to round hours according to business rules
+const roundHoursForDisplay = (totalHours) => {
+  const hours = Math.floor(totalHours);
+  const decimalPart = totalHours - hours;
+  const minutes = decimalPart * 60;
+  
+  // If remaining minutes < 30, round down; if >= 30, round up
+  if (minutes < 30) {
+    return hours;
+  } else {
+    return hours + 1;
+  }
+};
+
 // GET /api/departments - Get all departments with statistics
 router.get('/', (req, res) => {
   try {
@@ -124,8 +138,8 @@ router.get('/:id', (req, res) => {
         totalWorkingDays,
         totalAttendedDays,
         attendanceRate: totalWorkingDays > 0 ? Math.round((totalAttendedDays / totalWorkingDays) * 100) : 0,
-        totalHours: monthAttendance.reduce((sum, att) => sum + att.totalHours, 0),
-        totalOvertimeHours: monthAttendance.reduce((sum, att) => sum + att.overtimeHours, 0)
+        totalHours: roundHoursForDisplay(monthAttendance.reduce((sum, att) => sum + att.totalHours, 0)),
+        totalOvertimeHours: roundHoursForDisplay(monthAttendance.reduce((sum, att) => sum + att.overtimeHours, 0))
       };
     });
     

@@ -27,6 +27,20 @@ const readAllData = () => {
   }
 };
 
+// Helper function to round hours according to business rules
+const roundHoursForDisplay = (totalHours) => {
+  const hours = Math.floor(totalHours);
+  const decimalPart = totalHours - hours;
+  const minutes = decimalPart * 60;
+  
+  // If remaining minutes < 30, round down; if >= 30, round up
+  if (minutes < 30) {
+    return hours;
+  } else {
+    return hours + 1;
+  }
+};
+
 // GET /api/dashboard/overview - Get comprehensive dashboard overview
 router.get('/overview', (req, res) => {
   try {
@@ -59,13 +73,41 @@ router.get('/overview', (req, res) => {
     };
     
     // Request Statistics (for analytics cards) - using correct data types
+    // Filter requests by date range if provided
+    let statsRequests = filteredRequests;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      statsRequests = filteredRequests.filter(request => {
+        const requestDate = new Date(request.date);
+        return requestDate >= start && requestDate <= end;
+      });
+    }
+
     const requestStats = {
-      permitted_leaves: filteredRequests.filter(r => r.type === 'PERMITTED_LEAVES').length,
-      unpermitted_leaves: filteredRequests.filter(r => r.type === 'UNPERMITTED_LEAVES').length,
-      authorized_absence: filteredRequests.filter(r => r.type === 'AUTHORIZED_ABSENCE').length,
-      unauthorized_absence: filteredRequests.filter(r => r.type === 'UNAUTHORIZED_ABSENCE').length,
-      overtime: filteredRequests.filter(r => r.type === 'OVERTIME').length,
-      late_arrival: filteredRequests.filter(r => r.type === 'LATE_IN').length,
+      authorized_absence: statsRequests.filter(r => r.type === 'AUTHORIZED_ABSENCE' || r.requestType === 'Absence').length,
+      unauthorized_absence: statsRequests.filter(r => r.type === 'UNAUTHORIZED_ABSENCE').length,
+      early_leave: statsRequests.filter(r => r.type === 'EARLY_LEAVE' || r.requestType === 'Early Leave').length,
+      late_arrival: statsRequests.filter(r => r.type === 'LATE_ARRIVAL' || r.requestType === 'Late Arrival').length,
+      overtime: roundHoursForDisplay(filteredAttendance.reduce((sum, record) => {
+        if (startDate && endDate) {
+          const recordDate = new Date(record.date);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          if (recordDate < start || recordDate > end) return sum;
+        }
+        const dailyHours = record.totalHours || 0;
+        return sum + (dailyHours > 8 ? dailyHours - 8 : 0);
+      }, 0)),
+      total_hours: roundHoursForDisplay(filteredAttendance.reduce((sum, record) => {
+        if (startDate && endDate) {
+          const recordDate = new Date(record.date);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          if (recordDate < start || recordDate > end) return sum;
+        }
+        return sum + (record.totalHours || 0);
+      }, 0))
     };
     
     // Age Distribution using real birthdates
@@ -444,8 +486,8 @@ router.get('/quick-stats', (req, res) => {
     const pendingRequests = requests.filter(r => r.status === 'Pending').length;
     const totalRequests = requests.length;
     
-    const totalHours = currentAttendance.reduce((sum, record) => sum + record.totalHours, 0);
-    const totalOvertimeHours = currentAttendance.reduce((sum, record) => sum + record.overtimeHours, 0);
+    const totalHours = roundHoursForDisplay(currentAttendance.reduce((sum, record) => sum + record.totalHours, 0));
+    const totalOvertimeHours = roundHoursForDisplay(currentAttendance.reduce((sum, record) => sum + record.overtimeHours, 0));
     
     // Performance indicators
     const excellentPerformers = currentAttendance.filter(record => record.attendanceRate >= 95).length;
@@ -517,6 +559,481 @@ router.get('/quick-stats', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve quick statistics',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/dashboard/today-checkins - Get teacher check-ins with checkout times (supports date range and subject filtering)
+router.get('/today-checkins', (req, res) => {
+  try {
+    const { teachers, attendance } = readAllData();
+    const { startDate, endDate, subject } = req.query;
+    
+    // Use provided date range or default to today
+    const targetStartDate = startDate || new Date().toISOString().split('T')[0];
+    const targetEndDate = endDate || targetStartDate;
+    
+    // Filter teachers by subject if specified
+    let filteredTeachers = teachers;
+    if (subject) {
+      filteredTeachers = teachers.filter(t => t.subject === subject);
+    }
+    const filteredTeacherIds = filteredTeachers.map(t => t.id);
+    
+    // Find attendance records within date range and subject filter
+    const filteredAttendance = attendance.filter(record => {
+      const recordDate = record.dateISO;
+      const inDateRange = recordDate >= targetStartDate && recordDate <= targetEndDate;
+      const inSubjectFilter = !subject || filteredTeacherIds.includes(record.teacherId);
+      return inDateRange && inSubjectFilter;
+    });
+    
+    // Enrich with teacher data
+    const checkinData = filteredAttendance.map(record => {
+      const teacher = teachers.find(t => t.id === record.teacherId);
+      return {
+        teacherId: record.teacherId,
+        name: record.name || (teacher ? teacher.name : 'Unknown'),
+        subject: record.subject || (teacher ? teacher.subject : 'Unknown'),
+        checkIn: record.checkIn,
+        checkOut: record.checkOut || null,
+        totalHours: record.totalHours || 0,
+        attendance: record.attendance,
+        workType: record.workType || (teacher ? teacher.workType : 'Unknown'),
+        date: record.dateISO
+      };
+    });
+    
+    // Group by status
+    const checkedInOnly = checkinData.filter(t => t.checkIn && !t.checkOut);
+    const checkedInAndOut = checkinData.filter(t => t.checkIn && t.checkOut);
+    
+    res.json({
+      success: true,
+      data: {
+        dateRange: `${targetStartDate} to ${targetEndDate}`,
+        total: checkinData.length,
+        checkedInOnly: checkedInOnly.length,
+        checkedInAndOut: checkedInAndOut.length,
+        teachers: checkinData,
+        filters: { subject: subject || 'All Subjects', startDate: targetStartDate, endDate: targetEndDate }
+      },
+      message: 'Check-ins retrieved successfully'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve today\'s check-ins',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/dashboard/today-accepted-requests - Get today's accepted requests by type
+router.get('/today-accepted-requests', (req, res) => {
+  try {
+    const { teachers, requests } = readAllData();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Find today's accepted requests
+    const todayRequests = requests.filter(request => {
+      const requestForToday = request.startDate === today || 
+                             (request.duration && request.duration.includes(today.split('-').reverse().join(' ')));
+      const isAccepted = request.status === 'approved' || request.result === 'Accepted';
+      return requestForToday && isAccepted;
+    });
+    
+    // Group by request type
+    const requestsByType = {
+      'Early Leave': todayRequests.filter(r => r.requestType === 'Early Leave').length,
+      'Late Arrival': todayRequests.filter(r => r.requestType === 'Late Arrival').length,
+      'Authorized Absence': todayRequests.filter(r => r.requestType === 'Authorized Absence' || r.requestType === 'Absence').length,
+      'Permitted Leaves': todayRequests.filter(r => r.requestType === 'Permitted Leaves').length
+    };
+    
+    // Detailed data with teacher info
+    const detailedRequests = todayRequests.map(request => {
+      const teacher = teachers.find(t => t.id === request.teacherId);
+      return {
+        id: request.id,
+        teacherName: request.name || (teacher ? teacher.name : 'Unknown'),
+        subject: request.subject || (teacher ? teacher.subject : 'Unknown'),
+        requestType: request.requestType,
+        reason: request.reason,
+        duration: request.duration,
+        approvedAt: request.updatedAt
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        date: today,
+        total: todayRequests.length,
+        byType: requestsByType,
+        requests: detailedRequests
+      },
+      message: 'Today\'s accepted requests retrieved successfully'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve today\'s accepted requests',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/dashboard/today-absences - Get absences (authorized and unauthorized) (supports date range and subject filtering)
+router.get('/today-absences', (req, res) => {
+  try {
+    const { teachers, attendance, requests } = readAllData();
+    const { startDate, endDate, subject } = req.query;
+    
+    // Use provided date range or default to today
+    const targetStartDate = startDate || new Date().toISOString().split('T')[0];
+    const targetEndDate = endDate || targetStartDate;
+    
+    // Filter teachers by subject if specified
+    let filteredTeachers = teachers;
+    if (subject) {
+      filteredTeachers = teachers.filter(t => t.subject === subject);
+    }
+    const filteredTeacherIds = filteredTeachers.map(t => t.id);
+    
+    // Find attendance records within date range and subject filter
+    const filteredAttendance = attendance.filter(record => {
+      const recordDate = record.dateISO;
+      const inDateRange = recordDate >= targetStartDate && recordDate <= targetEndDate;
+      const inSubjectFilter = !subject || filteredTeacherIds.includes(record.teacherId);
+      return inDateRange && inSubjectFilter;
+    });
+    const checkedInTeacherIds = filteredAttendance.map(record => record.teacherId);
+    
+    // Find absence requests within date range and subject filter
+    const filteredAbsenceRequests = requests.filter(request => {
+      const requestDate = request.startDate;
+      const inDateRange = requestDate >= targetStartDate && requestDate <= targetEndDate;
+      const inSubjectFilter = !subject || filteredTeacherIds.includes(request.teacherId);
+      const isAbsenceRequest = request.requestType === 'Absence' || 
+                              request.requestType === 'Authorized Absence' ||
+                              request.type === 'AUTHORIZED_ABSENCE' ||
+                              request.type === 'UNAUTHORIZED_ABSENCE';
+      return inDateRange && inSubjectFilter && isAbsenceRequest;
+    });
+    
+    // 1. Separate AUTHORIZED absences (approved requests)
+    const authorizedAbsences = filteredAbsenceRequests.filter(request => {
+      return (request.status === 'approved' || request.result === 'Accepted') &&
+             (request.requestType === 'Absence' || request.requestType === 'Authorized Absence' || request.type === 'AUTHORIZED_ABSENCE');
+    });
+    
+    // 2. Find REJECTED absence requests
+    const rejectedAbsenceRequests = filteredAbsenceRequests.filter(request => {
+      return (request.status === 'rejected' || request.result === 'Rejected') &&
+             (request.requestType === 'Absence' || request.requestType === 'Authorized Absence' || request.type === 'AUTHORIZED_ABSENCE');
+    });
+    
+    // 3. Find teachers who are absent but didn't check in
+    const absentTeachers = filteredTeachers.filter(teacher => {
+      const notCheckedIn = !checkedInTeacherIds.includes(teacher.id);
+      const isActive = teacher.status === 'Active';
+      return isActive && notCheckedIn;
+    });
+    
+    // 4. Categorize absent teachers into unauthorized types
+    const unauthorizedAbsencesRejected = absentTeachers.filter(teacher => {
+      return rejectedAbsenceRequests.some(req => req.teacherId === teacher.id);
+    });
+    
+    const unauthorizedAbsencesNoRequest = absentTeachers.filter(teacher => {
+      const hasApprovedRequest = authorizedAbsences.some(req => req.teacherId === teacher.id);
+      const hasRejectedRequest = rejectedAbsenceRequests.some(req => req.teacherId === teacher.id);
+      return !hasApprovedRequest && !hasRejectedRequest;
+    });
+    
+    // Format authorized absences
+    const formattedAuthorizedAbsences = authorizedAbsences.map(request => {
+      const teacher = teachers.find(t => t.id === request.teacherId);
+      return {
+        id: request.teacherId,
+        teacherId: request.teacherId,
+        name: request.name || (teacher ? teacher.name : 'Unknown'),
+        subject: request.subject || (teacher ? teacher.subject : 'Unknown'),
+        absenceType: 'authorized',
+        reason: request.reason || 'Approved absence request',
+        duration: request.duration,
+        requestDate: request.date || request.startDate
+      };
+    });
+    
+    // Format unauthorized absences - rejected requests
+    const formattedUnauthorizedRejected = unauthorizedAbsencesRejected.map(teacher => {
+      const rejectedRequest = rejectedAbsenceRequests.find(req => req.teacherId === teacher.id);
+      return {
+        id: teacher.id,
+        teacherId: teacher.id,
+        name: teacher.name,
+        subject: teacher.subject,
+        absenceType: 'unauthorized-rejected',
+        reason: rejectedRequest ? `Rejected request: ${rejectedRequest.reason}` : 'Absence request was rejected',
+        duration: rejectedRequest ? rejectedRequest.duration : 'Full day',
+        requestDate: rejectedRequest ? rejectedRequest.startDate : targetStartDate
+      };
+    });
+    
+    // Format unauthorized absences - no request submitted
+    const formattedUnauthorizedNoRequest = unauthorizedAbsencesNoRequest.map(teacher => {
+      return {
+        id: teacher.id,
+        teacherId: teacher.id,
+        name: teacher.name,
+        subject: teacher.subject,
+        absenceType: 'unauthorized-no-request',
+        reason: 'No absence request submitted',
+        duration: 'Full day',
+        requestDate: targetStartDate
+      };
+    });
+    
+    // Combine all absences
+    const allAbsences = [
+      ...formattedAuthorizedAbsences, 
+      ...formattedUnauthorizedRejected, 
+      ...formattedUnauthorizedNoRequest
+    ];
+    
+    // Add contact information from teachers data
+    const enrichedAbsences = allAbsences.map(absence => {
+      const teacher = teachers.find(t => t.id === absence.teacherId);
+      return {
+        ...absence,
+        email: teacher?.email || `${absence.name.toLowerCase().replace(/\s+/g, '.').toLowerCase()}@school.edu`,
+        phone: teacher?.phone || `+966${Math.floor(Math.random() * 900000000) + 100000000}`
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        dateRange: `${targetStartDate} to ${targetEndDate}`,
+        totalAbsent: enrichedAbsences.length,
+        authorizedAbsence: formattedAuthorizedAbsences.length,
+        unauthorizedAbsence: formattedUnauthorizedRejected.length + formattedUnauthorizedNoRequest.length,
+        unauthorizedNoRequest: formattedUnauthorizedNoRequest.length,
+        unauthorizedRejected: formattedUnauthorizedRejected.length,
+        absentTeachers: enrichedAbsences,
+        filters: { subject: subject || 'All Subjects', startDate: targetStartDate, endDate: targetEndDate }
+      },
+      message: 'Absences retrieved successfully'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve today\'s absences',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/dashboard/missing-teachers - Get teachers who didn't check in and don't have approved requests
+router.get('/missing-teachers', (req, res) => {
+  try {
+    const { teachers, attendance, requests } = readAllData();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Get today's attendance
+    const todayAttendance = attendance.filter(record => record.dateISO === today);
+    const checkedInTeacherIds = todayAttendance.map(record => record.teacherId);
+    
+    // Get today's approved requests
+    const todayApprovedRequests = requests.filter(request => {
+      const requestForToday = request.startDate === today || 
+                             (request.duration && request.duration.includes(today.split('-').reverse().join(' ')));
+      const isApproved = request.status === 'approved' || request.result === 'Accepted';
+      return requestForToday && isApproved;
+    });
+    const approvedRequestTeacherIds = todayApprovedRequests.map(request => request.teacherId);
+    
+    // Get today's rejected requests
+    const todayRejectedRequests = requests.filter(request => {
+      const requestForToday = request.startDate === today || 
+                             (request.duration && request.duration.includes(today.split('-').reverse().join(' ')));
+      const isRejected = request.status === 'rejected' || request.result === 'Rejected';
+      return requestForToday && isRejected;
+    });
+    const rejectedRequestTeacherIds = todayRejectedRequests.map(request => request.teacherId);
+    
+    // Find missing teachers (not checked in AND no approved request)
+    const missingTeachers = teachers.filter(teacher => {
+      const notCheckedIn = !checkedInTeacherIds.includes(teacher.id);
+      const noApprovedRequest = !approvedRequestTeacherIds.includes(teacher.id);
+      const isActive = teacher.status === 'Active';
+      return isActive && notCheckedIn && noApprovedRequest;
+    });
+    
+    // Teachers with rejected requests who also didn't check in
+    const rejectedAndNotCheckedIn = teachers.filter(teacher => {
+      const notCheckedIn = !checkedInTeacherIds.includes(teacher.id);
+      const hasRejectedRequest = rejectedRequestTeacherIds.includes(teacher.id);
+      const isActive = teacher.status === 'Active';
+      return isActive && notCheckedIn && hasRejectedRequest;
+    });
+    
+    // Combine and format the data
+    const allMissingTeachers = [...missingTeachers, ...rejectedAndNotCheckedIn].map(teacher => {
+      const hasRejectedRequest = rejectedRequestTeacherIds.includes(teacher.id);
+      return {
+        id: teacher.id,
+        name: teacher.name,
+        subject: teacher.subject,
+        workType: teacher.workType,
+        phone: teacher.phone,
+        status: hasRejectedRequest ? 'Rejected Request' : 'No Request',
+        reason: hasRejectedRequest ? 'Had rejected request' : 'No excuse provided'
+      };
+    });
+    
+    // Remove duplicates based on teacher ID
+    const uniqueMissingTeachers = allMissingTeachers.filter((teacher, index, self) => 
+      index === self.findIndex(t => t.id === teacher.id)
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        date: today,
+        total: uniqueMissingTeachers.length,
+        noExcuse: missingTeachers.length,
+        rejectedRequest: rejectedAndNotCheckedIn.length,
+        teachers: uniqueMissingTeachers
+      },
+      message: 'Missing teachers retrieved successfully'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve missing teachers',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/dashboard/immediate-requests - Get immediate requests (supports date range and subject filtering)
+router.get('/immediate-requests', (req, res) => {
+  try {
+    const { teachers, requests } = readAllData();
+    const { startDate, endDate, subject } = req.query;
+    
+    // Use provided date range or default to tomorrow and day after
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    const dayAfterTomorrow = new Date();
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    const dayAfterTomorrowStr = dayAfterTomorrow.toISOString().split('T')[0];
+    
+    const targetStartDate = startDate || tomorrowStr;
+    const targetEndDate = endDate || dayAfterTomorrowStr;
+    
+    // Filter teachers by subject if specified
+    let filteredTeachers = teachers;
+    if (subject) {
+      filteredTeachers = teachers.filter(t => t.subject === subject);
+    }
+    const filteredTeacherIds = filteredTeachers.map(t => t.id);
+    
+    // Find pending requests within date range and subject filter
+    const immediateRequests = requests.filter(request => {
+      const isPending = request.status === 'pending' || (!request.status && !request.result);
+      const requestDate = request.startDate;
+      const inDateRange = requestDate >= targetStartDate && requestDate <= targetEndDate;
+      const inSubjectFilter = !subject || filteredTeacherIds.includes(request.teacherId);
+      
+      return isPending && inDateRange && inSubjectFilter;
+    });
+    
+    // Group by date
+    const requestsByDate = {};
+    immediateRequests.forEach(request => {
+      const date = request.startDate;
+      if (!requestsByDate[date]) {
+        requestsByDate[date] = [];
+      }
+      requestsByDate[date].push(request);
+    });
+    
+    // Format the data with teacher information
+    const formatRequests = (requestList, targetDate) => {
+      return requestList.map(request => {
+        const teacher = teachers.find(t => t.id === request.teacherId);
+        return {
+          id: request.id,
+          teacherName: request.name || (teacher ? teacher.name : 'Unknown'),
+          subject: request.subject || (teacher ? teacher.subject : 'Unknown'),
+          requestType: request.requestType,
+          reason: request.reason,
+          duration: request.duration,
+          submittedAt: request.submittedAt || request.createdAt,
+          urgency: 'high', // All immediate requests are high urgency
+          targetDate: targetDate
+        };
+      });
+    };
+    
+    // Format all requests
+    const allFormattedRequests = immediateRequests.map(request => {
+      const teacher = teachers.find(t => t.id === request.teacherId);
+      return {
+        id: request.id,
+        teacherName: request.name || (teacher ? teacher.name : 'Unknown'),
+        subject: request.subject || (teacher ? teacher.subject : 'Unknown'),
+        requestType: request.requestType,
+        reason: request.reason,
+        duration: request.duration,
+        submittedAt: request.submittedAt || request.createdAt,
+        urgency: 'high',
+        targetDate: request.startDate
+      };
+    });
+    
+    // Create date-specific responses for backward compatibility
+    const tomorrowRequests = requestsByDate[tomorrowStr] || [];
+    const dayAfterRequests = requestsByDate[dayAfterTomorrowStr] || [];
+    const formattedTomorrowRequests = formatRequests(tomorrowRequests, tomorrowStr);
+    const formattedDayAfterRequests = formatRequests(dayAfterRequests, dayAfterTomorrowStr);
+    
+    res.json({
+      success: true,
+      data: {
+        tomorrow: {
+          date: tomorrowStr,
+          count: formattedTomorrowRequests.length,
+          requests: formattedTomorrowRequests
+        },
+        dayAfterTomorrow: {
+          date: dayAfterTomorrowStr,
+          count: formattedDayAfterRequests.length,
+          requests: formattedDayAfterRequests
+        },
+        total: immediateRequests.length,
+        allRequests: allFormattedRequests,
+        requestsByDate: requestsByDate,
+        filters: { subject: subject || 'All Subjects', startDate: targetStartDate, endDate: targetEndDate }
+      },
+      message: 'Immediate requests retrieved successfully'
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve immediate requests',
       details: error.message
     });
   }

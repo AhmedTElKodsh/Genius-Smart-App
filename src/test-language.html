@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language System Test</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .language-switch {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .language-switch button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #D6B10E;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .language-switch button:hover {
+            background: #c4a00d;
+        }
+        .test-content {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .test-content h1 {
+            color: #141F25;
+        }
+        .test-content p {
+            color: #666;
+            margin: 10px 0;
+        }
+        .sidebar-preview {
+            background: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #D6B10E;
+            margin: 20px 0;
+        }
+        .sidebar-preview h3 {
+            margin-top: 0;
+            color: #141F25;
+        }
+        .nav-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        [dir="rtl"] {
+            text-align: right;
+            direction: rtl;
+        }
+        [dir="ltr"] {
+            text-align: left;
+            direction: ltr;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="language-switch">
+            <button onclick="setLanguage('en')">English</button>
+            <button onclick="setLanguage('ar')">العربية</button>
+        </div>
+
+        <div class="test-content">
+            <h1 id="title">Manager Portal</h1>
+            <p id="subtitle">Genius Smart Education</p>
+        </div>
+
+        <div class="sidebar-preview">
+            <h3 id="nav-title">Navigation Menu</h3>
+            <div class="nav-item" id="nav-dashboard">📊 Dashboard</div>
+            <div class="nav-item" id="nav-teachers">👥 Teachers</div>
+            <div class="nav-item" id="nav-requests">📄 Requests</div>
+            <div class="nav-item" id="nav-settings">⚙️ Settings</div>
+        </div>
+
+        <div class="test-content">
+            <p id="test-message">Language switching test successful!</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple translation object based on our LanguageContext
+        const translations = {
+            en: {
+                'brand.subtitle': 'Manager Portal',
+                'brand.education': 'Genius Smart Education',
+                'nav.dashboard': '📊 Dashboard',
+                'nav.teachers': '👥 Teachers',
+                'nav.requests': '📄 Requests',
+                'nav.settings': '⚙️ Settings',
+                'nav.title': 'Navigation Menu',
+                'test.message': 'Language switching test successful!'
+            },
+            ar: {
+                'brand.subtitle': 'بوابة المدير',
+                'brand.education': 'جينيوس سمارت للتعليم',
+                'nav.dashboard': '📊 لوحة التحكم',
+                'nav.teachers': '👥 المعلمين',
+                'nav.requests': '📄 الطلبات',
+                'nav.settings': '⚙️ الإعدادات',
+                'nav.title': 'قائمة التنقل',
+                'test.message': 'اختبار تبديل اللغة نجح!'
+            }
+        };
+
+        let currentLanguage = 'en';
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const container = document.getElementById('container');
+            const isRTL = lang === 'ar';
+            
+            // Update document direction
+            document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+            document.documentElement.lang = lang;
+            container.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+            
+            // Update text content
+            document.getElementById('title').textContent = translations[lang]['brand.subtitle'];
+            document.getElementById('subtitle').textContent = translations[lang]['brand.education'];
+            document.getElementById('nav-title').textContent = translations[lang]['nav.title'];
+            document.getElementById('nav-dashboard').textContent = translations[lang]['nav.dashboard'];
+            document.getElementById('nav-teachers').textContent = translations[lang]['nav.teachers'];
+            document.getElementById('nav-requests').textContent = translations[lang]['nav.requests'];
+            document.getElementById('nav-settings').textContent = translations[lang]['nav.settings'];
+            document.getElementById('test-message').textContent = translations[lang]['test.message'];
+
+            // Update font family for Arabic
+            if (isRTL) {
+                document.body.style.fontFamily = "'Tajawal', 'Cairo', 'Arial', sans-serif";
+            } else {
+                document.body.style.fontFamily = "'Poppins', 'Arial', sans-serif";
+            }
+
+            console.log(`Language switched to: ${lang}`);
+            console.log(`Direction: ${isRTL ? 'RTL' : 'LTR'}`);
+        }
+
+        // Test both languages on page load
+        console.log('Testing language system...');
+        setLanguage('en');
+        
+        // Auto-test Arabic after 2 seconds for demo
+        setTimeout(() => {
+            console.log('Auto-switching to Arabic for demo...');
+            setLanguage('ar');
+        }, 2000);
+    </script>
+</body>
+</html> 

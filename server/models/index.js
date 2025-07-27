@@ -30,7 +30,7 @@ const REQUEST_TYPES = {
   },
   LATE_IN: {
     key: 'LATE_IN',
-    english: 'Late In',
+    english: 'Late Arrival',
     arabic: 'التأخير'
   }
 };

@@ -7,6 +7,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { useLanguage } from '../contexts/LanguageContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -17,13 +18,14 @@ const ChartContainer = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
-const ChartTitle = styled.h3`
-  font-family: 'Poppins', sans-serif;
+const ChartTitle = styled.h3<{ $isRTL?: boolean }>`
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 18px;
   font-weight: 600;
   color: #141F25;
   margin: 0 0 20px 0;
   text-align: center;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const ChartWrapper = styled.div`
@@ -51,12 +53,13 @@ const CenterNumber = styled.div`
   line-height: 1;
 `;
 
-const CenterLabel2 = styled.div`
-  font-family: 'Poppins', sans-serif;
+const CenterLabel2 = styled.div<{ $isRTL?: boolean }>`
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 12px;
   font-weight: 400;
   color: #666;
   margin-top: 4px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const LegendContainer = styled.div`
@@ -95,6 +98,7 @@ interface AgeDistributionChartProps {
 }
 
 const AgeDistributionChart: React.FC<AgeDistributionChartProps> = ({ data }) => {
+  const { t, isRTL } = useLanguage();
   const total = data.total || 1; // Prevent division by zero
   
   const chartData = {
@@ -140,12 +144,12 @@ const AgeDistributionChart: React.FC<AgeDistributionChartProps> = ({ data }) => 
 
   return (
     <ChartContainer>
-      <ChartTitle>Avg. Teachers Ages</ChartTitle>
+      <ChartTitle $isRTL={isRTL}>{t('dashboard.averageTeachersAges')}</ChartTitle>
       <ChartWrapper>
         <Doughnut data={chartData} options={options} />
         <CenterLabel>
           <CenterNumber>{total}</CenterNumber>
-          <CenterLabel2>Teachers</CenterLabel2>
+          <CenterLabel2 $isRTL={isRTL}>{t('nav.teachers')}</CenterLabel2>
         </CenterLabel>
       </ChartWrapper>
       <LegendContainer>

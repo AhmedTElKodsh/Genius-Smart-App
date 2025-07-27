@@ -1,0 +1,107 @@
+[
+  {
+    "id": "MGR_ADM001",
+    "email": "ibrahimmizo55@gmail.com",
+    "password": "admin123",
+    "name": "Ibrahim Hamdy",
+    "nameArabic": "إبراهيم حمدي",
+    "role": "Administrator Manager",
+    "department": "Administration",
+    "managerLevel": "admin",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": true,
+      "canEditTeachers": true,
+      "canManageRequests": true,
+      "canDownloadReports": true,
+      "canManageAuthorities": true
+    },
+    "createdAt": "2025-01-26",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR_ADM002",
+    "email": "badrsalah525@gmail.com",
+    "password": "admin123",
+    "name": "Amer Zaher",
+    "nameArabic": "عمرو زاهر",
+    "role": "Administrator Manager",
+    "department": "Administration",
+    "managerLevel": "admin",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": true,
+      "canEditTeachers": true,
+      "canManageRequests": true,
+      "canDownloadReports": true,
+      "canManageAuthorities": true
+    },
+    "createdAt": "2025-01-26",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR_LIM001",
+    "email": "mahetabmostafa92@gmail.com",
+    "password": "manager123",
+    "name": "Mahitab Mustafa",
+    "nameArabic": "ماهيتاب مصطفى",
+    "role": "Request Manager",
+    "department": "Education",
+    "managerLevel": "limited",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": false,
+      "canEditTeachers": false,
+      "canManageRequests": true,
+      "canDownloadReports": true,
+      "canManageAuthorities": false
+    },
+    "createdAt": "2025-01-26",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR_REG001",
+    "email": "ebtahal@genius.edu", 
+    "password": "manager123",
+    "name": "Ebtahal Al-Zahra",
+    "nameArabic": "ابتهال الزهراء",
+    "role": "Reports Manager",
+    "department": "Reports",
+    "managerLevel": "basic",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": false,
+      "canEditTeachers": false,
+      "canManageRequests": false,
+      "canDownloadReports": true,
+      "canManageAuthorities": false
+    },
+    "createdAt": "2025-01-26",
+    "lastLogin": null,
+    "isActive": true
+  },
+  {
+    "id": "MGR_REG002",
+    "email": "adel@genius.edu",
+    "password": "manager123", 
+    "name": "Adel Hassan",
+    "nameArabic": "عادل حسن",
+    "role": "Reports Manager",
+    "department": "Reports",
+    "managerLevel": "basic",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": false,
+      "canEditTeachers": false,
+      "canManageRequests": false,
+      "canDownloadReports": true,
+      "canManageAuthorities": false
+    },
+    "createdAt": "2025-01-26",
+    "lastLogin": null,
+    "isActive": true
+  }
+] 
