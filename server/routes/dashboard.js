@@ -589,21 +589,26 @@ router.get('/today-checkins', (req, res) => {
       return inDateRange && inSubjectFilter;
     });
     
-    // Enrich with teacher data
-    const checkinData = filteredAttendance.map(record => {
-      const teacher = teachers.find(t => t.id === record.teacherId);
-      return {
-        teacherId: record.teacherId,
-        name: record.name || (teacher ? teacher.name : 'Unknown'),
-        subject: record.subject || (teacher ? teacher.subject : 'Unknown'),
-        checkIn: record.checkIn,
-        checkOut: record.checkOut || null,
-        totalHours: record.totalHours || 0,
-        attendance: record.attendance,
-        workType: record.workType || (teacher ? teacher.workType : 'Unknown'),
-        date: record.dateISO
-      };
-    });
+    // Enrich with teacher data and remove duplicates (keep latest record per teacher)
+    const checkinData = filteredAttendance
+      .sort((a, b) => new Date(b.createdAt || b.date || '1970-01-01') - new Date(a.createdAt || a.date || '1970-01-01'))
+      .filter((record, index, self) => 
+        index === self.findIndex(r => r.teacherId === record.teacherId)
+      )
+      .map(record => {
+        const teacher = teachers.find(t => t.id === record.teacherId);
+        return {
+          teacherId: record.teacherId,
+          name: record.name || (teacher ? teacher.name : 'Unknown'),
+          subject: record.subject || (teacher ? teacher.subject : 'Unknown'),
+          checkIn: record.checkIn,
+          checkOut: record.checkOut || null,
+          totalHours: record.totalHours || 0,
+          attendance: record.attendance,
+          workType: record.workType || (teacher ? teacher.workType : 'Unknown'),
+          date: record.dateISO
+        };
+      });
     
     // Group by status
     const checkedInOnly = checkinData.filter(t => t.checkIn && !t.checkOut);
@@ -799,12 +804,14 @@ router.get('/today-absences', (req, res) => {
       };
     });
     
-    // Combine all absences
+    // Combine all absences and remove duplicates by teacher ID
     const allAbsences = [
       ...formattedAuthorizedAbsences, 
       ...formattedUnauthorizedRejected, 
       ...formattedUnauthorizedNoRequest
-    ];
+    ].filter((absence, index, self) => 
+      index === self.findIndex(a => a.teacherId === absence.teacherId)
+    );
     
     // Add contact information from teachers data
     const enrichedAbsences = allAbsences.map(absence => {

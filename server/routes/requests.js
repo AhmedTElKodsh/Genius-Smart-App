@@ -5,65 +5,18 @@ const { v4: uuidv4 } = require('uuid');
 const { sendRequestNotificationEmail, sendRequestStatusEmail } = require('../utils/emailService');
 const { cleanupDelayedRequests, getDelayedRequestsStats } = require('../utils/requestCleanup');
 const {
-  checkManageRequestsAuthority,
-  checkDownloadReportsAuthority,
-  checkManageAuthoritiesPermission,
-  checkPortalAccess
-} = require('../middleware/authorityMiddleware');
+  extractUserAndRole,
+  requireRole,
+  requireAuthority,
+  requireManagerPortalAccess,
+  auditAction,
+  preventSelfApproval,
+  canApproveRequestType,
+  ROLES
+} = require('../middleware/roleAuthMiddleware');
 const router = express.Router();
 
-// Extract manager email from token for authority middleware
-const extractManagerEmail = (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token || !token.startsWith('gse_')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized: Invalid token'
-      });
-    }
-
-    // Extract manager ID from token and find manager email
-    const parts = token.split('_');
-    if (parts.length < 3) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized: Invalid token format'
-      });
-    }
-
-    // Handle manager IDs that may contain underscores (e.g., MGR_abc123)
-    // Token format: gse_MANAGER_ID_TIMESTAMP
-    // So we take everything except the first and last parts
-    const managerId = parts.slice(1, -1).join('_');
-    
-    // Load manager data to get email
-    const managersPath = path.join(__dirname, '..', 'data', 'managers.json');
-    const managersData = fs.readFileSync(managersPath, 'utf8');
-    const managers = JSON.parse(managersData);
-    const manager = managers.find(m => m.id === managerId);
-
-    if (!manager || !manager.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized: Manager not found or inactive'
-      });
-    }
-
-    // Set manager email for authority middleware
-    req.managerEmail = manager.email;
-    next();
-
-  } catch (error) {
-    console.error('Error extracting manager email:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
+// Legacy function - replaced by extractUserAndRole middleware
 
 // Helper function to get manager email (for notifications)
 const getManagerEmail = () => {
@@ -363,8 +316,14 @@ router.get('/', (req, res) => {
 });
 
 // PUT /api/requests/:id - Update request status (accept/reject)
-router.put('/:id', extractManagerEmail, checkManageRequestsAuthority, async (req, res) => {
-  console.log('PUT route hit!', req.params.id, req.body);
+router.put('/:id', 
+  extractUserAndRole, 
+  requireManagerPortalAccess,
+  requireAuthority('Accept and Reject Employee Requests'),
+  preventSelfApproval,
+  auditAction('APPROVE_REQUEST', 'request'),
+  async (req, res) => {
+  console.log('PUT route hit by user:', req.user.name, 'for request:', req.params.id, req.body);
   
   try {
     const requestId = req.params.id;
@@ -393,11 +352,52 @@ router.put('/:id', extractManagerEmail, checkManageRequestsAuthority, async (req
         availableIds: requests.map(r => r.id)
       });
     }
+
+    const request = requests[requestIndex];
+    
+    // Additional role-based approval check
+    if (!canApproveRequestType(req.user, request.requestType, request.teacherId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Cannot approve this request type',
+        details: req.user.role === 'MANAGER' ? 
+          'Managers can only approve employee requests, not manager requests' :
+          'Insufficient permissions to approve this request',
+        userRole: req.user.roleName,
+        requestType: request.requestType,
+        requesterId: request.teacherId
+      });
+    }
+
+    // Store original data for audit trail
+    req.originalData = { ...request };
     
     // Update the request with both result and status fields
     requests[requestIndex].result = result;
     requests[requestIndex].status = result === 'Accepted' ? 'approved' : 'rejected'; // Map to correct status values
     requests[requestIndex].updatedAt = new Date().toISOString();
+    
+    // Add approval tracking
+    requests[requestIndex].approvedBy = req.user.id;
+    requests[requestIndex].approverName = req.user.name;
+    requests[requestIndex].approverRole = req.user.role;
+    requests[requestIndex].approvedAt = new Date().toISOString();
+    requests[requestIndex].canBeRevokedBy = req.user.role === 'MANAGER' ? 'ADMIN' : null;
+    
+    // Deduct hours from teacher's balance if request is accepted and has hours
+    if (result === 'Accepted' && requests[requestIndex].hours) {
+      const requestType = requests[requestIndex].requestType;
+      if (requestType === 'Late Arrival' || requestType === 'Early Leave') {
+        const hoursToDeduct = requests[requestIndex].hours;
+        const deductionSuccess = updateTeacherHours(requests[requestIndex].teacherId, hoursToDeduct);
+        
+        if (deductionSuccess) {
+          console.log(`✅ Deducted ${hoursToDeduct} hours from teacher ${requests[requestIndex].name}`);
+        } else {
+          console.error(`❌ Failed to deduct hours for teacher ${requests[requestIndex].name}`);
+        }
+      }
+    }
     
     // Keep the processed request in the database (don't remove it immediately)
     // This allows teacher notifications to work properly
@@ -442,6 +442,38 @@ router.put('/:id', extractManagerEmail, checkManageRequestsAuthority, async (req
   }
 });
 
+// Helper function to get teacher data by ID
+const getTeacherData = (teacherId) => {
+  try {
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+    return teachersData.find(teacher => teacher.id === teacherId);
+  } catch (error) {
+    console.error('Error getting teacher data:', error);
+    return null;
+  }
+};
+
+// Helper function to update teacher remaining hours
+const updateTeacherHours = (teacherId, hoursToDeduct) => {
+  try {
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+    
+    const teacherIndex = teachersData.findIndex(teacher => teacher.id === teacherId);
+    if (teacherIndex === -1) return false;
+    
+    teachersData[teacherIndex].remainingLateEarlyHours = 
+      (teachersData[teacherIndex].remainingLateEarlyHours || 4) - hoursToDeduct;
+    
+    fs.writeFileSync(teachersPath, JSON.stringify(teachersData, null, 2));
+    return true;
+  } catch (error) {
+    console.error('Error updating teacher hours:', error);
+    return false;
+  }
+};
+
 // POST /api/requests - Submit a new request from teacher
 router.post('/', async (req, res) => {
   try {
@@ -453,7 +485,8 @@ router.post('/', async (req, res) => {
       fromDate,
       toDate,
       reason,
-      subject
+      subject,
+      hours
     } = req.body;
 
     // Validate required fields
@@ -462,6 +495,42 @@ router.post('/', async (req, res) => {
         success: false,
         message: 'Missing required fields: teacherId, teacherName, type, fromDate'
       });
+    }
+
+    // Hour validation for Late Arrival and Early Leave requests
+    if (type === 'lateArrival' || type === 'earlyLeave') {
+      // Validate hours field is provided
+      if (!hours || hours <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Hours field is required for Late Arrival and Early Leave requests'
+        });
+      }
+
+      // Validate daily limit (max 2 hours per day)
+      if (hours > 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Maximum 2 hours per day allowed for Late Arrival and Early Leave requests'
+        });
+      }
+
+      // Get teacher data to check remaining hours
+      const teacher = getTeacherData(teacherId);
+      if (!teacher) {
+        return res.status(404).json({
+          success: false,
+          message: 'Teacher not found'
+        });
+      }
+
+      const remainingHours = teacher.remainingLateEarlyHours || 4;
+      if (hours > remainingHours) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient hours. You have ${remainingHours} hours remaining out of 4 total hours.`
+        });
+      }
     }
 
     // Get existing requests
@@ -510,7 +579,8 @@ router.post('/', async (req, res) => {
       submittedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      subject: subject || ''
+      subject: subject || '',
+      hours: (type === 'lateArrival' || type === 'earlyLeave') ? hours : undefined // Include hours for hour-based requests
     };
 
     // Add to requests array
@@ -650,7 +720,11 @@ router.get('/teacher/:teacherId', async (req, res) => {
 });
 
 // GET /api/requests/completed - Get all completed requests (Admin Manager only)
-router.get('/completed', extractManagerEmail, checkManageAuthoritiesPermission, (req, res) => {
+router.get('/completed', 
+  extractUserAndRole, 
+  requireManagerPortalAccess,
+  requireAuthority('View Analytics'), 
+  (req, res) => {
   try {
     // Get all requests
     const allRequests = getRequestsData();
@@ -756,7 +830,11 @@ router.get('/cleanup/stats', (req, res) => {
 });
 
 // POST /api/requests/cleanup - Clean up delayed requests (Admin Manager only)
-router.post('/cleanup', extractManagerEmail, checkManageAuthoritiesPermission, (req, res) => {
+router.post('/cleanup', 
+  extractUserAndRole, 
+  requireRole(ROLES.ADMIN),
+  auditAction('CLEANUP_REQUESTS', 'system'), 
+  (req, res) => {
   try {
     const result = cleanupDelayedRequests();
     

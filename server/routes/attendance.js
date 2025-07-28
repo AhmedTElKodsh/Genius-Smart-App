@@ -5,6 +5,12 @@ const path = require('path');
 
 const router = express.Router();
 
+// Helper function to check if a date is an Egyptian weekend (Friday = 5, Saturday = 6)
+const isEgyptianWeekend = (date) => {
+  const dayOfWeek = new Date(date).getDay();
+  return dayOfWeek === 5 || dayOfWeek === 6; // Friday (5) or Saturday (6)
+};
+
 // Helper function to load attendance data
 const loadAttendanceData = async () => {
   try {
@@ -139,16 +145,17 @@ const calculateAttendanceMetrics = (attendanceRecords, dateRange = null) => {
     const isEarlyCheckout = checkOutTime && record.totalHours && parseFloat(record.totalHours) < 8;
     const isAbsent = !checkInTime || record.attendance === 'Absent';
     
-    // Count based on type (same logic as /history/ endpoint)
+    // Count based on type - Fixed logic to distinguish absence from short work sessions
     if (hasPermittedLeaves) {
       metrics.allowedAbsence++;
     } else if (hasAuthorizedAbsence) {
       metrics.authorizedAbsence++;
     } else if (isAbsent && !hasPermittedLeaves && !hasAuthorizedAbsence) {
+      // Only count as unauthorized absence if truly absent (no check-in)
       metrics.unauthorizedAbsence++;
-    } else if (isEarlyCheckout && !hasPermittedLeaves) {
-      metrics.unallowedAbsence++;
     }
+    // Note: Removed the isEarlyCheckout logic that incorrectly counted short work sessions as "unallowed absence"
+    // Working fewer than 8 hours doesn't mean absence - the teacher was present and worked
 
     // Check for Late Arrival (after 8:00 AM) for present days
     if (checkInTime && !isAbsent) {
@@ -384,9 +391,8 @@ router.get('/teacher/:teacherId', async (req, res) => {
         recordType = 'authorized_absence';
       } else if (isAbsent && !hasPermittedLeaves && !hasAuthorizedAbsence) {
         recordType = 'unauthorized_absence';
-      } else if (isEarlyCheckout && !hasPermittedLeaves) {
-        recordType = 'unpermitted_leave';
       }
+      // Note: Removed isEarlyCheckout logic - working fewer than 8 hours is still "present", not a "leave"
 
       return {
         id: record.id,
@@ -425,7 +431,7 @@ router.get('/teacher/:teacherId', async (req, res) => {
 router.post('/checkin/:teacherId', async (req, res) => {
   try {
     const { teacherId } = req.params;
-    const { action } = req.body; // 'checkin' or 'checkout'
+    const { action, isOvertimeSession } = req.body; // 'checkin' or 'checkout', plus overtime flag
     
     const attendanceData = await loadAttendanceData();
     const now = new Date();
@@ -456,6 +462,10 @@ router.post('/checkin/:teacherId', async (req, res) => {
         todayRecord.checkIn = checkInTime;
         todayRecord.currentSessionCheckOut = null; // Reset for new session
         todayRecord.attendance = 'Active';
+        // Mark as overtime session if location was verified
+        if (isOvertimeSession) {
+          todayRecord.isOvertimeSession = true;
+        }
         // Initialize sessions array if it doesn't exist
         if (!todayRecord.sessions) {
           todayRecord.sessions = [];
@@ -482,6 +492,7 @@ router.post('/checkin/:teacherId', async (req, res) => {
           sessions: [], // Track multiple sessions
           subject: req.body.subject || '',
           workType: req.body.workType || 'Full-time',
+          isOvertimeSession: isOvertimeSession || false, // Mark as overtime if location verified
           createdAt: now.toISOString()
         };
         attendanceData.push(newRecord);
@@ -523,6 +534,20 @@ router.post('/checkin/:teacherId', async (req, res) => {
       // Calculate total accumulated hours from all sessions
       const totalAccumulatedHours = todayRecord.sessions.reduce((total, session) => total + session.hours, 0);
       todayRecord.totalHours = Math.round(totalAccumulatedHours * 100) / 100;
+      
+      // If this was an overtime session (location verified), mark all time as overtime
+      if (todayRecord.isOvertimeSession) {
+        todayRecord.overtime = todayRecord.totalHours;
+        todayRecord.regularHours = 0;
+        // Add note that this was an overtime session
+        todayRecord.notes = (todayRecord.notes || '') + ' ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified';
+      } else {
+        // Normal calculation: overtime is hours over 8
+        const regularHours = Math.min(todayRecord.totalHours, 8);
+        const overtimeHours = Math.max(0, todayRecord.totalHours - 8);
+        todayRecord.regularHours = Math.round(regularHours * 100) / 100;
+        todayRecord.overtime = Math.round(overtimeHours * 100) / 100;
+      }
       
       todayRecord.attendance = 'Completed';
     }
@@ -830,9 +855,8 @@ router.get('/history/:teacherId', async (req, res) => {
         recordType = 'authorized_absence';
       } else if (isAbsent && !hasPermittedLeaves && !hasAuthorizedAbsence) {
         recordType = 'unauthorized_absence';
-      } else if (isEarlyCheckout && !hasPermittedLeaves) {
-        recordType = 'unpermitted_leave';
       }
+      // Note: Removed isEarlyCheckout logic - working fewer than 8 hours is still "present", not a "leave"
 
       return {
         id: record.id,
@@ -929,8 +953,8 @@ router.get('/notifications/:teacherId', async (req, res) => {
     recentRecords.forEach(record => {
       const recordDate = new Date(record.date);
       
-      // Check for late arrivals (after 8:00 AM)
-      if (record.checkInTime) {
+      // Check for late arrivals (after 8:00 AM) - exclude Egyptian weekends
+      if (record.checkInTime && !isEgyptianWeekend(record.dateISO || record.date)) {
         const checkInTime = new Date(`1970-01-01T${record.checkInTime}`);
         const eightAM = new Date('1970-01-01T08:00:00');
         if (checkInTime > eightAM) {
@@ -941,8 +965,8 @@ router.get('/notifications/:teacherId', async (req, res) => {
         }
       }
 
-      // Check for early leaves (before 4:00 PM without permission)
-      if (record.checkOutTime && !record.hasPermission) {
+      // Check for early leaves (before 4:00 PM without permission) - exclude Egyptian weekends
+      if (record.checkOutTime && !record.hasPermission && !isEgyptianWeekend(record.dateISO || record.date)) {
         const checkOutTime = new Date(`1970-01-01T${record.checkOutTime}`);
         const fourPM = new Date('1970-01-01T16:00:00');
         if (checkOutTime < fourPM) {
@@ -953,8 +977,8 @@ router.get('/notifications/:teacherId', async (req, res) => {
         }
       }
 
-      // Check for unauthorized absence
-      if (!record.checkInTime && !record.hasPermission) {
+      // Check for unauthorized absence (exclude Egyptian weekends - Friday & Saturday)
+      if (!record.checkInTime && !record.hasPermission && !isEgyptianWeekend(record.dateISO || record.date)) {
         patterns.unauthorizedAbsence.push({
           date: record.date
         });

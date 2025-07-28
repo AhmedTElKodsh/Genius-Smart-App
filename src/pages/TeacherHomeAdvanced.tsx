@@ -840,7 +840,8 @@ const TeacherHomeAdvanced: React.FC = () => {
           action: 'checkin',
           teacherName: teacherData.name,
           subject: teacherData.subject,
-          workType: teacherData.workType || 'Full-time'
+          workType: teacherData.workType || 'Full-time',
+          isOvertimeSession: true // Mark as overtime since location was verified
         }),
       });
 

@@ -18,6 +18,10 @@ const attendanceRoutes = require('./routes/attendance');
 const managerRoutes = require('./routes/manager');
 const clerkUserRoutes = require('./routes/clerkUser');
 const authoritiesRoutes = require('./routes/authorities');
+const auditTrailRoutes = require('./routes/auditTrail');
+const holidaysRoutes = require('./routes/holidays');
+const dataTrackingRoutes = require('./routes/dataTracking');
+const analyticsRoutes = require('./routes/analytics');
 
 // Initialize Express app
 const app = express();
@@ -45,6 +49,10 @@ app.use(cors({
 app.use(morgan('combined')); // Logging
 app.use(express.json({ limit: '10mb', charset: 'utf-8' }));
 app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
+
+// Data tracking middleware for comprehensive monitoring
+const { trackDataChange } = require('./middleware/dataTrackingMiddleware');
+app.use(trackDataChange);
 
 // Initialize Clerk middleware (must be before routes)
 if (process.env.CLERK_SECRET_KEY) {
@@ -79,6 +87,7 @@ if (process.env.CLERK_SECRET_KEY) {
   app.use('/api/clerk/dashboard', requireAuth(), dashboardRoutes);
   app.use('/api/clerk/attendance', requireAuth(), attendanceRoutes);
   app.use('/api/clerk/manager', requireAuth(), managerRoutes);
+  app.use('/api/clerk/analytics', requireAuth(), analyticsRoutes);
 }
 
 // Legacy routes (for backward compatibility during transition)
@@ -89,6 +98,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/manager', managerRoutes);
 app.use('/api/authorities', authoritiesRoutes);
+app.use('/api/audit', auditTrailRoutes);
+app.use('/api/holidays', holidaysRoutes);
+app.use('/api/tracking', dataTrackingRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Clerk user info endpoint
 if (process.env.CLERK_SECRET_KEY) {

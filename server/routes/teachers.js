@@ -10,6 +10,7 @@ const {
   checkEditTeacherAuthority,
   checkPortalAccess
 } = require('../middleware/authorityMiddleware');
+const { SYSTEM_LAYERS } = require('../scripts/implement3TierSystem');
 
 // Extract manager email from token for authority middleware
 const extractManagerEmail = (req, res, next) => {
@@ -164,6 +165,63 @@ router.get('/', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve teachers',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/teachers/me - Get current user info (must come before /:id routes)
+router.get('/me', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token || !token.startsWith('gse_')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: Invalid token'
+      });
+    }
+
+    // Extract user ID from token
+    const parts = token.split('_');
+    if (parts.length < 3) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: Invalid token format'
+      });
+    }
+
+    const userId = parts.slice(1, -1).join('_');
+    
+    // Read teachers data
+    const teachers = readTeachers();
+    const user = teachers.find(t => t.id === userId);
+
+    if (!user || user.status !== 'Active') {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found or inactive'
+      });
+    }
+
+    // Return user info (excluding password)
+    const { password, plainPassword, ...userInfo } = user;
+    res.json({
+      success: true,
+      data: userInfo,
+      role: user.role,
+      roleName: user.roleName,
+      roleNameAr: user.roleNameAr,
+      authorities: user.authorities,
+      canAccessManagerPortal: user.canAccessManagerPortal
+    });
+
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get user information',
       details: error.message
     });
   }
@@ -690,7 +748,10 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
 });
 
 // PUT /api/teachers/:id - Update a specific teacher (Admin only)
-router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, async (req, res) => {
+router.put('/:id', 
+  require('../middleware/roleAuthMiddleware').extractUserAndRole,
+  require('../middleware/roleAuthMiddleware').requireRole(require('../middleware/roleAuthMiddleware').ROLES.ADMIN),
+  async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -703,7 +764,11 @@ router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, async (req, r
       subject,
       workType,
       password,
-      birthdate
+      birthdate,
+      role,
+      authorities,
+      employmentDate,
+      allowedAbsenceDays
     } = req.body;
 
     // Validate required fields
@@ -757,6 +822,16 @@ router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, async (req, r
       age--;
     }
 
+    // Process role and authorities
+    let processedRole = role || existingTeacher.role || 'EMPLOYEE';
+    let processedAuthorities = authorities || existingTeacher.authorities || [];
+    
+    // If role is provided, update authorities based on the 3-tier system
+    if (role && SYSTEM_LAYERS[role]) {
+      const roleConfig = SYSTEM_LAYERS[role];
+      processedAuthorities = [...roleConfig.authorities];
+    }
+
     // Prepare updated teacher object
     const updatedTeacher = {
       ...existingTeacher,
@@ -770,6 +845,23 @@ router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, async (req, r
       email: email,
       phone: phone,
       address: address,
+      employmentDate: employmentDate || existingTeacher.employmentDate,
+      allowedAbsenceDays: allowedAbsenceDays || existingTeacher.allowedAbsenceDays || 20,
+      // Update role and related fields
+      role: processedRole,
+      roleLevel: SYSTEM_LAYERS[processedRole]?.level || 1,
+      roleName: SYSTEM_LAYERS[processedRole]?.name || 'Employee',
+      roleNameAr: SYSTEM_LAYERS[processedRole]?.nameAr || 'موظف',
+      authorities: processedAuthorities,
+      roleDescription: SYSTEM_LAYERS[processedRole]?.description || 'Basic teacher access',
+      canAccessManagerPortal: processedRole === 'ADMIN' || processedRole === 'MANAGER',
+      canAccessTeacherPortal: true,
+      canApproveRequests: processedRole === 'ADMIN' || processedRole === 'MANAGER',
+      canApproveManagerRequests: processedRole === 'ADMIN',
+      canRevokeActions: processedRole === 'ADMIN',
+      canViewAuditTrail: processedRole === 'ADMIN',
+      isPerformanceTracked: processedRole === 'MANAGER' || processedRole === 'EMPLOYEE',
+      lastRoleUpdate: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
@@ -972,5 +1064,45 @@ const updateSubjectCounts = () => {
     console.error('Error updating subject counts:', error);
   }
 };
+
+// GET /api/teachers/:id/remaining-hours - Get teacher's remaining late/early hours
+router.get('/:id/remaining-hours', (req, res) => {
+  try {
+    const teacherId = req.params.id;
+    
+    const teachersFilePath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersFilePath, 'utf8'));
+    
+    const teacher = teachersData.find(t => t.id === teacherId);
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: 'Teacher not found'
+      });
+    }
+    
+    const remainingHours = teacher.remainingLateEarlyHours || 4;
+    const totalHours = teacher.totalLateEarlyHours || 4;
+    const usedHours = totalHours - remainingHours;
+    
+    res.json({
+      success: true,
+      data: {
+        remainingHours,
+        totalHours,
+        usedHours
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting teacher remaining hours:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+  });
+
+
 
 module.exports = router; 

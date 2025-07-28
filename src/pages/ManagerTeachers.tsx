@@ -441,6 +441,305 @@ const AnalyticsGrid = styled.div`
   margin-bottom: 32px;
 `;
 
+// Statistics specific styled components
+const StatisticsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const StatisticsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+`;
+
+const StatisticsFilters = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const FilterSelect = styled.select`
+  padding: 8px 16px;
+  border: 1px solid #e1e7ec;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  background: #ffffff;
+  color: #141F25;
+  min-width: 150px;
+  cursor: pointer;
+  
+  &:focus {
+    outline: none;
+    border-color: #D6B10E;
+  }
+`;
+
+const KPICardsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+`;
+
+const KPICard = styled.div`
+  background: #ffffff;
+  border: 1px solid #e1e7ec;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #D6B10E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const KPIValue = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #D6B10E;
+  margin-bottom: 8px;
+`;
+
+const KPILabel = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+`;
+
+const KPITrend = styled.div<{ $isPositive?: boolean }>`
+  font-size: 12px;
+  font-weight: 500;
+  color: ${props => props.$isPositive ? '#22c55e' : '#ef4444'};
+  margin-top: 4px;
+`;
+
+const ChartsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ChartCard = styled.div`
+  background: #ffffff;
+  border: 1px solid #e1e7ec;
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 300px;
+`;
+
+const ChartHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ChartTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #141F25;
+  margin: 0;
+`;
+
+const ChartControls = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ChartToggle = styled.button<{ $isActive: boolean }>`
+  padding: 6px 12px;
+  background: ${props => props.$isActive ? '#D6B10E' : 'transparent'};
+  color: ${props => props.$isActive ? '#ffffff' : '#666'};
+  border: 1px solid ${props => props.$isActive ? '#D6B10E' : '#e1e7ec'};
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.$isActive ? '#D6B10E' : '#f5f5f5'};
+    border-color: #D6B10E;
+  }
+`;
+
+const ChartContent = styled.div`
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  border: 2px dashed #e1e7ec;
+  border-radius: 8px;
+`;
+
+const FullWidthChart = styled.div`
+  background: #ffffff;
+  border: 1px solid #e1e7ec;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+`;
+
+const TableSection = styled.div`
+  background: #ffffff;
+  border: 1px solid #e1e7ec;
+  border-radius: 12px;
+  padding: 24px;
+`;
+
+const TableTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #141F25;
+  margin: 0 0 20px 0;
+`;
+
+const StatsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Poppins', sans-serif;
+`;
+
+const StatsTableHeader = styled.thead`
+  background: #f8f9fa;
+`;
+
+const StatsTableHeaderRow = styled.tr`
+  border-bottom: 1px solid #e1e7ec;
+`;
+
+const StatsTableHeaderCell = styled.th<{ $alignLeft?: boolean }>`
+  padding: 12px 16px;
+  text-align: ${props => props.$alignLeft ? 'left' : 'center'};
+  font-size: 14px;
+  font-weight: 600;
+  color: #141F25;
+  border-right: 1px solid #e1e7ec;
+  
+  &:last-child {
+    border-right: none;
+  }
+`;
+
+const StatsTableBody = styled.tbody``;
+
+const StatsTableRow = styled.tr`
+  border-bottom: 1px solid #f1f3f4;
+  
+  &:hover {
+    background: #f8f9fa;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const StatsTableCell = styled.td<{ $alignLeft?: boolean }>`
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #141F25;
+  border-right: 1px solid #f1f3f4;
+  text-align: ${props => props.$alignLeft ? 'left' : 'center'};
+  
+  &:last-child {
+    border-right: none;
+  }
+`;
+
+const PerformanceBadge = styled.span<{ $performance: string }>`
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: ${props => {
+    switch (props.$performance) {
+      case 'excellent': return '#dcfce7';
+      case 'good': return '#dbeafe';
+      case 'average': return '#fef3c7';
+      case 'poor': return '#fee2e2';
+      case 'atRisk': return '#fde2e7';
+      default: return '#f3f4f6';
+    }
+  }};
+  color: ${props => {
+    switch (props.$performance) {
+      case 'excellent': return '#166534';
+      case 'good': return '#1e40af';
+      case 'average': return '#d97706';
+      case 'poor': return '#dc2626';
+      case 'atRisk': return '#be185d';
+      default: return '#374151';
+    }
+  }};
+`;
+
+const DonutChart = styled.div`
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #22c55e 0deg 120deg,
+    #3b82f6 120deg 240deg,
+    #f59e0b 240deg 300deg,
+    #ef4444 300deg 330deg,
+    #ec4899 330deg 360deg
+  );
+  position: relative;
+  margin: 0 auto;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    background: #ffffff;
+    border-radius: 50%;
+  }
+`;
+
+const DonutLegend = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+`;
+
+const LegendColor = styled.div<{ $color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: ${props => props.$color};
+`;
+
 // Types
 interface Teacher {
   id: string;
@@ -476,10 +775,25 @@ interface TeacherReport {
   totalHours: number;
 }
 
+// Types for statistics
+interface StatisticsData {
+  performanceSegments: {
+    excellent: any[];
+    good: any[];
+    average: any[];
+    poor: any[];
+    atRisk: any[];
+  };
+  departmentComparison: any[];
+  weeklyPatterns: Record<string, any>;
+  attendanceSummary: any;
+  requestSummary: any;
+}
+
 const Teachers: React.FC = () => {
   const navigate = useNavigate();
   const { t, isRTL } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'all' | 'reports'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'reports' | 'statistics'>('all');
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([]);
@@ -515,6 +829,13 @@ const Teachers: React.FC = () => {
     overtime: 0,
     total_hours: 0
   });
+
+  // Statistics specific state
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [statisticsLoading, setStatisticsLoading] = useState(false);
+  const [statisticsPeriod, setStatisticsPeriod] = useState<string>('month');
+  const [selectedMetric, setSelectedMetric] = useState<string>('attendanceRate');
+  const [chartType, setChartType] = useState<string>('bar');
 
   // Function to translate subject names for display
   const translateSubject = (subject: string): string => {
@@ -611,6 +932,71 @@ const Teachers: React.FC = () => {
     }
   };
 
+  // Fetch statistics data
+  const fetchStatisticsData = async () => {
+    if (activeTab !== 'statistics') return;
+    
+    try {
+      setStatisticsLoading(true);
+      const token = localStorage.getItem('authToken');
+      
+      const [performanceRes, departmentRes, weeklyRes, summaryRes, requestRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/analytics/employees/performance-segments?period=${statisticsPeriod}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`http://localhost:5000/api/analytics/departments/comparison?period=${statisticsPeriod}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`http://localhost:5000/api/analytics/attendance/weekly-patterns?period=${statisticsPeriod}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`http://localhost:5000/api/analytics/attendance/summary?period=${statisticsPeriod}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`http://localhost:5000/api/analytics/requests/summary?period=${statisticsPeriod}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      if (performanceRes.ok && departmentRes.ok && weeklyRes.ok && summaryRes.ok && requestRes.ok) {
+        const [performance, department, weekly, summary, requests] = await Promise.all([
+          performanceRes.json(),
+          departmentRes.json(),
+          weeklyRes.json(),
+          summaryRes.json(),
+          requestRes.json()
+        ]);
+
+        setStatisticsData({
+          performanceSegments: performance.performanceSegments || { excellent: [], good: [], average: [], poor: [], atRisk: [] },
+          departmentComparison: department.departmentComparison || [],
+          weeklyPatterns: weekly.weeklyPatterns || {},
+          attendanceSummary: summary.summary || {},
+          requestSummary: requests.summary || {}
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setStatisticsLoading(false);
+    }
+  };
+
   // Fetch teachers and subjects data on component mount
   useEffect(() => {
     fetchData();
@@ -623,6 +1009,13 @@ const Teachers: React.FC = () => {
     
     return () => clearInterval(refreshInterval);
   }, []);
+
+  // Fetch statistics when tab or period changes
+  useEffect(() => {
+    if (activeTab === 'statistics') {
+      fetchStatisticsData();
+    }
+  }, [activeTab, statisticsPeriod]);
 
   // Filter teachers based on subject and search query
   useEffect(() => {
@@ -706,7 +1099,7 @@ const Teachers: React.FC = () => {
     }
   }, [activeTab, selectedSubject, dateRange]);
 
-  const handleTabChange = (tab: 'all' | 'reports') => {
+  const handleTabChange = (tab: 'all' | 'reports' | 'statistics') => {
     setActiveTab(tab);
   };
 
@@ -714,12 +1107,36 @@ const Teachers: React.FC = () => {
     setSelectedSubject(e.target.value);
   };
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   const handleDateRangeChange = (range: DateRange) => {
     setDateRange(range);
+  };
+
+  // Statistics period change handler
+  const handleStatisticsPeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatisticsPeriod(e.target.value);
+  };
+
+  // Chart metric change handler
+  const handleMetricChange = (metric: string) => {
+    setSelectedMetric(metric);
+  };
+
+  // Chart type change handler
+  const handleChartTypeChange = (type: string) => {
+    setChartType(type);
+  };
+
+  // Performance badge helper
+  const getPerformanceBadge = (rate: number) => {
+    if (rate >= 95) return { type: 'excellent', label: t('performance.excellent') };
+    if (rate >= 85) return { type: 'good', label: t('performance.good') };
+    if (rate >= 75) return { type: 'average', label: t('performance.average') };
+    if (rate < 75) return { type: 'poor', label: t('performance.poor') };
+    return { type: 'average', label: t('performance.average') };
   };
 
   // Click handler for analytics cards
@@ -1066,6 +1483,12 @@ const Teachers: React.FC = () => {
             >
               {t('teachers.reports')}
             </Tab>
+            <Tab
+              $isActive={activeTab === 'statistics'}
+              onClick={() => handleTabChange('statistics')}
+            >
+              {t('teachers.statistics')} / الإحصائيات
+            </Tab>
           </TabContainer>
           
           <HeaderControls>
@@ -1081,7 +1504,7 @@ const Teachers: React.FC = () => {
               ))}
             </FilterDropdown>
             
-            {activeTab === 'reports' && (
+            {(activeTab === 'reports' || activeTab === 'statistics') && (
               <DateRangePicker
                 value={dateRange}
                 onChange={handleDateRangeChange}
@@ -1147,6 +1570,202 @@ const Teachers: React.FC = () => {
               </TeachersGrid>
             )}
           </>
+        )}
+
+        {activeTab === 'statistics' && (
+          <StatisticsContainer>
+            <StatisticsHeader>
+              <h2>{t('teachers.statistics')} / الإحصائيات</h2>
+              <StatisticsFilters>
+                <FilterSelect value={statisticsPeriod} onChange={handleStatisticsPeriodChange}>
+                  <option value="today">Today / اليوم</option>
+                  <option value="week">This Week / هذا الأسبوع</option>
+                  <option value="month">This Month / هذا الشهر</option>
+                  <option value="quarter">This Quarter / هذا الربع</option>
+                  <option value="year">This Year / هذا العام</option>
+                </FilterSelect>
+              </StatisticsFilters>
+            </StatisticsHeader>
+
+            {statisticsLoading ? (
+              <LoadingContainer>Loading statistics...</LoadingContainer>
+            ) : statisticsData ? (
+              <>
+                {/* KPI Cards */}
+                <KPICardsGrid>
+                  <KPICard>
+                    <KPIValue>{teachers.length}</KPIValue>
+                    <KPILabel>Total Teachers / إجمالي المعلمين</KPILabel>
+                  </KPICard>
+                  <KPICard>
+                    <KPIValue>{statisticsData.attendanceSummary.attendanceRate}</KPIValue>
+                    <KPILabel>Attendance Rate / معدل الحضور</KPILabel>
+                    <KPITrend $isPositive={true}>+2.3%</KPITrend>
+                  </KPICard>
+                  <KPICard>
+                    <KPIValue>{statisticsData.performanceSegments.excellent.length}</KPIValue>
+                    <KPILabel>Top Performers / المتفوقون</KPILabel>
+                  </KPICard>
+                  <KPICard>
+                    <KPIValue>{statisticsData.performanceSegments.atRisk.length}</KPIValue>
+                    <KPILabel>At Risk / معرضون للخطر</KPILabel>
+                  </KPICard>
+                  <KPICard>
+                    <KPIValue>{statisticsData.departmentComparison.length}</KPIValue>
+                    <KPILabel>Departments / الأقسام</KPILabel>
+                  </KPICard>
+                </KPICardsGrid>
+
+                {/* Charts Grid */}
+                <ChartsGrid>
+                  {/* Performance Distribution Chart */}
+                  <ChartCard>
+                    <ChartHeader>
+                      <ChartTitle>Performance Distribution / توزيع الأداء</ChartTitle>
+                    </ChartHeader>
+                    <ChartContent>
+                      <div style={{ textAlign: 'center' }}>
+                        <DonutChart />
+                        <DonutLegend>
+                          <LegendItem>
+                            <LegendColor $color="#22c55e" />
+                            <span>Excellent ({statisticsData.performanceSegments.excellent.length})</span>
+                          </LegendItem>
+                          <LegendItem>
+                            <LegendColor $color="#3b82f6" />
+                            <span>Good ({statisticsData.performanceSegments.good.length})</span>
+                          </LegendItem>
+                          <LegendItem>
+                            <LegendColor $color="#f59e0b" />
+                            <span>Average ({statisticsData.performanceSegments.average.length})</span>
+                          </LegendItem>
+                          <LegendItem>
+                            <LegendColor $color="#ef4444" />
+                            <span>Poor ({statisticsData.performanceSegments.poor.length})</span>
+                          </LegendItem>
+                          <LegendItem>
+                            <LegendColor $color="#ec4899" />
+                            <span>At Risk ({statisticsData.performanceSegments.atRisk.length})</span>
+                          </LegendItem>
+                        </DonutLegend>
+                      </div>
+                    </ChartContent>
+                  </ChartCard>
+
+                  {/* Department Comparison Chart */}
+                  <ChartCard>
+                    <ChartHeader>
+                      <ChartTitle>Department Performance / أداء الأقسام</ChartTitle>
+                      <ChartControls>
+                        <ChartToggle 
+                          $isActive={selectedMetric === 'attendanceRate'} 
+                          onClick={() => handleMetricChange('attendanceRate')}
+                        >
+                          Attendance / الحضور
+                        </ChartToggle>
+                        <ChartToggle 
+                          $isActive={selectedMetric === 'punctualityScore'} 
+                          onClick={() => handleMetricChange('punctualityScore')}
+                        >
+                          Punctuality / الالتزام
+                        </ChartToggle>
+                      </ChartControls>
+                    </ChartHeader>
+                    <ChartContent>
+                      <div style={{ textAlign: 'center', color: '#666' }}>
+                        📊 Department comparison chart will be rendered here
+                        <br />
+                        Showing {selectedMetric} for all departments
+                      </div>
+                    </ChartContent>
+                  </ChartCard>
+                </ChartsGrid>
+
+                {/* Weekly Patterns Full Width */}
+                <FullWidthChart>
+                  <ChartHeader>
+                    <ChartTitle>Weekly Attendance Patterns / أنماط الحضور الأسبوعية</ChartTitle>
+                    <ChartControls>
+                      <ChartToggle 
+                        $isActive={chartType === 'line'} 
+                        onClick={() => handleChartTypeChange('line')}
+                      >
+                        Line Chart
+                      </ChartToggle>
+                      <ChartToggle 
+                        $isActive={chartType === 'bar'} 
+                        onClick={() => handleChartTypeChange('bar')}
+                      >
+                        Bar Chart
+                      </ChartToggle>
+                      <ChartToggle 
+                        $isActive={chartType === 'heatmap'} 
+                        onClick={() => handleChartTypeChange('heatmap')}
+                      >
+                        Heatmap
+                      </ChartToggle>
+                    </ChartControls>
+                  </ChartHeader>
+                  <ChartContent>
+                    <div style={{ textAlign: 'center', color: '#666' }}>
+                      📈 Weekly patterns {chartType} chart will be rendered here
+                      <br />
+                      Best day: {Object.keys(statisticsData.weeklyPatterns)[0] || 'N/A'}
+                    </div>
+                  </ChartContent>
+                </FullWidthChart>
+
+                {/* Teacher Ranking Table */}
+                <TableSection>
+                  <TableTitle>Teacher Performance Ranking / ترتيب أداء المعلمين</TableTitle>
+                  <StatsTable>
+                    <StatsTableHeader>
+                      <StatsTableHeaderRow>
+                        <StatsTableHeaderCell $alignLeft={true}>Teacher / المعلم</StatsTableHeaderCell>
+                        <StatsTableHeaderCell>Department / القسم</StatsTableHeaderCell>
+                        <StatsTableHeaderCell>Attendance Rate / معدل الحضور</StatsTableHeaderCell>
+                        <StatsTableHeaderCell>Punctuality / الالتزام</StatsTableHeaderCell>
+                        <StatsTableHeaderCell>Performance / الأداء</StatsTableHeaderCell>
+                      </StatsTableHeaderRow>
+                    </StatsTableHeader>
+                    <StatsTableBody>
+                      {/* Combine all performance segments and sort by attendance rate */}
+                      {[
+                        ...statisticsData.performanceSegments.excellent,
+                        ...statisticsData.performanceSegments.good,
+                        ...statisticsData.performanceSegments.average,
+                        ...statisticsData.performanceSegments.poor
+                      ]
+                        .sort((a, b) => parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate))
+                        .slice(0, 10)
+                        .map((teacher, index) => {
+                          const badge = getPerformanceBadge(parseFloat(teacher.attendanceRate));
+                          return (
+                            <StatsTableRow key={teacher.teacherId}>
+                              <StatsTableCell $alignLeft={true}>{teacher.name}</StatsTableCell>
+                              <StatsTableCell>{translateSubject(teacher.subject)}</StatsTableCell>
+                              <StatsTableCell>{teacher.attendanceRate}%</StatsTableCell>
+                              <StatsTableCell>{teacher.punctualityScore}%</StatsTableCell>
+                              <StatsTableCell>
+                                <PerformanceBadge $performance={badge.type}>
+                                  {badge.label}
+                                </PerformanceBadge>
+                              </StatsTableCell>
+                            </StatsTableRow>
+                          );
+                        })}
+                    </StatsTableBody>
+                  </StatsTable>
+                </TableSection>
+              </>
+            ) : (
+              <EmptyState>
+                <EmptyIcon>📊</EmptyIcon>
+                <h3>No Statistics Available</h3>
+                <p>Statistics data is currently unavailable. Please try again later.</p>
+              </EmptyState>
+            )}
+          </StatisticsContainer>
         )}
 
         {activeTab === 'reports' && (

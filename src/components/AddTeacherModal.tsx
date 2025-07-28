@@ -271,6 +271,15 @@ const ErrorMessage = styled.div`
   }
 `;
 
+const HelperText = styled.p<{ $isRTL?: boolean }>`
+  font-size: 12px;
+  color: #666;
+  margin: 4px 0 0 0;
+  font-style: italic;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  line-height: 1.4;
+`;
+
 const AuthoritySection = styled.div`
   margin: 24px 0;
   padding: 20px;
@@ -354,10 +363,27 @@ interface FormData {
 }
 
 const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSuccess, managerAuthorities }) => {
-  const { language, translations } = useLanguage();
+  const { language, translations, isRTL } = useLanguage();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Calculate allowed absence days based on employment date
+  const calculateAllowedAbsenceDays = (employmentDate: string): number => {
+    if (!employmentDate) return 0;
+    
+    const employment = new Date(employmentDate);
+    const today = new Date();
+    const monthsDiff = (today.getFullYear() - employment.getFullYear()) * 12 + (today.getMonth() - employment.getMonth());
+    
+    if (monthsDiff < 3) {
+      return 0; // Newly hired teachers (< 3 months) = No Allowed Absence Days
+    } else if (monthsDiff < 24) {
+      return 9; // Teachers (> 3 months < 2 Years) = 9 days per Year
+    } else {
+      return 12; // Teachers (> 2 Years) = 12 Days per year
+    }
+  };
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -424,10 +450,20 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Auto-calculate allowed absence days when employment date changes
+      if (field === 'employmentDate' && value) {
+        const calculatedDays = calculateAllowedAbsenceDays(value);
+        newFormData.allowedAbsenceDays = calculatedDays.toString();
+      }
+      
+      return newFormData;
+    });
     setError('');
   };
 
@@ -694,6 +730,9 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                 max={new Date().toISOString().split('T')[0]}
                 required
               />
+              <HelperText $isRTL={isRTL}>
+                {translations['addTeacher.employmentDateHelper']}
+              </HelperText>
             </FormFieldFull>
 
             <FormFieldFull>
@@ -706,6 +745,9 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                 value={formData.allowedAbsenceDays}
                 onChange={(e) => handleInputChange('allowedAbsenceDays', e.target.value)}
               />
+              <HelperText $isRTL={isRTL}>
+                {translations['addTeacher.allowedAbsenceDaysHelper']}
+              </HelperText>
             </FormFieldFull>
 
             {managerAuthorities?.canManageAuthorities && (

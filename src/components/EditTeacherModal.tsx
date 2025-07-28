@@ -287,6 +287,15 @@ const ErrorMessage = styled.div`
   }
 `;
 
+const HelperText = styled.p<{ $isRTL?: boolean }>`
+  font-size: 12px;
+  color: #666;
+  margin: 4px 0 0 0;
+  font-style: italic;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  line-height: 1.4;
+`;
+
 const ActivityContent = styled.div`
   padding: 32px;
 `;
@@ -569,6 +578,7 @@ interface FormData {
   employmentDate: string;
   allowedAbsenceDays: string;
   authorities: string[];
+  systemRole: string;
 }
 
 const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, onSuccess, teacher }) => {
@@ -577,6 +587,24 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+
+  // Calculate allowed absence days based on employment date
+  const calculateAllowedAbsenceDays = (employmentDate: string): number => {
+    if (!employmentDate) return 0;
+    
+    const employment = new Date(employmentDate);
+    const today = new Date();
+    const monthsDiff = (today.getFullYear() - employment.getFullYear()) * 12 + (today.getMonth() - employment.getMonth());
+    
+    if (monthsDiff < 3) {
+      return 0; // Newly hired teachers (< 3 months) = No Allowed Absence Days
+    } else if (monthsDiff < 24) {
+      return 9; // Teachers (> 3 months < 2 Years) = 9 days per Year
+    } else {
+      return 12; // Teachers (> 2 Years) = 12 Days per year
+    }
+  };
   
   // Activity tab state
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
@@ -603,7 +631,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
     password: '',
     employmentDate: '',
     allowedAbsenceDays: '',
-    authorities: []
+    authorities: [],
+    systemRole: 'EMPLOYEE'
   });
 
   // Generate day options (1-31)
@@ -632,11 +661,29 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   useEffect(() => {
     if (isOpen) {
       fetchSubjects();
+      fetchCurrentUserRole();
       if (teacher) {
         populateFormData(teacher);
       }
     }
   }, [isOpen, teacher]);
+
+  // Fetch current user's role to determine permissions
+  const fetchCurrentUserRole = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/teachers/me', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUserRole(userData.role || '');
+      }
+    } catch (error) {
+      console.error('Error fetching current user role:', error);
+    }
+  };
 
   const fetchSubjects = async () => {
     try {
@@ -679,7 +726,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
       password: '', // Leave empty for security
       employmentDate: teacher.employmentDate || '',
       allowedAbsenceDays: teacher.allowedAbsenceDays?.toString() || '',
-      authorities: teacher.authorities || []
+      authorities: teacher.authorities || [],
+      systemRole: teacher.role || 'EMPLOYEE'
     });
   };
 
@@ -763,11 +811,73 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   }, [isOpen, activeTab, teacher?.id]);
 
   const handleInputChange = (field: keyof FormData, value: string | string[]) => {
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Auto-calculate allowed absence days when employment date changes
+      if (field === 'employmentDate' && typeof value === 'string' && value) {
+        const calculatedDays = calculateAllowedAbsenceDays(value);
+        newFormData.allowedAbsenceDays = calculatedDays.toString();
+      }
+      
+      return newFormData;
+    });
+    setError('');
+  };
+
+  // Handle role change and automatically update authorities
+  const handleRoleChange = (role: string) => {
+    let authorities: string[] = [];
+    
+    switch (role) {
+      case 'ADMIN':
+        authorities = [
+          'Access Manager Portal',
+          'Access Teacher Portal',
+          'Add new teachers',
+          'Edit Existing Teachers',
+          'Delete Teachers',
+          'Accept and Reject All Requests',
+          'Accept and Reject Manager Requests',
+          'Download Reports',
+          'View All Analytics',
+          'Manage User Authorities',
+          'View Action Audit Trail',
+          'Revoke Manager Actions',
+          'Promote/Demote Users',
+          'System Administration'
+        ];
+        break;
+      case 'MANAGER':
+        authorities = [
+          'Access Manager Portal',
+          'Access Teacher Portal',
+          'View Teachers Info',
+          'Accept and Reject Employee Requests',
+          'Download Reports',
+          'View Analytics',
+          'Submit Own Requests'
+        ];
+        break;
+      case 'EMPLOYEE':
+      default:
+        authorities = [
+          'Access Teacher Portal',
+          'Submit Requests',
+          'View Own Data',
+          'Check In/Out'
+        ];
+        break;
+    }
+
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      systemRole: role,
+      authorities: authorities
     }));
-    setError('');
   };
 
   const handleAuthorityChange = (authority: string, checked: boolean) => {
@@ -845,7 +955,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
         birthdate: `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`,
         employmentDate: formData.employmentDate,
         allowedAbsenceDays: parseInt(formData.allowedAbsenceDays) || 0,
-        authorities: formData.authorities
+        authorities: formData.authorities,
+        role: formData.systemRole
       };
 
       // Only include password if it's provided
@@ -1046,6 +1157,30 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                  </FormField>
                </FormGrid>
 
+               {/* System Role - Only visible to Admins */}
+               {currentUserRole === 'ADMIN' && (
+                 <FormGrid>
+                   <FormField>
+                     <Label $isRTL={isRTL}>{t('addTeacher.systemRole')}</Label>
+                     <Select
+                       value={formData.systemRole}
+                       onChange={(e) => handleRoleChange(e.target.value)}
+                     >
+                       <option value="">{t('addTeacher.selectSystemRole')}</option>
+                       <option value="ADMIN">
+                         {t('systemRoles.admin')} - {t('systemRoles.adminDescription')}
+                       </option>
+                       <option value="MANAGER">
+                         {t('systemRoles.manager')} - {t('systemRoles.managerDescription')}
+                       </option>
+                       <option value="EMPLOYEE">
+                         {t('systemRoles.employee')} - {t('systemRoles.employeeDescription')}
+                       </option>
+                     </Select>
+                   </FormField>
+                 </FormGrid>
+               )}
+
                <FormGrid>
                  <FormField>
                    <Label $isRTL={isRTL}>{t('addTeacher.employmentDate')}</Label>
@@ -1054,6 +1189,9 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                      value={formData.employmentDate}
                      onChange={(e) => handleInputChange('employmentDate', e.target.value)}
                    />
+                   <HelperText $isRTL={isRTL}>
+                     {t('addTeacher.employmentDateHelper')}
+                   </HelperText>
                  </FormField>
                  
                  <FormField>
@@ -1066,21 +1204,15 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                      value={formData.allowedAbsenceDays}
                      onChange={(e) => handleInputChange('allowedAbsenceDays', e.target.value)}
                    />
+                   <HelperText $isRTL={isRTL}>
+                     {t('addTeacher.allowedAbsenceDaysHelper')}
+                   </HelperText>
                  </FormField>
                </FormGrid>
 
                <AuthoritiesContainer>
                  <Label $isRTL={isRTL}>{t('addTeacher.authorities')}</Label>
                  <AuthoritiesGrid>
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('none')}
-                       onChange={(e) => handleAuthorityChange('none', e.target.checked)}
-                     />
-                     {t('authorities.none')}
-                   </AuthorityItem>
-                   
                    <AuthorityItem $isRTL={isRTL}>
                      <AuthorityCheckbox
                        type="checkbox"

@@ -150,6 +150,7 @@ const DayCell = styled.button<{
   $isToday: boolean; 
   $isOtherMonth: boolean;
   $isFuture: boolean;
+  $isWeekend: boolean;
 }>`
   width: 36px;
   height: 36px;
@@ -167,12 +168,14 @@ const DayCell = styled.button<{
     if (props.$isSelected) return '#D6B10E';
     if (props.$isInRange) return '#FFF3CD';
     if (props.$isToday) return '#E7E7E7';
+    if (props.$isWeekend && !props.$isOtherMonth) return '#FFE6E6'; // Light red for Egyptian weekends
     return 'transparent';
   }};
   
   color: ${props => {
     if (props.$isFuture || props.$isOtherMonth) return '#ccc';
     if (props.$isSelected) return '#ffffff';
+    if (props.$isWeekend && !props.$isSelected && !props.$isOtherMonth) return '#CC0000'; // Red text for weekends
     if (props.$isToday) return '#141F25';
     return '#141F25';
   }};
@@ -364,6 +367,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isDayToday = isToday(day);
           const isDayFuture = isFuture(day);
+          const isEgyptianWeekend = day.getDay() === 5 || day.getDay() === 6; // Friday (5) or Saturday (6)
           
           return (
             <DayCell
@@ -373,6 +377,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
               $isToday={isDayToday}
               $isOtherMonth={!isCurrentMonth}
               $isFuture={isDayFuture}
+              $isWeekend={isEgyptianWeekend}
               onClick={() => handleDayClick(day)}
               disabled={isDayFuture || !isCurrentMonth}
             >
@@ -393,14 +398,29 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     return t('datePicker.selectDateRange');
   };
 
+  // Function to get the current display label based on the date range
+  const getCurrentDisplayLabel = () => {
+    // Check if it's this week
+    const thisWeekRange = getThisWeekRange();
+    if (isSameDay(value.startDate, thisWeekRange.start) && isSameDay(value.endDate, thisWeekRange.end)) {
+      return t('common.thisWeek');
+    }
+    
+    // Check if it's this month  
+    const thisMonthRange = getThisMonthRange();
+    if (isSameDay(value.startDate, thisMonthRange.start) && isSameDay(value.endDate, thisMonthRange.end)) {
+      return t('common.thisMonth');
+    }
+    
+    // Otherwise it's custom
+    return `${format(value.startDate, 'd MMM yyyy', { locale })} - ${format(value.endDate, 'd MMM yyyy', { locale })}`;
+  };
+
   return (
     <PickerContainer ref={containerRef}>
       <PickerButton $isRTL={isRTL} onClick={() => setIsOpen(!isOpen)}>
         <span className="icon">📅</span>
-        {value.label === t('common.custom') ? 
-          `${format(value.startDate, 'd MMM yyyy', { locale })} - ${format(value.endDate, 'd MMM yyyy', { locale })}` :
-          value.label
-        }
+        {getCurrentDisplayLabel()}
       </PickerButton>
       
       <DropdownContainer $isOpen={isOpen} $isRTL={isRTL}>

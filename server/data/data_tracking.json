@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-07-27T19:14:54.611Z",
+  "changes": [
+    {
+      "id": "b718a9b3-8774-4341-8a7f-4657a147fc82",
+      "timestamp": "2025-07-27T19:14:56.527Z",
+      "userId": "SYSTEM",
+      "userName": "System Import",
+      "userRole": "ADMIN",
+      "action": "FILE_BULK_IMPORT",
+      "targetType": "FILE",
+      "targetId": "complete_database_import",
+      "originalData": null,
+      "newData": {
+        "totalEmployees": 31,
+        "totalSubjects": 19,
+        "totalAttendanceRecords": 846,
+        "totalRequests": 159
+      },
+      "changes": [
+        {
+          "type": "CREATE",
+          "description": "New record created"
+        }
+      ],
+      "metadata": {
+        "userAgent": "",
+        "ipAddress": "",
+        "source": "server",
+        "dataSize": 89,
+        "changeReason": "File BULK_IMPORT: complete_database_import"
+      }
+    }
+  ],
+  "statistics": {
+    "totalChanges": 1,
+    "changesByType": {
+      "FILE_BULK_IMPORT": 1
+    },
+    "changesByUser": {
+      "SYSTEM": 1
+    },
+    "lastUpdate": "2025-07-27T19:14:56.527Z"
+  }
+}

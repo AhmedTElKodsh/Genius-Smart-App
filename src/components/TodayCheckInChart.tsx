@@ -439,8 +439,10 @@ const TodayCheckInChart: React.FC<TodayCheckInChartProps> = ({ data, loading, er
           {isRTL ? 'تفاصيل حضور المعلمين' : 'Teacher Check-in Details'}
         </TableHeader>
         <TableContent>
-          {data.teachers.map((teacher) => (
-            <TeacherRow key={teacher.id} $isRTL={isRTL}>
+          {data.teachers.filter((teacher, index, self) => 
+            index === self.findIndex(t => t.id === teacher.id)
+          ).map((teacher, index) => (
+            <TeacherRow key={`${teacher.id}-${index}`} $isRTL={isRTL}>
               <TeacherAvatar>
                 {teacher.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
               </TeacherAvatar>

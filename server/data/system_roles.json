@@ -1,0 +1,90 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-07-27T13:53:54.589Z",
+  "lastUpdated": "2025-07-27T13:53:54.589Z",
+  "layers": {
+    "ADMIN": {
+      "level": 3,
+      "name": "Admin",
+      "nameAr": "مدير عام",
+      "authorities": [
+        "Access Manager Portal",
+        "Access Teacher Portal",
+        "Add new teachers",
+        "Edit Existing Teachers",
+        "Delete Teachers",
+        "Accept and Reject All Requests",
+        "Accept and Reject Manager Requests",
+        "Download Reports",
+        "View All Analytics",
+        "Manage User Authorities",
+        "View Action Audit Trail",
+        "Revoke Manager Actions",
+        "Promote/Demote Users",
+        "System Administration"
+      ],
+      "description": "Full system access with ability to manage all layers and revoke actions"
+    },
+    "MANAGER": {
+      "level": 2,
+      "name": "Manager",
+      "nameAr": "مدير",
+      "authorities": [
+        "Access Manager Portal",
+        "Access Teacher Portal",
+        "View Teachers Info",
+        "Accept and Reject Employee Requests",
+        "Download Reports",
+        "View Analytics",
+        "Submit Own Requests"
+      ],
+      "description": "Restricted management access, cannot approve own requests or revoke admin actions"
+    },
+    "EMPLOYEE": {
+      "level": 1,
+      "name": "Employee",
+      "nameAr": "موظف",
+      "authorities": [
+        "Access Teacher Portal",
+        "Submit Requests",
+        "View Own Data",
+        "Check In/Out"
+      ],
+      "description": "Basic teacher access with request submission capabilities"
+    }
+  },
+  "hierarchyRules": {
+    "adminCanRevokeManager": true,
+    "managerCannotRevokeAdmin": true,
+    "managerCannotApproveOwnRequests": true,
+    "adminCanViewAllActions": true,
+    "performanceTrackingAppliesTo": [
+      "MANAGER",
+      "EMPLOYEE"
+    ]
+  },
+  "defaultAuthorities": {
+    "Access Manager Portal": [
+      "ADMIN",
+      "MANAGER"
+    ],
+    "Access Teacher Portal": [
+      "ADMIN",
+      "MANAGER",
+      "EMPLOYEE"
+    ],
+    "Accept and Reject Requests": [
+      "ADMIN",
+      "MANAGER"
+    ],
+    "Accept and Reject Manager Requests": [
+      "ADMIN"
+    ],
+    "Revoke Manager Actions": [
+      "ADMIN"
+    ],
+    "View Action Audit Trail": [
+      "ADMIN"
+    ]
+  }
+}

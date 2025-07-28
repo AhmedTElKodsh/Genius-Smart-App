@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-07-27T13:53:54.589Z",
+  "actions": [
+    {
+      "actionId": "b718a9b3-8774-4341-8a7f-4657a147fc82",
+      "timestamp": "2025-07-27T19:14:56.527Z",
+      "userId": "SYSTEM",
+      "userName": "System Import",
+      "userRole": "ADMIN",
+      "action": "FILE_BULK_IMPORT",
+      "targetType": "FILE",
+      "targetId": "complete_database_import",
+      "targetName": "Unknown",
+      "details": {
+        "changes": [
+          {
+            "type": "CREATE",
+            "description": "New record created"
+          }
+        ],
+        "reason": "File BULK_IMPORT: complete_database_import"
+      },
+      "originalData": null,
+      "newData": {
+        "totalEmployees": 31,
+        "totalSubjects": 19,
+        "totalAttendanceRecords": 846,
+        "totalRequests": 159
+      },
+      "canBeRevoked": false,
+      "revokedAt": null,
+      "revokedBy": null
+    }
+  ],
+  "schema": {
+    "actionId": "string (UUID)",
+    "timestamp": "ISO string",
+    "userId": "string (performer ID)",
+    "userName": "string (performer name)",
+    "userRole": "string (ADMIN/MANAGER/EMPLOYEE)",
+    "action": "string (action type)",
+    "targetType": "string (request/teacher/system)",
+    "targetId": "string (target ID)",
+    "targetName": "string (target name)",
+    "details": "object (action details)",
+    "originalData": "object (before state)",
+    "newData": "object (after state)",
+    "canBeRevoked": "boolean",
+    "revokedAt": "ISO string or null",
+    "revokedBy": "string (revoker ID) or null",
+    "revokedReason": "string or null"
+  }
+}

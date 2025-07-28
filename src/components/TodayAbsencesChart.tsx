@@ -446,10 +446,14 @@ const TodayAbsencesChart: React.FC<TodayAbsencesChartProps> = ({ data, loading, 
     );
   }
 
-  const filteredTeachers = data.absentTeachers.filter(teacher => {
-    if (filter === 'all') return true;
-    return teacher.absenceType === filter;
-  });
+  const filteredTeachers = data.absentTeachers
+    .filter(teacher => {
+      if (filter === 'all') return true;
+      return teacher.absenceType === filter;
+    })
+    .filter((teacher, index, self) => 
+      index === self.findIndex(t => t.id === teacher.id)
+    );
 
   const getAbsenceTypeLabel = (type: string) => {
     switch (type) {
@@ -545,8 +549,8 @@ const TodayAbsencesChart: React.FC<TodayAbsencesChartProps> = ({ data, loading, 
               No absent teachers in this category
             </EmptyState>
           ) : (
-            filteredTeachers.map((teacher) => (
-              <TeacherCard key={teacher.id} $isRTL={isRTL}>
+            filteredTeachers.map((teacher, index) => (
+              <TeacherCard key={`${teacher.id}-${index}`} $isRTL={isRTL}>
                 <TeacherHeader $isRTL={isRTL}>
                   <TeacherInfo $isRTL={isRTL}>
                     <TeacherName $isRTL={isRTL}>{teacher.name}</TeacherName>

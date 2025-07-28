@@ -176,7 +176,13 @@ export const translations = {
     },
 
     // Teachers section
+    'teachers.allTeachers': 'All Teachers',
     'teachers.reports': 'Reports',
+    'teachers.analytics': 'Analytics',
+    'teachers.noTeachers': 'No Teachers Found',
+    'teachers.noTeachersDesc': 'No teachers match your current filters',
+    'teachers.allSubjects': 'All Subjects',
+    'teachers.searchTeachers': 'Search teachers...',
     
     // Teacher Reports
     'reports.teacher': "Teacher",
@@ -195,9 +201,31 @@ export const translations = {
     'reports.to': "To",
     'reports.showing': "Showing",
 
+    // Performance
+    'performance.excellent': 'Excellent',
+    'performance.good': 'Good',
+    'performance.average': 'Average',
+    'performance.poor': 'Poor',
+
+    // Common
+    'common.hours': 'Hours',
+    'Page': 'Page',
+
     // Subjects
     subjects: {
       subject: "Subject",
+      management: "Management",
+      quran: "Quran",
+      arabic: "Arabic",
+      math: "Mathematics",
+      english: "English",
+      science: "Science",
+      art: "Art",
+      programming: "Programming",
+      socialStudies: "Social Studies",
+      fitness: "Fitness",
+      scouting: "Scouting",
+      nanny: "Nanny"
     },
 
     // Teacher Information
@@ -271,14 +299,14 @@ export const translations = {
       todayAcceptedRequests: "الطلبات المقبولة اليوم",
       noAcceptedRequestsToday: "لا توجد طلبات مقبولة اليوم",
       
-      missingTeachers: "المعلمون المفقودون",
+      missingTeachers: "المعلمون المتغيبين",
       excellentAttendance: "حضور ممتاز!",
       allTeachersAccountedFor: "جميع المعلمين متواجدون اليوم",
       highAbsenceAlert: "تنبيه غياب مرتفع",
       moderateAbsenceAlert: "قلق غياب متوسط",
       minimalAbsenceAlert: "غياب قليل ملاحظ",
       teachers: "معلمون",
-      totalMissing: "إجمالي المفقودين",
+      totalMissing: "إجمالي المتغيبين",
       noExcuse: "بدون عذر",
       rejectedRequests: "طلبات مرفوضة",
       rejected: "مرفوض",
@@ -415,7 +443,13 @@ export const translations = {
     },
 
     // Teachers section
+    'teachers.allTeachers': 'جميع المعلمين',
     'teachers.reports': 'التقارير',
+    'teachers.analytics': 'التحليلات',
+    'teachers.noTeachers': 'لم يتم العثور على معلمين',
+    'teachers.noTeachersDesc': 'لا يوجد معلمون يطابقون المرشحات المحددة',
+    'teachers.allSubjects': 'جميع المواد',
+    'teachers.searchTeachers': 'البحث عن المعلمين...',
     
     // Teacher Reports
     'reports.teacher': "المعلم",
@@ -434,9 +468,31 @@ export const translations = {
     'reports.to': "إلى",
     'reports.showing': "عرض",
 
+    // Performance
+    'performance.excellent': 'ممتاز',
+    'performance.good': 'جيد',
+    'performance.average': 'متوسط',
+    'performance.poor': 'ضعيف',
+
+    // Common
+    'common.hours': 'ساعات',
+    'Page': 'الصفحة',
+
     // Subjects
     subjects: {
       subject: "المادة",
+      management: "الإدارة",
+      quran: "القرآن الكريم",
+      arabic: "اللغة العربية",
+      math: "الرياضيات",
+      english: "اللغة الإنجليزية",
+      science: "العلوم",
+      art: "الفنون",
+      programming: "البرمجة",
+      socialStudies: "الدراسات الاجتماعية",
+      fitness: "اللياقة البدنية",
+      scouting: "الكشافة",
+      nanny: "رعاية الأطفال"
     },
 
     // Teacher Information
@@ -455,7 +511,6 @@ export const translations = {
         Biology: "الأحياء",
         Management: "الإدارة",
         "Computer Science": "علوم الحاسوب",
-        "Physical Education": "التربية البدنية",
         Art: "الفنون",
         Music: "الموسيقى",
         Quran: "القرآن",
@@ -465,7 +520,6 @@ export const translations = {
         Fitness: "اللياقة البدنية",
         Scouting: "الكشافة",
         Nanny: "المربية",
-        "Class Teacher": "مدرس الفصل",
         "General Support": "الدعم العام",
         Childcare: "رعاية الأطفال",
         Canteen: "المقصف",

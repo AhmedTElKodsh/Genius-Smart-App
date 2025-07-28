@@ -419,6 +419,109 @@ const SuccessButton = styled.button<{ isDarkMode: boolean; isRTL: boolean }>`
   }
 `;
 
+// Hour Selection Components
+const HourSelectionSection = styled.div<{ isRTL: boolean }>`
+  margin-bottom: 20px;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+`;
+
+const HourSelectionLabel = styled.label<{ isDarkMode: boolean; isRTL: boolean }>`
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: ${props => props.isDarkMode ? '#f0f0f0' : '#333'};
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+  font-size: 16px;
+`;
+
+const HourOptionsGrid = styled.div<{ isRTL: boolean }>`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+`;
+
+const HourOption = styled.button<{ isDarkMode: boolean; isRTL: boolean; isSelected: boolean }>`
+  background: ${props => props.isSelected ? '#DAA520' : (props.isDarkMode ? '#2a2a2a' : '#f8f9fa')};
+  color: ${props => props.isSelected ? 'white' : (props.isDarkMode ? '#f0f0f0' : '#333')};
+  border: ${props => props.isSelected ? '2px solid #DAA520' : `2px solid ${props.isDarkMode ? '#404040' : '#e9ecef'}`};
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props => props.isSelected ? '#B8860B' : (props.isDarkMode ? '#353535' : '#e9ecef')};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const CustomHourInput = styled.input<{ isDarkMode: boolean; isRTL: boolean; hasError?: boolean }>`
+  width: 100%;
+  padding: 12px 16px;
+  border: ${props => props.hasError 
+    ? '2px solid #ff4757' 
+    : `2px solid ${props.isDarkMode ? '#404040' : '#e9ecef'}`
+  };
+  border-radius: 8px;
+  background: ${props => props.hasError
+    ? (props.isDarkMode ? '#2a1a1a' : '#fff5f5')
+    : (props.isDarkMode ? '#2a2a2a' : 'white')
+  };
+  color: ${props => props.isDarkMode ? '#f0f0f0' : '#333'};
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+  font-size: 16px;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+
+  &:focus {
+    outline: none;
+    border-color: #DAA520;
+  }
+
+  &::placeholder {
+    color: ${props => props.isDarkMode ? '#888' : '#666'};
+  }
+`;
+
+const RemainingHoursInfo = styled.div<{ isDarkMode: boolean; isRTL: boolean }>`
+  background: ${props => props.isDarkMode ? 'rgba(218, 165, 32, 0.1)' : 'rgba(218, 165, 32, 0.1)'};
+  border: 1px solid rgba(218, 165, 32, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: ${props => props.isDarkMode ? '#f0f0f0' : '#333'};
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+  font-size: 14px;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+`;
+
+const HourErrorMessage = styled.div<{ isDarkMode: boolean; isRTL: boolean }>`
+  background: ${props => props.isDarkMode ? 'rgba(255, 71, 87, 0.1)' : 'rgba(255, 71, 87, 0.1)'};
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  color: #ff4757;
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+  font-size: 14px;
+  text-align: center;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+  animation: fadeIn 0.3s ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+
 // Types
 interface SendRequestModalProps {
   isOpen: boolean;
@@ -449,6 +552,42 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [employmentErrorMessage, setEmploymentErrorMessage] = useState('');
   const [showReasonError, setShowReasonError] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [showWeekendWarning, setShowWeekendWarning] = useState(false);
+  
+  // Hour tracking for Late Arrival and Early Leave
+  const [selectedHours, setSelectedHours] = useState<number>(0.5);
+  const [customHours, setCustomHours] = useState<string>('');
+  const [useCustomHours, setUseCustomHours] = useState(false);
+  const [remainingHours, setRemainingHours] = useState<number>(4); // Default 4 hours total
+  const [showHourError, setShowHourError] = useState(false);
+
+  // Helper function to check if a date is an Egyptian weekend (Friday = 5, Saturday = 6)
+  const isEgyptianWeekend = (dateString: string) => {
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay();
+    return dayOfWeek === 5 || dayOfWeek === 6; // Friday (5) or Saturday (6)
+  };
+
+  // Fetch remaining hours when modal opens
+  React.useEffect(() => {
+    if (isOpen && teacherData?.id) {
+      const fetchRemainingHours = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/teachers/${teacherData.id}/remaining-hours`);
+          const data = await response.json();
+          
+          if (data.success) {
+            setRemainingHours(data.data.remainingHours);
+          }
+        } catch (error) {
+          console.error('Error fetching remaining hours:', error);
+          // Keep default value of 4 if fetch fails
+        }
+      };
+
+      fetchRemainingHours();
+    }
+  }, [isOpen, teacherData?.id]);
 
   const requestTypes = [
     { key: 'earlyLeave', label: t.earlyLeave },
@@ -527,6 +666,14 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
 
   // Function to handle date validation and show warning if needed
   const handleDateChange = (date: string, isFromDate: boolean = true) => {
+    // Check if the date is an Egyptian weekend
+    if (isEgyptianWeekend(date)) {
+      setShowWeekendWarning(true);
+      // Auto-hide warning after 4 seconds
+      setTimeout(() => setShowWeekendWarning(false), 4000);
+      return;
+    }
+
     if (!isValidDate(date, selectedType)) {
       setShowDateWarning(true);
       // Auto-hide warning after 4 seconds
@@ -543,15 +690,35 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
 
   // Function to calculate employment duration in months
   const getEmploymentDurationInMonths = () => {
-    if (!teacherData?.joinDate) return 0;
+    // Try to get employment date from either employmentDate or joinDate field
+    const employmentDateStr = teacherData?.employmentDate || teacherData?.joinDate;
     
-    const joinDate = new Date(teacherData.joinDate);
+    if (!employmentDateStr) {
+      return 0;
+    }
+    
+    const joinDate = new Date(employmentDateStr);
     const currentDate = new Date();
     
+    // Check if date parsing was successful
+    if (isNaN(joinDate.getTime())) {
+      return 0;
+    }
+    
+    // Calculate the difference in months more accurately
     const yearsDiff = currentDate.getFullYear() - joinDate.getFullYear();
     const monthsDiff = currentDate.getMonth() - joinDate.getMonth();
+    const daysDiff = currentDate.getDate() - joinDate.getDate();
     
-    return yearsDiff * 12 + monthsDiff;
+    // Calculate total months
+    let totalMonths = yearsDiff * 12 + monthsDiff;
+    
+    // If we haven't reached the same day of the month, don't count the current month
+    if (daysDiff < 0) {
+      totalMonths--;
+    }
+    
+    return Math.max(0, totalMonths); // Ensure non-negative result
   };
 
   // Function to get the start and end of current month
@@ -693,6 +860,35 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
       return;
     }
     
+    // Validate hours for Late Arrival and Early Leave requests
+    if (selectedType === 'lateArrival' || selectedType === 'earlyLeave') {
+      let requestedHours = selectedHours;
+      
+      if (useCustomHours) {
+        const customHoursNum = parseFloat(customHours);
+        if (!customHours || isNaN(customHoursNum) || customHoursNum < 0.5 || customHoursNum > 2) {
+          setShowHourError(true);
+          setTimeout(() => setShowHourError(false), 4000);
+          return;
+        }
+        requestedHours = customHoursNum;
+      }
+      
+      // Check if requested hours exceed remaining hours
+      if (requestedHours > remainingHours) {
+        setShowHourError(true);
+        setTimeout(() => setShowHourError(false), 4000);
+        return;
+      }
+      
+      // Check daily limit (max 2 hours per day)
+      if (requestedHours > 2) {
+        setShowHourError(true);
+        setTimeout(() => setShowHourError(false), 4000);
+        return;
+      }
+    }
+    
     // Clear reason error if it was shown before
     setShowReasonError(false);
     // (Note: Since canHaveMultipleDays is now false, the toDate check is no longer needed)
@@ -723,6 +919,12 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
       const actualDuration = 'oneDay';
       const actualToDate = fromDate;
       
+      // Calculate final hours for Late Arrival and Early Leave
+      let finalHours = undefined;
+      if (selectedType === 'lateArrival' || selectedType === 'earlyLeave') {
+        finalHours = useCustomHours ? parseFloat(customHours) : selectedHours;
+      }
+      
       const requestData = {
         teacherId: teacherData.id,
         teacherName: teacherData.name,
@@ -733,7 +935,8 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
         reason: reason || '',
         status: 'pending',
         submittedAt: new Date().toISOString(),
-        subject: teacherData.subject || ''
+        subject: teacherData.subject || '',
+        hours: finalHours // Include hours for Late Arrival and Early Leave
       };
 
       const response = await fetch('http://localhost:5000/api/requests', {
@@ -876,6 +1079,107 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
             </>
           )}
 
+          {/* Hour Selection for Late Arrival and Early Leave */}
+          {(selectedType === 'lateArrival' || selectedType === 'earlyLeave') && (
+            <HourSelectionSection isRTL={isRTL}>
+              <HourSelectionLabel isDarkMode={isDarkMode} isRTL={isRTL}>
+                {isRTL ? 'عدد الساعات' : 'Number of Hours'}
+              </HourSelectionLabel>
+              
+              <RemainingHoursInfo isDarkMode={isDarkMode} isRTL={isRTL}>
+                {isRTL 
+                  ? `الساعات المتبقية: ${remainingHours} من 4 ساعات`
+                  : `Remaining Hours: ${remainingHours} out of 4 hours`
+                }
+              </RemainingHoursInfo>
+
+              <HourOptionsGrid isRTL={isRTL}>
+                <HourOption
+                  isDarkMode={isDarkMode}
+                  isRTL={isRTL}
+                  isSelected={!useCustomHours && selectedHours === 0.5}
+                  disabled={remainingHours < 0.5}
+                  onClick={() => {
+                    setSelectedHours(0.5);
+                    setUseCustomHours(false);
+                    setCustomHours('');
+                    setShowHourError(false);
+                  }}
+                >
+                  {isRTL ? '0.5 ساعة' : '0.5 Hours'}
+                </HourOption>
+                <HourOption
+                  isDarkMode={isDarkMode}
+                  isRTL={isRTL}
+                  isSelected={!useCustomHours && selectedHours === 1}
+                  disabled={remainingHours < 1}
+                  onClick={() => {
+                    setSelectedHours(1);
+                    setUseCustomHours(false);
+                    setCustomHours('');
+                    setShowHourError(false);
+                  }}
+                >
+                  {isRTL ? '1 ساعة' : '1 Hour'}
+                </HourOption>
+                <HourOption
+                  isDarkMode={isDarkMode}
+                  isRTL={isRTL}
+                  isSelected={!useCustomHours && selectedHours === 2}
+                  disabled={remainingHours < 2}
+                  onClick={() => {
+                    setSelectedHours(2);
+                    setUseCustomHours(false);
+                    setCustomHours('');
+                    setShowHourError(false);
+                  }}
+                >
+                  {isRTL ? '2 ساعة' : '2 Hours'}
+                </HourOption>
+              </HourOptionsGrid>
+
+              <HourOption
+                isDarkMode={isDarkMode}
+                isRTL={isRTL}
+                isSelected={useCustomHours}
+                onClick={() => {
+                  setUseCustomHours(true);
+                  setShowHourError(false);
+                }}
+                style={{ marginBottom: '10px', width: '100%' }}
+              >
+                {isRTL ? 'ادخال ساعات مخصصة' : 'Enter Custom Hours'}
+              </HourOption>
+
+              {useCustomHours && (
+                <CustomHourInput
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  max="2"
+                  value={customHours}
+                  onChange={(e) => {
+                    setCustomHours(e.target.value);
+                    setShowHourError(false);
+                  }}
+                  placeholder={isRTL ? 'ادخل عدد الساعات (0.5 - 2)' : 'Enter hours (0.5 - 2)'}
+                  isDarkMode={isDarkMode}
+                  isRTL={isRTL}
+                  hasError={showHourError}
+                />
+              )}
+
+              {showHourError && (
+                <HourErrorMessage isDarkMode={isDarkMode} isRTL={isRTL}>
+                  {isRTL 
+                    ? 'يرجى إدخال عدد ساعات صحيح (حد أقصى 2 ساعة يومياً)'
+                    : 'Please enter a valid number of hours (max 2 hours per day)'
+                  }
+                </HourErrorMessage>
+              )}
+            </HourSelectionSection>
+          )}
+
           {/* Reason */}
           <ReasonSection isRTL={isRTL}>
             <DateLabel isDarkMode={isDarkMode} isRTL={isRTL}>
@@ -932,6 +1236,18 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
         isRTL={isRTL}
       >
         {employmentErrorMessage}
+      </WarningModal>
+
+      {/* Weekend Warning */}
+      <WarningModal
+        isVisible={showWeekendWarning}
+        isDarkMode={isDarkMode}
+        isRTL={isRTL}
+      >
+        {isRTL 
+          ? 'لا يمكن تقديم طلبات للأيام عطلة نهاية الأسبوع (الجمعة والسبت)'
+          : 'Cannot submit requests for weekend days (Friday and Saturday)'
+        }
       </WarningModal>
 
       {/* Success Modal */}

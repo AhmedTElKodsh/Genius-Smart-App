@@ -77,33 +77,56 @@ const verifyResetToken = (token) => {
   }
 };
 
-// Manager authentication
-router.post('/manager/signin', (req, res) => {
+// Manager authentication (Updated for 3-tier system)
+router.post('/manager/signin', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('🔍 Manager signin attempt:', { email, password: password.substring(0, 3) + '***' });
 
     // Validate input
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.status(400).json({
         success: false,
         message: 'Email and password are required'
       });
     }
 
-    const managers = loadManagers();
+    const teachers = loadTeachers();
+    console.log('📊 Total teachers loaded:', teachers.length);
     
-    // Find manager by email
-    const manager = managers.find(m => m.email.toLowerCase() === email.toLowerCase());
+    // Find user by email (can be Admin, Manager, or Employee with manager portal access)
+    const user = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
+    console.log('👤 User found:', user ? `${user.name} (${user.email})` : 'Not found');
     
-    if (!manager) {
+    if (!user) {
+      console.log('❌ User not found');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    // Check password (in production, use proper password hashing)
-    if (manager.password !== password) {
+    console.log('🔐 User has manager portal access:', user.canAccessManagerPortal);
+    // Check if user has manager portal access
+    if (!user.canAccessManagerPortal) {
+      console.log('❌ Access denied - no manager portal access');
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. Manager portal access required.'
+      });
+    }
+
+    console.log('🔑 Checking password...');
+    console.log('Stored hash:', user.password.substring(0, 20) + '...');
+    console.log('Plain password from DB:', user.plainPassword);
+    
+    // Check password using bcrypt
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('✅ Password valid:', isValidPassword);
+    
+    if (!isValidPassword) {
+      console.log('❌ Invalid password');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -111,18 +134,24 @@ router.post('/manager/signin', (req, res) => {
     }
 
     // Check if account is active
-    if (!manager.isActive) {
+    if (user.status !== 'Active') {
       return res.status(401).json({
         success: false,
         message: 'Account is disabled. Please contact administrator.'
       });
     }
 
-    // Update last login (in production, update the actual data file)
-    const currentTime = new Date().toISOString();
-    
-    // Generate a simple token (in production, use JWT)
-    const token = `gse_${manager.id}_${Date.now()}`;
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        roleLevel: user.roleLevel
+      },
+      process.env.JWT_SECRET || 'genius-smart-secret-key',
+      { expiresIn: '24h' }
+    );
 
     // Return success response
     res.json({
@@ -131,14 +160,18 @@ router.post('/manager/signin', (req, res) => {
       data: {
         token,
         manager: {
-          id: manager.id,
-          name: manager.name,
-          nameArabic: manager.nameArabic,
-          email: manager.email,
-          role: manager.role,
-          department: manager.department,
-          managerLevel: manager.managerLevel,
-          authorities: manager.authorities
+          id: user.id,
+          name: user.name,
+          nameArabic: user.name, // Since names are already in Arabic
+          email: user.email,
+          role: user.role,
+          roleName: user.roleName,
+          roleNameAr: user.roleNameAr,
+          department: user.subject,
+          managerLevel: user.roleLevel,
+          authorities: user.authorities,
+          canAccessManagerPortal: user.canAccessManagerPortal,
+          canAccessTeacherPortal: user.canAccessTeacherPortal
         }
       }
     });
@@ -418,7 +451,10 @@ router.post('/teacher/signin', async (req, res) => {
           email: teacher.email,
           subject: teacher.subject,
           workType: teacher.workType,
-          phone: teacher.phone
+          phone: teacher.phone,
+          employmentDate: teacher.employmentDate,
+          joinDate: teacher.joinDate,
+          allowedAbsenceDays: teacher.allowedAbsenceDays
         }
       }
     });

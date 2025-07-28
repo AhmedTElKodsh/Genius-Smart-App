@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-07-27T16:00:00.000Z",
+  "lastUpdated": "2025-07-27T16:00:00.000Z",
+  "description": "Formal holidays where teacher absences are not counted against them",
+  "holidays": [
+    {
+      "id": "holiday_1",
+      "name": "Independence Day",
+      "nameAr": "يوم الاستقلال",
+      "date": "2025-09-23",
+      "description": "National Independence Day",
+      "descriptionAr": "اليوم الوطني للاستقلال",
+      "isRecurring": true,
+      "category": "national",
+      "createdAt": "2025-07-27T16:00:00.000Z",
+      "createdBy": "system",
+      "isActive": true
+    },
+    {
+      "id": "holiday_2", 
+      "name": "National Day",
+      "nameAr": "اليوم الوطني",
+      "date": "2025-02-25",
+      "description": "Kingdom National Day",
+      "descriptionAr": "اليوم الوطني للمملكة",
+      "isRecurring": true,
+      "category": "national",
+      "createdAt": "2025-07-27T16:00:00.000Z",
+      "createdBy": "system",
+      "isActive": true
+    }
+  ],
+  "schema": {
+    "id": "string (unique identifier)",
+    "name": "string (holiday name in English)",
+    "nameAr": "string (holiday name in Arabic)",
+    "date": "ISO date string (YYYY-MM-DD)",
+    "description": "string (optional description in English)",
+    "descriptionAr": "string (optional description in Arabic)",
+    "isRecurring": "boolean (repeats annually)",
+    "category": "string (national, religious, administrative)",
+    "createdAt": "ISO datetime string",
+    "createdBy": "string (user ID or 'system')",
+    "isActive": "boolean (holiday is active)"
+  }
+} 

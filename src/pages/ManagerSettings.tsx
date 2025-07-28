@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import AddTeacherModal from '../components/AddTeacherModal';
+import HolidayModal from '../components/HolidayModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
 // Styled components
@@ -435,6 +436,158 @@ const TestButtonGroup = styled.div`
   flex-wrap: wrap;
 `;
 
+// Holiday Management Styled Components
+const HolidayManagementSection = styled.div`
+  margin-top: 24px;
+`;
+
+const HolidayHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  
+  h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+`;
+
+const AddHolidayButton = styled.button`
+  background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(212, 175, 55, 0.3);
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 48px 24px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  
+  p {
+    font-family: 'Poppins', sans-serif;
+    color: #666;
+    margin: 8px 0;
+    
+    &:first-child {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+`;
+
+const HolidayList = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+
+const HolidayCard = styled.div`
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #D4AF37;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const HolidayInfo = styled.div`
+  flex: 1;
+`;
+
+const HolidayName = styled.h4`
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+`;
+
+const HolidayDate = styled.p`
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #D4AF37;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+`;
+
+const HolidayDescription = styled.p`
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 8px 0;
+`;
+
+const RecurringBadge = styled.span`
+  background: #E8F5E8;
+  color: #2E7D2E;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const HolidayActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const EditButton = styled.button`
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #45a049;
+  }
+`;
+
+const DeleteButton = styled.button`
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #da190b;
+  }
+`;
+
 // Interfaces
 interface ManagerProfile {
   id: string;
@@ -477,6 +630,10 @@ const Settings: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [profileImage, setProfileImage] = useState<string>('');
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [editingHoliday, setEditingHoliday] = useState<any>(null);
   
   // Password visibility states
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -520,8 +677,12 @@ const Settings: React.FC = () => {
   // Load manager profile on component mount
   useEffect(() => {
     loadManagerProfile();
+    fetchCurrentUserRole();
     if (activeTab === 'notifications') {
       loadNotificationPreferences();
+    }
+    if (activeTab === 'holidays') {
+      loadHolidays();
     }
   }, [activeTab]);
 
@@ -819,6 +980,97 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Fetch current user role
+  const fetchCurrentUserRole = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:5000/api/teachers/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUserRole(userData.role || '');
+      }
+    } catch (error) {
+      console.error('Error fetching current user role:', error);
+    }
+  };
+
+  // Load holidays
+  const loadHolidays = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:5000/api/holidays', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setHolidays(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading holidays:', error);
+    }
+  };
+
+  // Add or update holiday
+  const saveHoliday = async (holidayData: any) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const url = editingHoliday 
+        ? `http://localhost:5000/api/holidays/${editingHoliday.id}`
+        : 'http://localhost:5000/api/holidays';
+      const method = editingHoliday ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(holidayData)
+      });
+      
+      if (response.ok) {
+        setSuccess(editingHoliday ? 'Holiday updated successfully' : 'Holiday added successfully');
+        setShowHolidayModal(false);
+        setEditingHoliday(null);
+        loadHolidays();
+      } else {
+        setError('Failed to save holiday');
+      }
+    } catch (error) {
+      setError('Error saving holiday');
+    }
+  };
+
+  // Delete holiday
+  const deleteHoliday = async (holidayId: string) => {
+    if (!window.confirm(t('settings.holidays.confirmDelete'))) return;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:5000/api/holidays/${holidayId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        setSuccess('Holiday deleted successfully');
+        loadHolidays();
+      } else {
+        setError('Failed to delete holiday');
+      }
+    } catch (error) {
+      setError('Error deleting holiday');
+    }
+  };
+
   // Generate day, month, year options
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -866,6 +1118,11 @@ const Settings: React.FC = () => {
           <Tab $active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')}>
             {t('settings.notifications')}
           </Tab>
+          {currentUserRole === 'ADMIN' && (
+            <Tab $active={activeTab === 'holidays'} onClick={() => setActiveTab('holidays')}>
+              {t('settings.holidays')}
+            </Tab>
+          )}
         </TabContainer>
 
         {activeTab === 'general' && (
@@ -1200,12 +1457,73 @@ const Settings: React.FC = () => {
             </PasswordForm>
           </FormContainer>
         )}
+
+        {activeTab === 'holidays' && currentUserRole === 'ADMIN' && (
+          <FormContainer>
+            <FormHeader>
+              <FormTitle>{t('settings.holidays.title')}</FormTitle>
+              <FormSubtitle>{t('settings.holidays.subtitle')}</FormSubtitle>
+            </FormHeader>
+
+            <HolidayManagementSection>
+              <HolidayHeader>
+                <h3>{t('settings.holidays.upcomingHolidays')}</h3>
+                <AddHolidayButton onClick={() => setShowHolidayModal(true)}>
+                  {t('settings.holidays.addHoliday')}
+                </AddHolidayButton>
+              </HolidayHeader>
+
+              {holidays.length === 0 ? (
+                <EmptyState>
+                  <p>{t('settings.holidays.noHolidays')}</p>
+                  <p>{t('settings.holidays.addFirst')}</p>
+                </EmptyState>
+              ) : (
+                <HolidayList>
+                  {holidays.map((holiday) => (
+                    <HolidayCard key={holiday.id}>
+                      <HolidayInfo>
+                        <HolidayName>{isRTL ? holiday.nameAr : holiday.name}</HolidayName>
+                        <HolidayDate>{new Date(holiday.date).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US')}</HolidayDate>
+                        {holiday.description && <HolidayDescription>{holiday.description}</HolidayDescription>}
+                        {holiday.isRecurring && (
+                          <RecurringBadge>{t('settings.holidays.recurringNote')}</RecurringBadge>
+                        )}
+                      </HolidayInfo>
+                      <HolidayActions>
+                        <EditButton onClick={() => {
+                          setEditingHoliday(holiday);
+                          setShowHolidayModal(true);
+                        }}>
+                          {t('settings.holidays.editHoliday')}
+                        </EditButton>
+                        <DeleteButton onClick={() => deleteHoliday(holiday.id)}>
+                          {t('settings.holidays.deleteHoliday')}
+                        </DeleteButton>
+                      </HolidayActions>
+                    </HolidayCard>
+                  ))}
+                </HolidayList>
+              )}
+            </HolidayManagementSection>
+          </FormContainer>
+        )}
       </MainContent>
       
       <AddTeacherModal
         isOpen={showAddTeacherModal}
         onClose={handleCloseModal}
         onSuccess={handleTeacherAdded}
+      />
+      
+      <HolidayModal
+        isOpen={showHolidayModal}
+        onClose={() => {
+          setShowHolidayModal(false);
+          setEditingHoliday(null);
+        }}
+        onSave={saveHoliday}
+        holiday={editingHoliday}
       />
     </SettingsContainer>
   );

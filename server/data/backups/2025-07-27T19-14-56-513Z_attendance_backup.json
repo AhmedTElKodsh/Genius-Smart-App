@@ -1,0 +1,49 @@
+[
+  {
+    "id": "attendance-1753545580196-0r5i14pa9",
+    "teacherId": "1dee0557-1204-43b8-9746-a834ea612cae",
+    "name": "ضحي سعد الدين",
+    "date": "July 26, 2025",
+    "dateISO": "2025-07-26",
+    "attendance": "Present",
+    "checkInTime": "18:59:00",
+    "checkOutTime": "21:41:00",
+    "totalHours": 2.65,
+    "overtime": 0,
+    "lateArrival": 0,
+    "earlyLeave": 0,
+    "subject": "Arabic",
+    "workType": "Part-time",
+    "hasPermission": false,
+    "notes": "Regular attendance",
+    "createdAt": "2025-07-26T15:59:40.177Z"
+  },
+  {
+    "id": "attendance-1753622281359-2sbur1zqs",
+    "teacherId": "1dee0557-1204-43b8-9746-a834ea612cae",
+    "name": "ضحي سعد الدين",
+    "date": "July 27, 2025",
+    "dateISO": "2025-07-27",
+    "attendance": "Completed",
+    "checkIn": "04:18 PM",
+    "checkOut": "04:18 PM",
+    "currentSessionCheckOut": "04:18 PM",
+    "permittedLeaves": "",
+    "authorizedAbsence": "",
+    "totalHours": 0,
+    "sessions": [
+      {
+        "checkIn": "04:18 PM",
+        "checkOut": "04:18 PM",
+        "hours": 0
+      }
+    ],
+    "subject": "Arabic",
+    "workType": "Part-time",
+    "isOvertimeSession": true,
+    "createdAt": "2025-07-27T13:18:01.357Z",
+    "overtime": 0,
+    "regularHours": 0,
+    "notes": " ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified"
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Management",
+    "teacherCount": 10
+  },
+  {
+    "id": 2,
+    "name": "Quran",
+    "teacherCount": 3
+  },
+  {
+    "id": 3,
+    "name": "Arabic",
+    "teacherCount": 3
+  },
+  {
+    "id": 4,
+    "name": "English",
+    "teacherCount": 3
+  },
+  {
+    "id": 5,
+    "name": "Math",
+    "teacherCount": 1
+  },
+  {
+    "id": 6,
+    "name": "Science",
+    "teacherCount": 2
+  },
+  {
+    "id": 7,
+    "name": "Art",
+    "teacherCount": 1
+  },
+  {
+    "id": 8,
+    "name": "Programming",
+    "teacherCount": 1
+  },
+  {
+    "id": 9,
+    "name": "Fitness",
+    "teacherCount": 1
+  },
+  {
+    "id": 10,
+    "name": "Scouting",
+    "teacherCount": 1
+  },
+  {
+    "id": 11,
+    "name": "Class Teacher",
+    "teacherCount": 1
+  },
+  {
+    "id": 12,
+    "name": "Social Studies",
+    "teacherCount": 1
+  },
+  {
+    "id": 13,
+    "name": "General Support",
+    "teacherCount": 1
+  },
+  {
+    "id": 14,
+    "name": "Childcare",
+    "teacherCount": 3
+  },
+  {
+    "id": 15,
+    "name": "Canteen",
+    "teacherCount": 1
+  },
+  {
+    "id": 16,
+    "name": "Security",
+    "teacherCount": 1
+  }
+]
