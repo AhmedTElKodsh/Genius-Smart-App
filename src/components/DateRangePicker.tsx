@@ -168,14 +168,14 @@ const DayCell = styled.button<{
     if (props.$isSelected) return '#D6B10E';
     if (props.$isInRange) return '#FFF3CD';
     if (props.$isToday) return '#E7E7E7';
-    if (props.$isWeekend && !props.$isOtherMonth) return '#FFE6E6'; // Light red for Egyptian weekends
+    if (props.$isWeekend && !props.$isOtherMonth) return '#F5F5F5'; // Light gray for Egyptian weekends
     return 'transparent';
   }};
   
   color: ${props => {
     if (props.$isFuture || props.$isOtherMonth) return '#ccc';
     if (props.$isSelected) return '#ffffff';
-    if (props.$isWeekend && !props.$isSelected && !props.$isOtherMonth) return '#CC0000'; // Red text for weekends
+    if (props.$isWeekend && !props.$isSelected && !props.$isOtherMonth) return '#999999'; // Gray text for weekends
     if (props.$isToday) return '#141F25';
     return '#141F25';
   }};
@@ -310,6 +310,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
       return;
     }
 
+    // Switch to custom mode when manually selecting dates on preset tabs
+    if (activeTab !== 'custom') {
+      setActiveTab('custom');
+    }
+
     // Allow manual date selection on all tabs
     if (!selectedStart || (selectedStart && selectedEnd)) {
       // Start new selection
@@ -329,16 +334,31 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
 
   const handleDone = () => {
     if (selectedStart && selectedEnd) {
-      const labels = {
-        week: t('common.thisWeek'),
-        month: t('common.thisMonth'),
-        custom: t('common.custom')
-      };
+      // Determine the appropriate label based on actual date range
+      let label: string;
+      
+      // Check if it matches this week
+      const thisWeekRange = getThisWeekRange();
+      if (isSameDay(selectedStart, thisWeekRange.start) && isSameDay(selectedEnd, thisWeekRange.end)) {
+        label = t('common.thisWeek');
+      }
+      // Check if it matches this month
+      else {
+        const thisMonthRange = getThisMonthRange();
+        if (isSameDay(selectedStart, thisMonthRange.start) && isSameDay(selectedEnd, thisMonthRange.end)) {
+          label = t('common.thisMonth');
+        }
+        // Otherwise it's custom - show the actual date range
+        else {
+          const locale = isRTL ? ar : undefined;
+          label = `${format(selectedStart, 'd MMM yyyy', { locale })} - ${format(selectedEnd, 'd MMM yyyy', { locale })}`;
+        }
+      }
       
       const range: DateRange = {
         startDate: selectedStart,
         endDate: selectedEnd,
-        label: labels[activeTab]
+        label: label
       };
       onChange(range);
     }

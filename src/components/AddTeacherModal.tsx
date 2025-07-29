@@ -722,7 +722,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
             </DateOfBirthContainer>
 
             <FormFieldFull>
-              <Label>Employment Date * / تاريخ التعيين *</Label>
+              <Label>{translations['form.employmentDate']}</Label>
               <Input
                 type="date"
                 value={formData.employmentDate}
@@ -736,7 +736,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
             </FormFieldFull>
 
             <FormFieldFull>
-              <Label>Allowed Absence Days / أيام الاجازة المتاحة</Label>
+              <Label>{translations['form.allowedAbsenceDays']}</Label>
               <Input
                 type="number"
                 min="0"

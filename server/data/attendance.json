@@ -18610,5 +18610,33 @@
     "hasPermission": false,
     "notes": "Day completed",
     "createdAt": "2025-07-16T19:14:56.499Z"
+  },
+  {
+    "id": "attendance-1753711596324-rth8t7w27",
+    "teacherId": "1dee0557-1204-43b8-9746-a834ea612cae",
+    "name": "ضحي سعد الدين",
+    "date": "July 28, 2025",
+    "dateISO": "2025-07-28",
+    "attendance": "Completed",
+    "checkIn": "05:06 PM",
+    "checkOut": "05:06 PM",
+    "currentSessionCheckOut": "05:06 PM",
+    "permittedLeaves": "",
+    "authorizedAbsence": "",
+    "totalHours": 0,
+    "sessions": [
+      {
+        "checkIn": "05:06 PM",
+        "checkOut": "05:06 PM",
+        "hours": 0
+      }
+    ],
+    "subject": "Arabic",
+    "workType": "Part-time",
+    "isOvertimeSession": true,
+    "createdAt": "2025-07-28T14:06:36.302Z",
+    "overtime": 0,
+    "regularHours": 0,
+    "notes": " ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified"
   }
 ]

@@ -2,7 +2,88 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const { extractUserAndRole, requireRole } = require('../middleware/roleAuthMiddleware');
+const jwt = require('jsonwebtoken');
+
+// JWT Authentication middleware
+const authenticateJWT = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: No token provided'
+      });
+    }
+
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'genius-smart-secret-key');
+    
+    // Load user data to get full user info
+    const teachers = loadTeachers();
+    const user = teachers.find(t => t.id === decoded.userId);
+
+    if (!user || user.status !== 'Active') {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: User not found or inactive'
+      });
+    }
+
+    // Attach user info to request
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      roleLevel: user.roleLevel,
+      authorities: user.authorities,
+      canAccessManagerPortal: user.canAccessManagerPortal
+    };
+
+    next();
+  } catch (error) {
+    console.error('JWT authentication error:', error);
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Invalid token'
+    });
+  }
+};
+
+// Role-based authorization middleware
+const requireRole = (allowedRoles) => {
+  return (req, res, next) => {
+    const userRole = req.user?.role;
+    const userAuthorities = req.user?.authorities || [];
+    
+    // Convert allowedRoles to array if it's a string
+    const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    
+    // Check if user has required role or manager portal access
+    if (rolesArray.includes(userRole) || req.user?.canAccessManagerPortal) {
+      next();
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Insufficient permissions'
+      });
+    }
+  };
+};
+
+// Load teachers data
+const loadTeachers = () => {
+  try {
+    const teachersPath = path.join(__dirname, '../data', 'teachers.json');
+    const data = fs.readFileSync(teachersPath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error loading teachers:', error);
+    return [];
+  }
+};
 
 // Helper function to load data files
 const loadData = (filename) => {
@@ -69,10 +150,10 @@ const filterByDateRange = (data, startDate, endDate, dateField = 'dateISO') => {
 };
 
 // 1. Core Attendance Statistics
-router.get('/attendance/summary', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/attendance/summary', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
-    const teachersData = loadData('teachers.json');
+    const teachersData = loadTeachers(); // Use loadTeachers here
     const period = req.query.period || 'month';
     const { start, end } = getDateRange(period);
     
@@ -138,7 +219,7 @@ router.get('/attendance/summary', extractUserAndRole, requireRole(['ADMIN', 'MAN
 });
 
 // 2. Period Comparison Analytics
-router.get('/attendance/comparison', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/attendance/comparison', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
     const period1 = req.query.period1 || 'month';
@@ -223,7 +304,7 @@ router.get('/attendance/comparison', extractUserAndRole, requireRole(['ADMIN', '
 });
 
 // 3. Day-of-Week Analysis
-router.get('/attendance/weekly-patterns', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/attendance/weekly-patterns', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
     const period = req.query.period || 'month';
@@ -331,10 +412,10 @@ router.get('/attendance/weekly-patterns', extractUserAndRole, requireRole(['ADMI
 });
 
 // 4. Employee Performance Segmentation
-router.get('/employees/performance-segments', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/employees/performance-segments', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
-    const teachersData = loadData('teachers.json');
+    const teachersData = loadTeachers(); // Use loadTeachers here
     const period = req.query.period || 'month';
     const { start, end } = getDateRange(period);
     
@@ -463,7 +544,7 @@ router.get('/employees/performance-segments', extractUserAndRole, requireRole(['
 });
 
 // 5. Request Analytics
-router.get('/requests/summary', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/requests/summary', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const requestsData = loadData('requests.json');
     const period = req.query.period || 'month';
@@ -558,10 +639,10 @@ router.get('/requests/summary', extractUserAndRole, requireRole(['ADMIN', 'MANAG
 });
 
 // 6. Department/Subject Analytics
-router.get('/departments/comparison', extractUserAndRole, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
+router.get('/departments/comparison', authenticateJWT, requireRole(['ADMIN', 'MANAGER']), (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
-    const teachersData = loadData('teachers.json');
+    const teachersData = loadTeachers(); // Use loadTeachers here
     const requestsData = loadData('requests.json');
     const period = req.query.period || 'month';
     const { start, end } = getDateRange(period);
@@ -679,7 +760,7 @@ router.get('/departments/comparison', extractUserAndRole, requireRole(['ADMIN', 
 });
 
 // 7. Quick Statistics (Simple endpoints)
-router.get('/quick/attendance-rate', extractUserAndRole, (req, res) => {
+router.get('/quick/attendance-rate', authenticateJWT, (req, res) => {
   try {
     const attendanceData = loadData('attendance.json');
     const totalRecords = attendanceData.length;

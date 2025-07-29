@@ -2701,5 +2701,23 @@
     "createdAt": "2025-07-10T19:14:56.513Z",
     "updatedAt": "2025-07-10T19:14:56.513Z",
     "subject": "Security"
+  },
+  {
+    "id": "7e83a540-d145-4539-927c-6f8eb344daa0",
+    "name": "إبراهيم حمدي",
+    "teacherId": "88574e76-66ba-485b-9822-fb28ac6d391c",
+    "requestType": "Late Arrival",
+    "appliedDate": "2025-07-28",
+    "duration": "28 July 2025",
+    "startDate": "2025-07-28",
+    "endDate": "2025-07-28",
+    "reason": "Testing dynamic preview",
+    "status": "pending",
+    "result": "",
+    "submittedAt": "2025-07-28T14:59:56.093Z",
+    "createdAt": "2025-07-28T14:59:56.093Z",
+    "updatedAt": "2025-07-28T14:59:56.093Z",
+    "subject": "Admin Management",
+    "hours": 1.5
   }
 ]

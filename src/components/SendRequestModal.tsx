@@ -447,11 +447,16 @@ const HourOption = styled.button<{ isDarkMode: boolean; isRTL: boolean; isSelect
   color: ${props => props.isSelected ? 'white' : (props.isDarkMode ? '#f0f0f0' : '#333')};
   border: ${props => props.isSelected ? '2px solid #DAA520' : `2px solid ${props.isDarkMode ? '#404040' : '#e9ecef'}`};
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px 8px;
   cursor: pointer;
   font-weight: 600;
   font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 50px;
 
   &:hover {
     background: ${props => props.isSelected ? '#B8860B' : (props.isDarkMode ? '#353535' : '#e9ecef')};
@@ -501,6 +506,8 @@ const RemainingHoursInfo = styled.div<{ isDarkMode: boolean; isRTL: boolean }>`
   font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
   font-size: 14px;
   direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+  font-weight: 600;
+  transition: all 0.3s ease;
 `;
 
 const HourErrorMessage = styled.div<{ isDarkMode: boolean; isRTL: boolean }>`
@@ -555,7 +562,7 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [showWeekendWarning, setShowWeekendWarning] = useState(false);
   
   // Hour tracking for Late Arrival and Early Leave
-  const [selectedHours, setSelectedHours] = useState<number>(0.5);
+  const [selectedHours, setSelectedHours] = useState<number>(0); // Start with 0 to show no preview initially
   const [customHours, setCustomHours] = useState<string>('');
   const [useCustomHours, setUseCustomHours] = useState(false);
   const [remainingHours, setRemainingHours] = useState<number>(4); // Default 4 hours total
@@ -598,12 +605,18 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
   // Check if selected type can have multiple days
   const canHaveMultipleDays = false; // All request types are now one day only
 
-  // Reset duration when switching to types that only allow one day
+  // Reset duration and hours when switching to types that only allow one day
   const handleTypeSelection = (type: string) => {
     setSelectedType(type);
     // All types are now one day only
     setDuration('oneDay');
     setToDate(''); // Clear to date since it's not needed
+    
+    // Reset hour selection when switching request types
+    setSelectedHours(0);
+    setUseCustomHours(false);
+    setCustomHours('');
+    setShowHourError(false);
   };
 
   // Handler for reason change to clear errors
@@ -622,6 +635,13 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
     setHasAttemptedSubmit(false);
     setShowDateWarning(false);
     setShowEmploymentError(false);
+    setShowHourError(false);
+    
+    // Reset hour selection
+    setSelectedHours(0);
+    setUseCustomHours(false);
+    setCustomHours('');
+    
     onClose();
   };
 
@@ -872,6 +892,11 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
           return;
         }
         requestedHours = customHoursNum;
+      } else if (selectedHours <= 0) {
+        // No hours selected with preset buttons
+        setShowHourError(true);
+        setTimeout(() => setShowHourError(false), 4000);
+        return;
       }
       
       // Check if requested hours exceed remaining hours
@@ -957,9 +982,15 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
         setToDate('');
         setReason('');
         
+        // Reset hour selection
+        setSelectedHours(0);
+        setUseCustomHours(false);
+        setCustomHours('');
+        
         // Clear error states
         setShowReasonError(false);
         setHasAttemptedSubmit(false);
+        setShowHourError(false);
         
         onRequestSubmitted();
         
@@ -1087,10 +1118,30 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
               </HourSelectionLabel>
               
               <RemainingHoursInfo isDarkMode={isDarkMode} isRTL={isRTL}>
-                {isRTL 
-                  ? `الساعات المتبقية: ${remainingHours} من 4 ساعات`
-                  : `Remaining Hours: ${remainingHours} out of 4 hours`
-                }
+                {(() => {
+                  let selectedHoursValue = 0;
+                  
+                  // Only calculate preview if user has selected hours
+                  if (!useCustomHours && selectedHours > 0) {
+                    selectedHoursValue = selectedHours;
+                  } else if (useCustomHours && customHours) {
+                    const customHoursNum = parseFloat(customHours);
+                    if (!isNaN(customHoursNum) && customHoursNum > 0) {
+                      selectedHoursValue = customHoursNum;
+                    }
+                  }
+                  
+                  if (selectedHoursValue > 0) {
+                    const previewRemainingHours = Math.max(0, remainingHours - selectedHoursValue);
+                    return isRTL 
+                      ? `الساعات المتبقية: ${previewRemainingHours} من 4 ساعات (بعد هذا الطلب)`
+                      : `Remaining Hours: ${previewRemainingHours} out of 4 hours (after this request)`;
+                  } else {
+                    return isRTL 
+                      ? `الساعات المتبقية: ${remainingHours} من 4 ساعات`
+                      : `Remaining Hours: ${remainingHours} out of 4 hours`;
+                  }
+                })()}
               </RemainingHoursInfo>
 
               <HourOptionsGrid isRTL={isRTL}>
@@ -1146,7 +1197,11 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
                   setUseCustomHours(true);
                   setShowHourError(false);
                 }}
-                style={{ marginBottom: '10px', width: '100%' }}
+                style={{ 
+                  marginBottom: '10px', 
+                  width: '100%',
+                  gridColumn: '1 / -1'
+                }}
               >
                 {isRTL ? 'ادخال ساعات مخصصة' : 'Enter Custom Hours'}
               </HourOption>
@@ -1161,6 +1216,7 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
                   onChange={(e) => {
                     setCustomHours(e.target.value);
                     setShowHourError(false);
+                    // The preview will automatically update due to the dynamic calculation above
                   }}
                   placeholder={isRTL ? 'ادخل عدد الساعات (0.5 - 2)' : 'Enter hours (0.5 - 2)'}
                   isDarkMode={isDarkMode}
@@ -1171,10 +1227,26 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
 
               {showHourError && (
                 <HourErrorMessage isDarkMode={isDarkMode} isRTL={isRTL}>
-                  {isRTL 
-                    ? 'يرجى إدخال عدد ساعات صحيح (حد أقصى 2 ساعة يومياً)'
-                    : 'Please enter a valid number of hours (max 2 hours per day)'
-                  }
+                  {(() => {
+                    if (selectedType === 'lateArrival' || selectedType === 'earlyLeave') {
+                      if (!useCustomHours && selectedHours <= 0) {
+                        return isRTL 
+                          ? 'يرجى اختيار عدد الساعات المطلوبة'
+                          : 'Please select the number of hours required';
+                      } else if (useCustomHours && (!customHours || parseFloat(customHours) <= 0)) {
+                        return isRTL 
+                          ? 'يرجى إدخال عدد ساعات صحيح (0.5 - 2 ساعة)'
+                          : 'Please enter a valid number of hours (0.5 - 2 hours)';
+                      } else {
+                        return isRTL 
+                          ? 'يرجى إدخال عدد ساعات صحيح (حد أقصى 2 ساعة يومياً)'
+                          : 'Please enter a valid number of hours (max 2 hours per day)';
+                      }
+                    }
+                    return isRTL 
+                      ? 'يرجى إدخال عدد ساعات صحيح'
+                      : 'Please enter a valid number of hours';
+                  })()}
                 </HourErrorMessage>
               )}
             </HourSelectionSection>

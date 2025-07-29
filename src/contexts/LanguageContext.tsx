@@ -88,6 +88,7 @@ const enTranslations = {
   'teachers.title': 'Teachers Management',
   'teachers.allTeachers': 'All Teachers',
   'teachers.reports': 'Reports',
+  'teachers.analytics': 'Analytics',
   'teachers.searchTeachers': 'Search teachers...',
   'teachers.filterBySubject': 'Filter by Subject',
   'teachers.allSubjects': 'All Subjects',
@@ -100,8 +101,8 @@ const enTranslations = {
   'teachers.workType.partTime': 'Part-time',
   'teachers.status.active': 'Active',
   'teachers.status.inactive': 'Inactive',
-  'teachers.noTeachers': 'No teachers found',
-  'teachers.noTeachersDesc': 'No teachers match your current filters.',
+  'teachers.noTeachers': 'No Teachers Found',
+  'teachers.noTeachersDesc': 'No teachers match your current filters',
 
   // Teachers Reports
   'reports.teacher': 'Teacher',
@@ -145,7 +146,6 @@ const enTranslations = {
     'addTeacher.employmentDateHelper': 'Auto-calculates absence days: 0 days (<3 months), 9 days (3 months-2 years), 12 days (>2 years)',
     'addTeacher.allowedAbsenceDaysHelper': 'Manager can override the auto-calculated value',
     'addTeacher.authorities': 'Authorities',
-  'addTeacher.roleType': 'Work Type',
   'addTeacher.systemRole': 'System Role',
   'addTeacher.selectSystemRole': 'Select System Role',
   'systemRoles.admin': 'Admin',
@@ -369,6 +369,244 @@ const enTranslations = {
   'authorities.canManageRequests': 'Accept and Reject Requests',
   'authorities.canDownloadReports': 'Download Reports',
   'authorities.canManageAuthorities': 'Manage Authorities (Admin Only)',
+
+  // Time Periods
+  'periods.today': 'Today',
+  'periods.week': 'This Week',
+  'periods.month': 'This Month',
+  'periods.quarter': 'This Quarter',
+  'periods.year': 'This Year',
+  
+  // Analytics KPIs
+  'analytics.totalTeachers': 'Total Teachers',
+  'analytics.attendanceRate': 'Attendance Rate',
+  'analytics.topPerformers': 'Top Performers',
+  'analytics.atRisk': 'At Risk',
+  'analytics.departments': 'Departments',
+  
+  // Analytics Charts
+  'analytics.performanceDistribution': 'Performance Distribution',
+  'analytics.departmentPerformance': 'Department Performance',
+  'analytics.departmentPerformanceDesc': 'Compare attendance, absence, late arrival, and early leave patterns between departments across different time periods',
+  'analytics.weeklyAttendancePatterns': 'Weekly Attendance Patterns',
+  'analytics.teacherPerformanceRanking': 'Teacher Performance Ranking',
+  
+  // New Comparison and Tracking Sections
+  'analytics.departmentComparison': 'Department Performance Comparison',
+  'analytics.teacherComparison': 'Teachers Performance Comparison',
+  'analytics.departmentTracking': 'Department Performance Tracking',
+  'analytics.teacherTracking': 'Teacher Performance Tracking',
+  
+  // Comparison Charts
+  'analytics.absenceComparison': 'Absence Comparison',
+  'analytics.earlyLeavesComparison': 'Early Leaves Comparison',
+  'analytics.lateArrivalComparison': 'Late Arrival Comparison',
+  'analytics.absenceRequests': 'Absence Requests',
+  'analytics.earlyLeavesRequests': 'Early Leaves Requests',
+  'analytics.lateArrivalRequests': 'Late Arrival Requests',
+  
+  // Tracking Charts
+  'analytics.registeredAbsence': 'Registered Absence Progress',
+  'analytics.registeredEarlyLeaves': 'Registered Early Leaves Progress',
+  'analytics.registeredLateArrival': 'Registered Late Arrival Progress',
+  
+  // Analytics Table Headers
+  'analytics.teacher': 'Teacher',
+  'analytics.department': 'Department',
+  'analytics.attendanceRateCol': 'Attendance Rate',
+  'analytics.punctuality': 'Punctuality',
+  'analytics.performance': 'Performance',
+  
+  // Performance Status Labels
+  'performance.excellent': 'Excellent',
+  'performance.good': 'Good',
+  'performance.average': 'Average',
+  'performance.poor': 'Poor',
+  
+  // Analytics Chart Labels
+  'analytics.attendance': 'Attendance',
+  'analytics.punctualityChart': 'Punctuality',
+  'analytics.absence': 'Absence',
+  'analytics.lateArrival': 'Late Arrival',
+  'analytics.earlyLeave': 'Early Leave',
+  
+  // Analytics Sections
+  'analytics.departmentsPerformanceComparison': 'Departments Performance Comparison',
+  'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',  
+  'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
+  'analytics.teacherPerformanceTracking': 'Teacher Performance Tracking',
+  'analytics.registeredAbsence': 'Registered Absence',
+  'analytics.registeredEarlyLeave': 'Registered Early Leave',
+  'analytics.registeredLateArrival': 'Registered Late Arrival',
+  
+  // Analytics KPI Modal
+  'analytics.totalTeachersDesc': 'Total number of active teachers in the system across all departments and subjects.',
+  'analytics.attendanceRateDesc': 'Overall attendance rate percentage calculated from daily check-ins and check-outs.',
+  'analytics.topPerformersDesc': 'Teachers with excellent attendance, punctuality, and overall performance ratings.',
+  'analytics.atRiskDesc': 'Teachers who may need additional support based on attendance patterns and performance metrics.',
+  'analytics.departmentsDesc': 'Total number of active departments with assigned teaching staff.',
+  'analytics.activeTeachers': 'Active Teachers',
+  'analytics.newThisMonth': 'New This Month',
+  'analytics.currentRate': 'Current Rate',
+  'analytics.lastMonth': 'Last Month',
+  'analytics.trend': 'Trend',
+  'analytics.excellentRating': 'Excellent Rating',
+  'analytics.averageScore': 'Average Score',
+  'analytics.improvement': 'Improvement',
+  'analytics.needingSupport': 'Needing Support',
+  'analytics.attendanceBelow': 'Attendance Below',
+  'analytics.improvementPlan': 'Improvement Plan',
+  'analytics.totalDepartments': 'Total Departments',
+  'analytics.fullyStaffed': 'Fully Staffed',
+  'analytics.needingStaff': 'Needing Staff',
+  'analytics.keyInsights': 'Key Insights',
+  
+  // Collapsible Section Titles
+  'analytics.departmentComparisons': 'Department Comparisons',
+  'analytics.departmentRequests': 'Department Requests',
+  'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',
+  'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
+  'analytics.teacherPerformanceTracking': 'Teacher Performance Tracking',
+  
+  // Section Descriptions
+  'analytics.departmentComparisonsDesc': 'Compare absence, early leave, and late arrival metrics across different departments to identify patterns and areas for improvement.',
+  'analytics.departmentRequestsDesc': 'Analyze request patterns for absence, early leave, and late arrival across departments to understand workflow and staffing needs.',
+  'analytics.teachersPerformanceComparisonDesc': 'Compare individual teacher performance metrics to identify top performers and those who may need additional support.',
+  'analytics.departmentPerformanceTrackingDesc': 'Track department performance trends over time to monitor improvement and identify seasonal patterns.',
+  'analytics.teacherPerformanceTrackingDesc': 'Monitor individual teacher performance trends over time to support professional development and recognition.',
+  
+  // Department Comparison Charts
+  'analytics.absenceComparison': 'Absence Comparison',
+  'analytics.earlyLeaveComparison': 'Early Leave Comparison',
+  'analytics.lateArrivalComparison': 'Late Arrival Comparison',
+  'analytics.absenceRequests': 'Absence Requests',
+  'analytics.earlyLeaveRequests': 'Early Leave Requests',
+  'analytics.lateArrivalRequests': 'Late Arrival Requests',
+  
+  // Chart Descriptions
+  'analytics.absenceComparisonDesc': 'Compare the number of absent days across different departments to identify which areas have higher absence rates.',
+  'analytics.earlyLeaveComparisonDesc': 'Analyze early departure patterns by department to understand workload distribution and scheduling needs.',
+  'analytics.lateArrivalComparisonDesc': 'Track late arrival incidents across departments to identify punctuality trends and potential scheduling issues.',
+  'analytics.absenceRequestsDesc': 'Monitor formal absence request volumes by department to understand planned leave patterns and staffing requirements.',
+  'analytics.earlyLeaveRequestsDesc': 'Review early departure request patterns to identify departments with frequent early leave needs.',
+  'analytics.lateArrivalRequestsDesc': 'Analyze late arrival request trends to understand traffic, transportation, or scheduling challenges by department.',
+  
+  // Teacher Comparison Charts
+  'analytics.teacherAbsenceComparison': 'Teacher Absence Comparison',
+  'analytics.teacherEarlyLeaveComparison': 'Teacher Early Leave Comparison',
+  'analytics.teacherLateArrivalComparison': 'Teacher Late Arrival Comparison',
+  'analytics.teacherAbsenceRequests': 'Teacher Absence Requests',
+  'analytics.teacherEarlyLeaveRequests': 'Teacher Early Leave Requests',
+  'analytics.teacherLateArrivalRequests': 'Teacher Late Arrival Requests',
+  
+  // Teacher Chart Descriptions
+  'analytics.teacherAbsenceComparisonDesc': 'Compare absence patterns among individual teachers to identify those who may need support or recognition.',
+  'analytics.teacherEarlyLeaveComparisonDesc': 'Analyze early departure patterns by teacher to understand individual scheduling needs and workload distribution.',
+  'analytics.teacherLateArrivalComparisonDesc': 'Track late arrival incidents by teacher to provide targeted support and identify potential challenges.',
+  'analytics.teacherAbsenceRequestsDesc': 'Monitor formal absence requests by individual teachers to understand planned leave patterns and coverage needs.',
+  'analytics.teacherEarlyLeaveRequestsDesc': 'Review early departure requests by teacher to identify individual scheduling preferences and constraints.',
+  'analytics.teacherLateArrivalRequestsDesc': 'Analyze late arrival requests by teacher to understand individual transportation or scheduling challenges.',
+  
+  // Department Tracking Charts
+  'analytics.departmentRegisteredAbsenceTracking': 'Department Registered Absence Tracking',
+  'analytics.departmentRegisteredEarlyLeavesTracking': 'Department Registered Early Leaves Tracking',
+  'analytics.departmentRegisteredLateArrivalTracking': 'Department Registered Late Arrival Tracking',
+  'analytics.departmentAbsenceRequestsTracking': 'Department Absence Requests Tracking',
+  'analytics.departmentEarlyLeaveRequestsTracking': 'Department Early Leave Requests Tracking',
+  'analytics.departmentLateArrivalRequestsTracking': 'Department Late Arrival Requests Tracking',
+  
+  // Department Tracking Descriptions
+  'analytics.departmentRegisteredAbsenceTrackingDesc': 'Track registered absence trends over time to identify seasonal patterns and department-specific issues.',
+  'analytics.departmentRegisteredEarlyLeavesTrackingDesc': 'Monitor early departure trends to understand workload cycles and staffing optimization opportunities.',
+  'analytics.departmentRegisteredLateArrivalTrackingDesc': 'Track late arrival patterns over time to identify systemic issues and improvement areas.',
+  'analytics.departmentAbsenceRequestsTrackingDesc': 'Monitor absence request volumes over time to predict staffing needs and plan coverage.',
+  'analytics.departmentEarlyLeaveRequestsTrackingDesc': 'Track early departure request trends to understand scheduling patterns and optimize work hours.',
+  'analytics.departmentLateArrivalRequestsTrackingDesc': 'Monitor late arrival request patterns to identify recurring challenges and implement solutions.',
+  
+  // Teacher Tracking Charts
+  'analytics.teacherRegisteredAbsenceTracking': 'Teacher Registered Absence Tracking',
+  'analytics.teacherRegisteredEarlyLeavesTracking': 'Teacher Registered Early Leaves Tracking',
+  'analytics.teacherRegisteredLateArrivalTracking': 'Teacher Registered Late Arrival Tracking',
+  'analytics.teacherAbsenceRequestsTracking': 'Teacher Absence Requests Tracking',
+  'analytics.teacherEarlyLeaveRequestsTracking': 'Teacher Early Leave Requests Tracking',
+  'analytics.teacherLateArrivalRequestsTracking': 'Teacher Late Arrival Requests Tracking',
+  
+  // Section Descriptions
+  'analytics.teachersPerformanceComparisonDesc': 'Compare individual teacher performance across absence, early leave, and late arrival metrics to identify top performers and those needing support.',
+  'analytics.departmentPerformanceTrackingDesc': 'Track department-level attendance patterns over time to monitor trends, seasonal variations, and improvement progress.',
+  'analytics.teacherPerformanceTrackingDesc': 'Monitor individual teacher attendance patterns over time to identify trends and provide targeted support.',
+  
+  // Chart Descriptions
+  'analytics.absenceComparisonDesc': 'Compare absence rates across departments to identify patterns and outliers.',
+  'analytics.earlyLeaveComparisonDesc': 'Analyze early departure patterns by department to understand workflow needs.',
+  'analytics.lateArrivalComparisonDesc': 'Monitor tardiness levels across departments for punctuality insights.',
+  'analytics.absenceRequestsDesc': 'Track absence request volumes by department to understand planning needs.',
+  'analytics.earlyLeaveRequestsDesc': 'Monitor early leave requests by department for better shift management.',
+  'analytics.lateArrivalRequestsDesc': 'Analyze late arrival requests by department to identify scheduling issues.',
+
+  
+  // Teacher Tracking Descriptions
+  'analytics.teacherRegisteredAbsenceTrackingDesc': 'Track individual teacher absence trends over time to provide personalized support and recognition.',
+  'analytics.teacherRegisteredEarlyLeavesTrackingDesc': 'Monitor individual early departure patterns to understand personal scheduling needs and constraints.',
+  'analytics.teacherRegisteredLateArrivalTrackingDesc': 'Track individual late arrival trends to identify personal challenges and provide targeted support.',
+  'analytics.teacherAbsenceRequestsTrackingDesc': 'Monitor individual absence request patterns to understand personal leave preferences and needs.',
+  'analytics.teacherEarlyLeaveRequestsTrackingDesc': 'Track individual early departure requests to accommodate personal scheduling requirements.',
+  'analytics.teacherLateArrivalRequestsTrackingDesc': 'Monitor individual late arrival requests to understand personal transportation or scheduling challenges.',
+  
+  // Analytics KPI Modal Tables
+  'analytics.allTeachersOverview': 'All Teachers Overview',
+  'analytics.attendanceDetails': 'Attendance Details',
+  'analytics.excellentPerformers': 'Top Performing Teachers',
+  'analytics.teachersNeedingSupport': 'Teachers Needing Support',
+  'analytics.departmentStaffing': 'Department Staffing Overview',
+  'analytics.teacherPerformance': 'Teacher Performance',
+  'analytics.teacherName': 'Teacher Name',
+  'analytics.workType': 'Work Type',
+  'analytics.employmentDate': 'Employment Date',
+  'analytics.absences': 'Absences',
+  'analytics.workHours': 'Work Hours',
+  'analytics.overallScore': 'Overall Score',
+  'analytics.lateArrivals': 'Late Arrivals',
+  'analytics.concernLevel': 'Concern Level',
+  'analytics.role': 'Role',
+  'analytics.status.excellent': 'Excellent',
+  'analytics.status.good': 'Good',
+  'analytics.status.average': 'Average',
+  'analytics.status.poor': 'Poor',
+  'analytics.status.atRisk': 'At Risk',
+  
+  // Analytics Insights
+  'analytics.insights.staffBalance': 'Staff distribution across departments is well balanced',
+  'analytics.insights.onboarding': 'New teacher onboarding is proceeding smoothly',
+  'analytics.insights.ratios': 'Teacher-to-student ratios are within optimal ranges',
+  'analytics.insights.coverage': 'Department coverage is complete with no gaps',
+  'analytics.insights.targetThreshold': 'Attendance rate is above the 85% target threshold',
+  'analytics.insights.improvement': 'Steady improvement over the past three months',
+  'analytics.insights.morningAttendance': 'Morning attendance is consistently higher than afternoon',
+  'analytics.insights.weekendStable': 'Weekend activities show lower but stable attendance',
+  'analytics.insights.topAttendance': 'Top performers maintain 95%+ attendance rates',
+  'analytics.insights.punctuality': 'Consistent early arrivals and minimal late departures',
+  'analytics.insights.satisfaction': 'High student satisfaction scores in evaluations',
+  'analytics.insights.development': 'Active participation in professional development',
+  'analytics.insights.challenges': 'Personal challenges affecting work attendance identified',
+  'analytics.insights.support': 'Targeted support programs have been initiated',
+  'analytics.insights.checkins': 'Monthly check-ins scheduled with department heads',
+  'analytics.insights.opportunities': 'Professional development opportunities provided',
+  'analytics.insights.adequate': 'Most departments have adequate staffing levels',
+  'analytics.insights.stemSatisfaction': 'STEM departments show highest teacher satisfaction',
+  'analytics.insights.languageOutcomes': 'Language departments have excellent student outcomes',
+  'analytics.insights.artsEngagement': 'Arts departments demonstrate strong community engagement',
+
+  // Comparison Labels
+  'comparison.comparePeriods': 'Compare Periods',
+  'comparison.hideComparison': 'Hide Comparison',
+  'comparison.compare': 'Compare',
+  'comparison.compareWith': 'Compare with:',
+  'comparison.vs': 'vs',
+  'comparison.current': 'Current:',
+
+  // New Analytics Charts
+  'analytics.attendanceCommitmentLevel': 'Attendance Commitment Level',
 };
 
 // Arabic translations
@@ -446,6 +684,7 @@ const arTranslations = {
   'teachers.title': 'إدارة المعلمين',
   'teachers.allTeachers': 'جميع المعلمين',
   'teachers.reports': 'التقارير',
+  'teachers.analytics': 'التحليلات',
   'teachers.searchTeachers': 'البحث عن المعلمين...',
   'teachers.filterBySubject': 'تصفية حسب المادة',
   'teachers.allSubjects': 'جميع المواد',
@@ -503,7 +742,6 @@ const arTranslations = {
     'addTeacher.employmentDateHelper': 'حساب تلقائي لأيام الغياب: 0 أيام (أقل من 3 أشهر)، 9 أيام (3 أشهر-سنتان)، 12 يوماً (أكثر من سنتين)',
     'addTeacher.allowedAbsenceDaysHelper': 'يمكن للمدير تعديل القيمة المحسوبة تلقائياً',
     'addTeacher.authorities': 'الصلاحيات',
-  'addTeacher.roleType': 'نوع الدوام',
   'addTeacher.systemRole': 'الدور في النظام',
   'addTeacher.selectSystemRole': 'اختر الدور في النظام',
   'systemRoles.admin': 'مدير عام',
@@ -727,6 +965,228 @@ const arTranslations = {
   'authorities.canManageRequests': 'قبول ورفض الطلبات',
   'authorities.canDownloadReports': 'تحميل التقارير',
   'authorities.canManageAuthorities': 'إدارة الصلاحيات (للمدير فقط)',
+
+  // Time Periods
+  'periods.today': 'اليوم',
+  'periods.week': 'هذا الأسبوع',
+  'periods.month': 'هذا الشهر',
+  'periods.quarter': 'هذا الربع',
+  'periods.year': 'هذا العام',
+  
+  // Analytics KPIs
+  'analytics.totalTeachers': 'إجمالي المعلمين',
+  'analytics.attendanceRate': 'معدل الحضور',
+  'analytics.topPerformers': 'المتميزون',
+  'analytics.atRisk': 'المخاطر',
+  'analytics.departments': 'الأقسام',
+  
+  // Analytics Charts
+  'analytics.performanceDistribution': 'توزيع الأداء',
+  'analytics.departmentPerformance': 'تحليل أداء الأقسام',
+  'analytics.departmentPerformanceDesc': 'مقارنة أنماط الحضور والغياب والوصول المتأخر والانصراف المبكر بين الأقسام عبر فترات زمنية مختلفة',
+  'analytics.weeklyAttendancePatterns': 'أنماط الحضور الأسبوعية',
+  'analytics.teacherPerformanceRanking': 'ترتيب أداء المعلمين',
+  
+  // New Comparison and Tracking Sections
+  'analytics.departmentComparison': 'مقارنة أداء الأقسام',
+  'analytics.teacherComparison': 'مقارنة أداء المعلمين',
+  'analytics.departmentTracking': 'تتبع أداء الأقسام',
+  'analytics.teacherTracking': 'تتبع أداء المعلمين',
+  
+  // Comparison Charts
+  'analytics.absenceComparison': 'مقارنة الغياب',
+  'analytics.earlyLeavesComparison': 'مقارنة الانصراف المبكر',
+  'analytics.lateArrivalComparison': 'مقارنة التأخير',
+  'analytics.absenceRequests': 'طلبات الغياب',
+  'analytics.earlyLeavesRequests': 'طلبات الانصراف المبكر',
+  'analytics.lateArrivalRequests': 'طلبات التأخير',
+  
+  // Tracking Charts
+  'analytics.registeredAbsence': 'تقدم الغياب المسجل',
+  'analytics.registeredEarlyLeaves': 'تقدم الانصراف المبكر المسجل',
+  'analytics.registeredLateArrival': 'تقدم التأخير المسجل',
+  
+  // Analytics Table Headers
+  'analytics.teacher': 'المعلم',
+  'analytics.department': 'القسم',
+  'analytics.attendanceRateCol': 'معدل الحضور',
+  'analytics.punctuality': 'التأخير',
+  'analytics.performance': 'الأداء',
+  
+  // Performance Status Labels
+  'performance.excellent': 'ممتاز',
+  'performance.good': 'جيد',
+  'performance.average': 'متوسط',
+  'performance.poor': 'ضعيف',
+  
+  // Analytics Chart Labels
+  'analytics.attendance': 'الحضور',
+  'analytics.punctualityChart': 'التأخير',
+  'analytics.absence': 'الغياب',
+  'analytics.lateArrival': 'الوصول المتأخر',
+  'analytics.earlyLeave': 'الانصراف المبكر',
+  
+  // Analytics Sections
+  'analytics.departmentsPerformanceComparison': 'مقارنة أداء الأقسام',
+  'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',  
+  'analytics.departmentPerformanceTracking': 'تتبع أداء الأقسام',
+  'analytics.teacherPerformanceTracking': 'تتبع أداء المعلمين',
+  'analytics.registeredAbsence': 'الغياب المسجل',
+  'analytics.registeredEarlyLeave': 'الانصراف المبكر المسجل',
+  'analytics.registeredLateArrival': 'الوصول المتأخر المسجل',
+  
+  // Analytics KPI Modal
+  'analytics.totalTeachersDesc': 'إجمالي عدد المعلمين النشطين في النظام عبر جميع الأقسام والمواد.',
+  'analytics.attendanceRateDesc': 'معدل الحضور الإجمالي بالنسبة المئوية محسوب من أيام التسجيل اليومي والخروج.',
+  'analytics.topPerformersDesc': 'المعلمون الذين لديهم حضور وتأخير وأداء عام جيد.',
+  'analytics.atRiskDesc': 'المعلمون الذين قد يحتاجون إلى دعم إضافي بناءً على أنماط الغياب والمقاييس الأدائية.',
+  'analytics.departmentsDesc': 'إجمالي عدد الأقسام النشطة مع فريق التدريس.',
+  'analytics.activeTeachers': 'المعلمون النشطون',
+  'analytics.newThisMonth': 'الجدد هذا الشهر',
+  'analytics.currentRate': 'المعدل الحالي',
+  'analytics.lastMonth': 'الشهر الماضي',
+  'analytics.trend': 'الاتجاه',
+  'analytics.excellentRating': 'تقييم جيد جداً',
+  'analytics.averageScore': 'النتيجة المتوسطة',
+  'analytics.improvement': 'التحسين',
+  'analytics.needingSupport': 'التأكيد على الدعم',
+  'analytics.attendanceBelow': 'الحضور أقل من',
+  'analytics.improvementPlan': 'خطة التحسين',
+  'analytics.totalDepartments': 'إجمالي الأقسام',
+  'analytics.fullyStaffed': 'مكتمل الفريق',
+  'analytics.needingStaff': 'التأكيد على الفريق',
+  'analytics.keyInsights': 'المفاهيم الرئيسية',
+  
+  // Collapsible Section Titles
+  'analytics.departmentComparisons': 'مقارنات الأقسام',
+  'analytics.departmentRequests': 'طلبات الأقسام',
+  'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',
+  'analytics.departmentPerformanceTracking': 'تتبع أداء الأقسام',
+  'analytics.teacherPerformanceTracking': 'تتبع أداء المعلمين',
+  
+  // Section Descriptions
+  'analytics.departmentComparisonsDesc': 'قارن مقاييس الغياب والانصراف المبكر والوصول المتأخر عبر الأقسام المختلفة لتحديد الأنماط ومجالات التحسين.',
+  'analytics.departmentRequestsDesc': 'حلل أنماط الطلبات للغياب والانصراف المبكر والوصول المتأخر عبر الأقسام لفهم سير العمل واحتياجات التوظيف.',
+  'analytics.teachersPerformanceComparisonDesc': 'قارن مقاييس أداء المعلمين الفردي لتحديد المتميزين والذين قد يحتاجون إلى دعم إضافي.',
+  'analytics.departmentPerformanceTrackingDesc': 'تتبع اتجاهات أداء الأقسام مع مرور الوقت لمراقبة التحسن وتحديد الأنماط الموسمية.',
+  'analytics.teacherPerformanceTrackingDesc': 'راقب اتجاهات أداء المعلمين الفردي مع مرور الوقت لدعم التطوير المهني والتقدير.',
+  
+  // Department Comparison Charts
+  'analytics.absenceComparison': 'مقارنة الغياب',
+  'analytics.earlyLeaveComparison': 'مقارنة الانصراف المبكر',
+  'analytics.lateArrivalComparison': 'مقارنة الوصول المتأخر',
+  'analytics.absenceRequests': 'طلبات الغياب',
+  'analytics.earlyLeaveRequests': 'طلبات الانصراف المبكر',
+  'analytics.lateArrivalRequests': 'طلبات الوصول المتأخر',
+  
+  // Chart Descriptions
+  'analytics.absenceComparisonDesc': 'قارن عدد أيام الغياب عبر الأقسام المختلفة لتحديد المناطق التي لديها معدلات غياب أعلى.',
+  'analytics.earlyLeaveComparisonDesc': 'حلل أنماط الانصراف المبكر حسب القسم لفهم توزيع أعباء العمل واحتياجات الجدولة.',
+  'analytics.lateArrivalComparisonDesc': 'تتبع حوادث الوصول المتأخر عبر الأقسام لتحديد اتجاهات الالتزام بالمواعيد ومشاكل الجدولة المحتملة.',
+  'analytics.absenceRequestsDesc': 'راقب أحجام طلبات الغياب الرسمية حسب القسم لفهم أنماط الإجازة المخططة ومتطلبات التوظيف.',
+  'analytics.earlyLeaveRequestsDesc': 'راجع أنماط طلبات الانصراف المبكر لتحديد الأقسام التي لديها احتياجات متكررة للانصراف المبكر.',
+  'analytics.lateArrivalRequestsDesc': 'حلل اتجاهات طلبات الوصول المتأخر لفهم تحديات المرور أو النقل أو الجدولة حسب القسم.',
+  
+  // Teacher Comparison Charts
+  'analytics.teacherAbsenceComparison': 'مقارنة غياب المعلمين',
+  'analytics.teacherEarlyLeaveComparison': 'مقارنة الانصراف المبكر للمعلمين',
+  'analytics.teacherLateArrivalComparison': 'مقارنة الوصول المتأخر للمعلمين',
+  'analytics.teacherAbsenceRequests': 'طلبات غياب المعلمين',
+  'analytics.teacherEarlyLeaveRequests': 'طلبات الانصراف المبكر للمعلمين',
+  'analytics.teacherLateArrivalRequests': 'طلبات الوصول المتأخر للمعلمين',
+  
+  // Teacher Chart Descriptions
+  'analytics.teacherAbsenceComparisonDesc': 'قارن أنماط الغياب بين المعلمين الفرديين لتحديد الذين قد يحتاجون إلى دعم أو تقدير.',
+  'analytics.teacherEarlyLeaveComparisonDesc': 'حلل أنماط الانصراف المبكر حسب المعلم لفهم الاحتياجات الفردية للجدولة وتوزيع أعباء العمل.',
+  'analytics.teacherLateArrivalComparisonDesc': 'تتبع حوادث الوصول المتأخر حسب المعلم لتقديم الدعم المستهدف وتحديد التحديات المحتملة.',
+  'analytics.teacherAbsenceRequestsDesc': 'راقب طلبات الغياب الرسمية للمعلمين الفرديين لفهم أنماط الإجازة المخططة واحتياجات التغطية.',
+  'analytics.teacherEarlyLeaveRequestsDesc': 'راجع طلبات الانصراف المبكر حسب المعلم لتحديد التفضيلات والقيود الفردية للجدولة.',
+  'analytics.teacherLateArrivalRequestsDesc': 'حلل طلبات الوصول المتأخر حسب المعلم لفهم تحديات النقل أو الجدولة الفردية.',
+  
+  // Department Tracking Charts
+  'analytics.departmentRegisteredAbsenceTracking': 'تتبع الغياب المسجل للأقسام',
+  'analytics.departmentRegisteredEarlyLeavesTracking': 'تتبع الانصراف المبكر المسجل للأقسام',
+  'analytics.departmentRegisteredLateArrivalTracking': 'تتبع الوصول المتأخر المسجل للأقسام',
+  'analytics.departmentAbsenceRequestsTracking': 'تتبع طلبات الغياب للأقسام',
+  'analytics.departmentEarlyLeaveRequestsTracking': 'تتبع طلبات الانصراف المبكر للأقسام',
+  'analytics.departmentLateArrivalRequestsTracking': 'تتبع طلبات الوصول المتأخر للأقسام',
+  
+  // Teacher Tracking Charts
+  'analytics.teacherRegisteredAbsenceTracking': 'تتبع الغياب المسجل للمعلمين',
+  'analytics.teacherRegisteredEarlyLeavesTracking': 'تتبع الانصراف المبكر المسجل للمعلمين',
+  'analytics.teacherRegisteredLateArrivalTracking': 'تتبع الوصول المتأخر المسجل للمعلمين',
+  'analytics.teacherAbsenceRequestsTracking': 'تتبع طلبات غياب المعلمين',
+  'analytics.teacherEarlyLeaveRequestsTracking': 'تتبع طلبات الانصراف المبكر للمعلمين',
+  'analytics.teacherLateArrivalRequestsTracking': 'تتبع طلبات الوصول المتأخر للمعلمين',
+  
+  // Section Descriptions
+  'analytics.teachersPerformanceComparisonDesc': 'قارن أداء المعلمين الفردي عبر مقاييس الغياب والانصراف المبكر والوصول المتأخر لتحديد المتميزين والذين يحتاجون دعماً.',
+  'analytics.departmentPerformanceTrackingDesc': 'تتبع أنماط الحضور على مستوى الأقسام عبر الزمن لمراقبة الاتجاهات والتغيرات الموسمية وتقدم التحسين.',
+  'analytics.teacherPerformanceTrackingDesc': 'راقب أنماط حضور المعلمين الفردية عبر الزمن لتحديد الاتجاهات وتقديم الدعم المستهدف.',
+  
+  // Chart Descriptions
+  'analytics.absenceComparisonDesc': 'قارن معدلات الغياب عبر الأقسام لتحديد الأنماط والحالات الشاذة.',
+  'analytics.earlyLeaveComparisonDesc': 'حلل أنماط الانصراف المبكر حسب القسم لفهم احتياجات سير العمل.',
+  'analytics.lateArrivalComparisonDesc': 'راقب مستويات التأخير عبر الأقسام للحصول على رؤى حول الالتزام بالمواعيد.',
+  'analytics.absenceRequestsDesc': 'تتبع أحجام طلبات الغياب حسب القسم لفهم احتياجات التخطيط.',
+  'analytics.earlyLeaveRequestsDesc': 'راقب طلبات الانصراف المبكر حسب القسم لإدارة أفضل للنوبات.',
+  'analytics.lateArrivalRequestsDesc': 'حلل طلبات الوصول المتأخر حسب القسم لتحديد مشاكل الجدولة.',
+
+  
+  // Analytics KPI Modal Tables
+  'analytics.allTeachersOverview': 'نظرة عامة على جميع المعلمين',
+  'analytics.attendanceDetails': 'تفاصيل الحضور',
+  'analytics.excellentPerformers': 'المعلمون المتميزون في الأداء',
+  'analytics.teachersNeedingSupport': 'المعلمون الذين يحتاجون إلى الدعم',
+  'analytics.departmentStaffing': 'توزيع الموظفين على الأقسام',
+  'analytics.teacherPerformance': 'أداء المعلمين',
+  'analytics.teacherName': 'اسم المعلم',
+  'analytics.workType': 'نوع العمل',
+  'analytics.employmentDate': 'تاريخ التوظيف',
+  'analytics.absences': 'أيام الغياب',
+  'analytics.workHours': 'ساعات العمل',
+  'analytics.overallScore': 'النتيجة الإجمالية',
+  'analytics.lateArrivals': 'مرات التأخير',
+  'analytics.concernLevel': 'مستوى الاهتمام',
+  'analytics.role': 'الدور الوظيفي',
+  'analytics.status.excellent': 'متميز',
+  'analytics.status.good': 'جيد',
+  'analytics.status.average': 'متوسط',
+  'analytics.status.poor': 'ضعيف',
+  'analytics.status.atRisk': 'يحتاج دعم',
+  
+  // Analytics Insights
+  'analytics.insights.staffBalance': 'توزيع الموظفين عبر الأقسام متوازن بشكل جيد',
+  'analytics.insights.onboarding': 'توظيف المعلمين الجدد يتم بإتقان',
+  'analytics.insights.ratios': 'نسب المعلمين إلى الطلاب داخل نطاقات أمثل',
+  'analytics.insights.coverage': 'تغطية الأقسام مكتملة بدون خلافات',
+  'analytics.insights.targetThreshold': 'معدل الحضور أعلى من أهداف الإرغاء الـ 85%',
+  'analytics.insights.improvement': 'التحسين المستمر خلال الثلاثة أشهر الماضية',
+  'analytics.insights.morningAttendance': 'الحضور في الصباح أعلى بشكل منتظم من الظهر',
+  'analytics.insights.weekendStable': 'النشاطات في الأسبوع الخارجية تظهر حضوراً أقل ولكن مستقراً',
+  'analytics.insights.topAttendance': 'المتميزون يحافظون على معدلات حضور 95%+',
+  'analytics.insights.punctuality': 'وصول مبكر متناسق وتأخيراً أقل من الأطوال',
+  'analytics.insights.satisfaction': 'درجات الرضا على التقييمات عالية',
+  'analytics.insights.development': 'المشاركة النشطة في التطوير المهني',
+  'analytics.insights.challenges': 'التحديات الشخصية التي تؤثر على حضور العمل تم التحديد',
+  'analytics.insights.support': 'برامج الدعم الهدفية تم إنشاؤها',
+  'analytics.insights.checkins': 'تم إعداد التفاعلات الشهرية مع رؤساء الأقسام',
+  'analytics.insights.opportunities': 'الفرص التطويرية المقدمة',
+  'analytics.insights.adequate': 'أغلب الأقسام لديها مستويات دعم كافية',
+  'analytics.insights.stemSatisfaction': 'الأقسام العلمية (STEM) تظهر أعلى رضا المعلمين',
+  'analytics.insights.languageOutcomes': 'الأقسام اللغوية تحقق أفضل نتائج الطلاب',
+  'analytics.insights.artsEngagement': 'الأقسام الفنونية تظهر تفاعلاً قوياً مع المجتمع',
+
+  // Comparison Labels
+  'comparison.comparePeriods': 'مقارنة الفترات',
+  'comparison.hideComparison': 'إخفاء المقارنة',
+  'comparison.compare': 'مقارنة',
+  'comparison.compareWith': 'مقارنة بـ:',
+  'comparison.vs': 'على',
+  'comparison.current': 'الحالي:',
+
+  // New Analytics Charts
+  'analytics.attendanceCommitmentLevel': 'مستوى التزام الحضور',
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);

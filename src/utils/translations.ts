@@ -122,6 +122,15 @@ export const translations = {
     no: "No",
     late: "Late",
     
+    // Time Periods
+    periods: {
+      today: "Today",
+      week: "This Week",
+      month: "This Month",
+      quarter: "This Quarter",
+      year: "This Year"
+    },
+    
     // Request Types
     earlyLeave: "Early Leave",
     lateArrival: "Late Arrival",
@@ -184,6 +193,38 @@ export const translations = {
     'teachers.allSubjects': 'All Subjects',
     'teachers.searchTeachers': 'Search teachers...',
     
+    // Analytics KPIs
+    'analytics.totalTeachers': 'Total Teachers',
+    'analytics.attendanceRate': 'Attendance Rate',
+    'analytics.topPerformers': 'Top Performers',
+    'analytics.atRisk': 'At Risk',
+    'analytics.departments': 'Departments',
+    
+    // Analytics Charts
+    'analytics.performanceDistribution': 'Performance Distribution',
+    'analytics.departmentPerformance': 'Department Performance',
+    'analytics.weeklyAttendancePatterns': 'Weekly Attendance Patterns',
+    'analytics.teacherPerformanceRanking': 'Teacher Performance Ranking',
+    
+    // Analytics Table Headers
+    'analytics.teacher': 'Teacher',
+    'analytics.department': 'Department',
+    'analytics.attendanceRateCol': 'Attendance Rate',
+    'analytics.punctuality': 'Punctuality',
+    'analytics.performance': 'Performance',
+    
+    // Analytics Chart Labels
+    'analytics.attendance': 'Attendance',
+    'analytics.punctualityChart': 'Punctuality',
+    
+    // Comparison Labels
+    'comparison.comparePeriods': 'Compare Periods',
+    'comparison.hideComparison': 'Hide Comparison',
+    'comparison.compare': 'Compare',
+    'comparison.compareWith': 'Compare with:',
+    'comparison.vs': 'vs',
+    'comparison.current': 'Current:',
+    
     // Teacher Reports
     'reports.teacher': "Teacher",
     'reports.workType': "Work Type",
@@ -210,6 +251,10 @@ export const translations = {
     // Common
     'common.hours': 'Hours',
     'Page': 'Page',
+    
+    // Form Labels
+    'form.employmentDate': 'Employment Date *',
+    'form.allowedAbsenceDays': 'Allowed Absence Days',
 
     // Subjects
     subjects: {
@@ -431,6 +476,14 @@ export const translations = {
     // Day abbreviations
     dayAbbreviations: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
     
+    // Time Periods
+    periods: {
+      today: "اليوم",
+      week: "هذا الأسبوع",
+      month: "هذا الشهر",
+      quarter: "هذا الربع",
+      year: "هذا العام"
+    },
 
                  
     // Review text
@@ -450,6 +503,38 @@ export const translations = {
     'teachers.noTeachersDesc': 'لا يوجد معلمون يطابقون المرشحات المحددة',
     'teachers.allSubjects': 'جميع المواد',
     'teachers.searchTeachers': 'البحث عن المعلمين...',
+    
+    // Analytics KPIs
+    'analytics.totalTeachers': 'إجمالي المعلمين',
+    'analytics.attendanceRate': 'معدل الحضور',
+    'analytics.topPerformers': 'المتفوقون',
+    'analytics.atRisk': 'معرضون للخطر',
+    'analytics.departments': 'الأقسام',
+    
+    // Analytics Charts
+    'analytics.performanceDistribution': 'توزيع الأداء',
+    'analytics.departmentPerformance': 'أداء الأقسام',
+    'analytics.weeklyAttendancePatterns': 'أنماط الحضور الأسبوعية',
+    'analytics.teacherPerformanceRanking': 'ترتيب أداء المعلمين',
+    
+    // Analytics Table Headers
+    'analytics.teacher': 'المعلم',
+    'analytics.department': 'القسم',
+    'analytics.attendanceRateCol': 'معدل الحضور',
+    'analytics.punctuality': 'الالتزام',
+    'analytics.performance': 'الأداء',
+    
+    // Analytics Chart Labels
+    'analytics.attendance': 'الحضور',
+    'analytics.punctualityChart': 'الالتزام',
+    
+    // Comparison Labels
+    'comparison.comparePeriods': 'مقارنة الفترات',
+    'comparison.hideComparison': 'إخفاء المقارنة',
+    'comparison.compare': 'مقارنة',
+    'comparison.compareWith': 'مقارنة مع:',
+    'comparison.vs': 'مقابل',
+    'comparison.current': 'الحالي:',
     
     // Teacher Reports
     'reports.teacher': "المعلم",
@@ -477,6 +562,10 @@ export const translations = {
     // Common
     'common.hours': 'ساعات',
     'Page': 'الصفحة',
+    
+    // Form Labels
+    'form.employmentDate': 'تاريخ التعيين *',
+    'form.allowedAbsenceDays': 'أيام الاجازة المتاحة',
 
     // Subjects
     subjects: {
