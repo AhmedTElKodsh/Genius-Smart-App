@@ -65,8 +65,11 @@ export const translations = {
     },
     
     // Filter Options
+    today: "Today",
     thisWeek: "This week",
     thisMonth: "This month",
+    thisQuarter: "This Quarter",
+    thisYear: "This Year",
     lastWeek: "Last week",
     lastMonth: "Last month",
     custom: "Custom",
@@ -270,7 +273,8 @@ export const translations = {
       socialStudies: "Social Studies",
       fitness: "Fitness",
       scouting: "Scouting",
-      nanny: "Nanny"
+      nanny: "Nanny",
+      history: "History"
     },
 
     // Teacher Information
@@ -484,6 +488,13 @@ export const translations = {
       quarter: "هذا الربع",
       year: "هذا العام"
     },
+    
+    // Date Range translations for Arabic
+    today: "اليوم",
+    thisWeek: "هذا الأسبوع",
+    thisMonth: "هذا الشهر",
+    thisQuarter: "هذا الربع",
+    thisYear: "هذا العام",
 
                  
     // Review text
@@ -581,7 +592,8 @@ export const translations = {
       socialStudies: "الدراسات الاجتماعية",
       fitness: "اللياقة البدنية",
       scouting: "الكشافة",
-      nanny: "رعاية الأطفال"
+      nanny: "رعاية الأطفال",
+      history: "التاريخ"
     },
 
     // Teacher Information

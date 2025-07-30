@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DateRangePicker Test</title>
+    <style>
+        body {
+            font-family: 'Poppins', 'Cairo', sans-serif;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #141F25;
+            margin-bottom: 40px;
+        }
+        
+        .section {
+            margin: 40px 0;
+        }
+        
+        .section h2 {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e7ec;
+        }
+        
+        .feature-list li:before {
+            content: "✓ ";
+            color: #D6B10E;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .status.complete {
+            background: #E8F5E8;
+            color: #4CAF50;
+        }
+        
+        .status.partial {
+            background: #FFF3CD;
+            color: #D6B10E;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e1e7ec;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DateRangePicker Component Updates</h1>
+        
+        <div class="section">
+            <h2>Implemented Features</h2>
+            <ul class="feature-list">
+                <li>Header with three buttons: Today, This Week, This Month <span class="status complete">Complete</span></li>
+                <li>Calendar showing Month, Year, Days <span class="status complete">Complete</span></li>
+                <li>Textarea box showing selected date range (start - end) <span class="status complete">Complete</span></li>
+                <li>Done button centered at bottom <span class="status complete">Complete</span></li>
+                <li>Day highlighting on click with display in textarea <span class="status complete">Complete</span></li>
+                <li>Days between start and end highlighted in light color <span class="status complete">Complete</span></li>
+                <li>Weekends (Friday & Saturday) grayed out <span class="status complete">Complete</span></li>
+                <li>Holidays grayed out based on data <span class="status complete">Complete</span></li>
+                <li>Text centered in textarea and button <span class="status complete">Complete</span></li>
+                <li>Full Arabic support with RTL layout <span class="status complete">Complete</span></li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Design Updates</h2>
+            <ul class="feature-list">
+                <li>Removed Quarter and Year tabs, keeping only Today, This Week, This Month</li>
+                <li>Updated range display to use white background with border</li>
+                <li>Made Done button full width with centered text</li>
+                <li>Weekends and holidays are non-selectable with grayed appearance</li>
+                <li>Light yellow highlight for days in selected range</li>
+                <li>Proper date formatting in both English and Arabic</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Technical Details</h2>
+            <div class="code-block">
+// Egyptian weekends (Friday & Saturday)
+const isEgyptianWeekend = day.getDay() === 5 || day.getDay() === 6;
+
+// Holiday check using provided data
+const isDayHoliday = holidays.some(holiday => holiday.date === dateString);
+
+// Prevent selection of weekends and holidays
+if (isEgyptianWeekend || isDayHoliday) {
+    return; // Don't allow selection
+}
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Arabic Support</h2>
+            <ul class="feature-list">
+                <li>RTL layout for entire component when in Arabic mode</li>
+                <li>Arabic date formatting using date-fns locale</li>
+                <li>Proper day headers (س, ج, خ, ر, ث, إ, أ)</li>
+                <li>Arabic translations for all UI elements</li>
+                <li>Centered text alignment preserved in both languages</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

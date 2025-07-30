@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import AddTeacherModal from '../components/AddTeacherModal';
 import HolidayModal from '../components/HolidayModal';
@@ -100,31 +99,35 @@ const Tab = styled.button<{ $active: boolean }>`
   `}
 `;
 
-const FormContainer = styled.div`
+const FormContainer = styled.div<{ $isRTL?: boolean }>`
   background: white;
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
-const FormHeader = styled.div`
+const FormHeader = styled.div<{ $isRTL?: boolean }>`
   margin-bottom: 32px;
   text-align: center;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
-const FormTitle = styled.h2`
+const FormTitle = styled.h2<{ $isRTL?: boolean }>`
   font-family: 'Poppins', sans-serif;
   font-size: 28px;
   font-weight: 600;
   color: #333;
   margin: 0 0 8px 0;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
 `;
 
-const FormSubtitle = styled.p`
+const FormSubtitle = styled.p<{ $isRTL?: boolean }>`
   font-family: 'Poppins', sans-serif;
   font-size: 16px;
   color: #666;
   margin: 0;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
 `;
 
 const Form = styled.form`
@@ -315,11 +318,76 @@ const SuccessMessage = styled.div`
   border: 1px solid #cfc;
 `;
 
-const HelperText = styled.p`
+const SuccessModal = styled.div<{ $show: boolean }>`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: ${props => props.$show ? 'block' : 'none'};
+  text-align: center;
+  min-width: 400px;
+  
+  .success-icon {
+    font-size: 64px;
+    color: #4caf50;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  p {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  
+  button {
+    background: #D4AF37;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #B8941F;
+    }
+  }
+`;
+
+const ModalOverlay = styled.div<{ $show: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: ${props => props.$show ? 'block' : 'none'};
+`;
+
+const HelperText = styled.p<{ $isRTL?: boolean }>`
   font-size: 12px;
   color: #666;
   margin-top: 4px;
   font-style: italic;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const NotificationContainer = styled.div`
@@ -588,24 +656,223 @@ const DeleteButton = styled.button`
   }
 `;
 
-// Interfaces
-interface ManagerProfile {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  dateOfBirth: {
-    day: string;
-    month: string;
-    year: string;
-  };
-  profileImage?: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// New styled components for General tab
+const WeekendSection = styled.div<{ $isRTL: boolean }>`
+  margin-bottom: 32px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const WeekendDays = styled.div<{ $isRTL: boolean }>`
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+`;
+
+const DayCheckbox = styled.label<{ $isRTL: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  min-width: 140px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  justify-content: center;
+  
+  &:hover {
+    border-color: #D4AF37;
+  }
+  
+  &.selected {
+    border-color: #D4AF37;
+    background: #FFF8E8;
+  }
+  
+  input[type="checkbox"] {
+    accent-color: #D4AF37;
+    transform: scale(1.2);
+  }
+`;
+
+const CalendarSection = styled.div<{ $isRTL: boolean }>`
+  margin-bottom: 32px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const CalendarWrapper = styled.div<{ $isRTL: boolean }>`
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+`;
+
+const SelectedHolidaysSection = styled.div<{ $isRTL: boolean }>`
+  margin-top: 20px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const HolidayTagsContainer = styled.div<{ $isRTL: boolean }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+`;
+
+const HolidayTag = styled.div<{ $isRTL: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  
+  &:hover {
+    border-color: #D4AF37;
+    background: #FFFBF0;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+  }
+  
+  .date-text {
+    flex: 1;
+  }
+  
+  .remove-btn {
+    cursor: pointer;
+    color: #999;
+    font-size: 20px;
+    font-weight: normal;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #ffebee;
+      color: #f44336;
+    }
+  }
+`;
+
+// Holiday Calendar component
+const HolidayCalendar = styled.div<{ $isRTL: boolean }>`
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+    
+    h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+      
+      button {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          border-color: #D4AF37;
+          background: #FFF8E8;
+        }
+      }
+    }
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    
+    .day-header {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      padding: 8px;
+    }
+    
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      background: white;
+      
+      &:hover:not(.disabled):not(.selected) {
+        background: #f5f5f5;
+        border-color: #D4AF37;
+      }
+      
+      &.selected {
+        background: #D4AF37;
+        color: white;
+        border-color: #D4AF37;
+      }
+      
+      &.today {
+        font-weight: bold;
+        border-color: #333;
+      }
+      
+      &.disabled {
+        color: #ccc;
+        cursor: not-allowed;
+        background: #f9f9f9;
+      }
+      
+      &.other-month {
+        color: #999;
+      }
+    }
+  }
+`;
+
+// Interfaces - removed unused ManagerProfile interface
 
 interface NotificationPreferences {
   allNotifications: boolean;
@@ -620,12 +887,114 @@ interface NotificationPreferences {
   yearlyReports: boolean;
 }
 
+// Holiday Calendar Component
+interface HolidayCalendarComponentProps {
+  currentMonth: Date;
+  selectedDates: Date[];
+  onDateClick: (date: Date) => void;
+  onMonthChange: (date: Date) => void;
+  isRTL: boolean;
+}
+
+const HolidayCalendarComponent: React.FC<HolidayCalendarComponentProps> = ({
+  currentMonth,
+  selectedDates,
+  onDateClick,
+  onMonthChange,
+  isRTL
+}) => {
+  
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    
+    return days;
+  };
+  
+  const isDateSelected = (date: Date | null) => {
+    if (!date) return false;
+    return selectedDates.some(d => 
+      d.getFullYear() === date.getFullYear() &&
+      d.getMonth() === date.getMonth() &&
+      d.getDate() === date.getDate()
+    );
+  };
+  
+  const isToday = (date: Date | null) => {
+    if (!date) return false;
+    const today = new Date();
+    return date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate();
+  };
+  
+  const monthNames = isRTL ? [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ] : [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  // For RTL, reverse the day headers to show Saturday first
+  const dayHeaders = isRTL ? ['س', 'ج', 'خ', 'ر', 'ث', 'ن', 'ح'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  
+  const days = getDaysInMonth(currentMonth);
+  
+  return (
+    <HolidayCalendar $isRTL={isRTL}>
+      <div className="calendar-header">
+        <h3>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h3>
+        <div className="nav-buttons">
+          <button type="button" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
+            {isRTL ? '›' : '‹'}
+          </button>
+          <button type="button" onClick={() => onMonthChange(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
+            {isRTL ? '‹' : '›'}
+          </button>
+        </div>
+      </div>
+      
+      <div className="calendar-grid">
+        {dayHeaders.map((day, index) => (
+          <div key={index} className="day-header">{day}</div>
+        ))}
+        
+        {days.map((date, index) => (
+          <div
+            key={index}
+            className={`day-cell ${!date ? 'empty' : ''} ${isDateSelected(date) ? 'selected' : ''} ${isToday(date) ? 'today' : ''}`}
+            onClick={() => date && onDateClick(date)}
+          >
+            {date ? date.getDate() : ''}
+          </div>
+        ))}
+      </div>
+    </HolidayCalendar>
+  );
+};
+
 const Settings: React.FC = () => {
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, language, setLanguage, isRTL } = useLanguage();
   
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('personalInfo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -635,10 +1004,7 @@ const Settings: React.FC = () => {
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState<any>(null);
   
-  // Password visibility states
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Password visibility states - removed unused state setters
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -674,6 +1040,12 @@ const Settings: React.FC = () => {
     confirmPassword: ''
   });
 
+  // State for General tab (weekends & holidays)
+  const [weekendDays, setWeekendDays] = useState<string[]>(['Friday', 'Saturday']);
+  const [selectedHolidays, setSelectedHolidays] = useState<Date[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   // Load manager profile on component mount
   useEffect(() => {
     loadManagerProfile();
@@ -683,6 +1055,9 @@ const Settings: React.FC = () => {
     }
     if (activeTab === 'holidays') {
       loadHolidays();
+    }
+    if (activeTab === 'general') {
+      loadSystemSettings();
     }
   }, [activeTab]);
 
@@ -1071,6 +1446,67 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Handle system settings submit
+  const loadSystemSettings = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/settings/system', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWeekendDays(data.weekendDays || ['Friday', 'Saturday']);
+        // Convert holiday date strings to Date objects
+        const holidays = data.holidays?.map((h: any) => new Date(h.date)) || [];
+        setSelectedHolidays(holidays);
+      }
+    } catch (error) {
+      console.error('Error loading system settings:', error);
+    }
+  };
+
+  const handleSystemSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/settings/system', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          weekendDays,
+          holidays: selectedHolidays.map(date => ({
+            date: date.toISOString().split('T')[0],
+            type: 'custom'
+          }))
+        })
+      });
+
+      if (response.ok) {
+        setSuccess(t('settings.general.settingsSaved'));
+        setShowSuccessModal(true);
+        // Close the modal after 3 seconds
+        setTimeout(() => setShowSuccessModal(false), 3000);
+      } else {
+        const errorData = await response.text();
+        console.error('Server response:', errorData);
+        setError(t('settings.general.settingsError'));
+      }
+    } catch (error) {
+      console.error('Error saving system settings:', error);
+      setError(t('settings.general.settingsError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Generate day, month, year options
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -1109,6 +1545,9 @@ const Settings: React.FC = () => {
         </Header>
 
         <TabContainer>
+          <Tab $active={activeTab === 'personalInfo'} onClick={() => setActiveTab('personalInfo')}>
+            {t('settings.personalInfo')}
+          </Tab>
           <Tab $active={activeTab === 'general'} onClick={() => setActiveTab('general')}>
             {t('settings.general')}
           </Tab>
@@ -1125,7 +1564,7 @@ const Settings: React.FC = () => {
           )}
         </TabContainer>
 
-        {activeTab === 'general' && (
+        {activeTab === 'personalInfo' && (
           <FormContainer>
             <FormHeader>
               <FormTitle>{t('settings.general.title')}</FormTitle>
@@ -1412,7 +1851,7 @@ const Settings: React.FC = () => {
               <FormGroup>
                 <Label htmlFor="currentPassword" $isRTL={isRTL}>{t('settings.security.currentPassword')}</Label>
                 <PasswordInput
-                  type={showCurrentPassword ? 'text' : 'password'}
+                  type="password"
                   id="currentPassword"
                   name="currentPassword"
                   value={passwordData.currentPassword}
@@ -1425,7 +1864,7 @@ const Settings: React.FC = () => {
               <FormGroup>
                 <Label htmlFor="newPassword" $isRTL={isRTL}>{t('settings.security.newPassword')}</Label>
                 <PasswordInput
-                  type={showNewPassword ? 'text' : 'password'}
+                  type="password"
                   id="newPassword"
                   name="newPassword"
                   value={passwordData.newPassword}
@@ -1438,7 +1877,7 @@ const Settings: React.FC = () => {
               <FormGroup>
                 <Label htmlFor="confirmPassword" $isRTL={isRTL}>{t('settings.security.confirmPassword')}</Label>
                 <PasswordInput
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type="password"
                   id="confirmPassword"
                   name="confirmPassword"
                   value={passwordData.confirmPassword}
@@ -1455,6 +1894,104 @@ const Settings: React.FC = () => {
                 {loading ? 'Changing Password...' : 'Change Password'}
               </SaveButton>
             </PasswordForm>
+          </FormContainer>
+        )}
+
+        {activeTab === 'general' && (
+          <FormContainer $isRTL={isRTL}>
+            <FormHeader $isRTL={isRTL}>
+              <FormTitle $isRTL={isRTL}>{t('settings.general.systemTitle')}</FormTitle>
+              <FormSubtitle $isRTL={isRTL}>{t('settings.general.systemSubtitle')}</FormSubtitle>
+            </FormHeader>
+
+            <Form onSubmit={handleSystemSettingsSubmit}>
+              {/* Weekend Days Section */}
+              <WeekendSection $isRTL={isRTL}>
+                <Label $isRTL={isRTL}>{t('settings.general.weekends')}</Label>
+                <HelperText $isRTL={isRTL}>{t('settings.general.weekendsDesc')}</HelperText>
+                <WeekendDays $isRTL={isRTL}>
+                  {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+                    <DayCheckbox key={day} $isRTL={isRTL} className={weekendDays.includes(day) ? 'selected' : ''}>
+                      <input
+                        type="checkbox"
+                        checked={weekendDays.includes(day)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setWeekendDays([...weekendDays, day]);
+                          } else {
+                            setWeekendDays(weekendDays.filter(d => d !== day));
+                          }
+                        }}
+                      />
+                      {t(`settings.general.${day.toLowerCase()}`)}
+                    </DayCheckbox>
+                  ))}
+                </WeekendDays>
+              </WeekendSection>
+
+              {/* Holidays Section */}
+              <CalendarSection $isRTL={isRTL}>
+                <Label $isRTL={isRTL}>{t('settings.general.holidaysTitle')}</Label>
+                <HelperText $isRTL={isRTL}>{t('settings.general.holidaysDesc')}</HelperText>
+                <CalendarWrapper $isRTL={isRTL}>
+                  <HolidayCalendarComponent
+                    currentMonth={currentMonth}
+                    selectedDates={selectedHolidays}
+                    onDateClick={(date) => {
+                      const dateIndex = selectedHolidays.findIndex(d => 
+                        d.getFullYear() === date.getFullYear() &&
+                        d.getMonth() === date.getMonth() &&
+                        d.getDate() === date.getDate()
+                      );
+                      
+                      if (dateIndex === -1) {
+                        setSelectedHolidays([...selectedHolidays, date]);
+                      } else {
+                        setSelectedHolidays(selectedHolidays.filter((_, i) => i !== dateIndex));
+                      }
+                    }}
+                    onMonthChange={setCurrentMonth}
+                    isRTL={isRTL}
+                  />
+                </CalendarWrapper>
+                
+                <SelectedHolidaysSection $isRTL={isRTL}>
+                  <Label $isRTL={isRTL}>{t('settings.general.selectedHolidays')}</Label>
+                  {selectedHolidays.length === 0 ? (
+                    <HelperText $isRTL={isRTL}>{t('settings.general.noHolidaysSelected')}</HelperText>
+                  ) : (
+                    <HolidayTagsContainer $isRTL={isRTL}>
+                      {selectedHolidays.map((date, index) => (
+                        <HolidayTag key={index} $isRTL={isRTL}>
+                          <span className="date-text">
+                            {date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </span>
+                          <span
+                            className="remove-btn"
+                            onClick={() => {
+                              setSelectedHolidays(selectedHolidays.filter((_, i) => i !== index));
+                            }}
+                          >
+                            ×
+                          </span>
+                        </HolidayTag>
+                      ))}
+                    </HolidayTagsContainer>
+                  )}
+                </SelectedHolidaysSection>
+              </CalendarSection>
+
+              {error && <ErrorMessage>{error}</ErrorMessage>}
+              {success && <SuccessMessage>{success}</SuccessMessage>}
+
+              <SaveButton type="submit" disabled={loading}>
+                {loading ? t('common.loading') : t('settings.general.saveSettings')}
+              </SaveButton>
+            </Form>
           </FormContainer>
         )}
 
@@ -1525,6 +2062,17 @@ const Settings: React.FC = () => {
         onSave={saveHoliday}
         holiday={editingHoliday}
       />
+      
+      {/* Success Modal */}
+      <ModalOverlay $show={showSuccessModal} onClick={() => setShowSuccessModal(false)} />
+      <SuccessModal $show={showSuccessModal}>
+        <div className="success-icon">✅</div>
+        <h3>{t('settings.general.successTitle')}</h3>
+        <p>{t('settings.general.successMessage')}</p>
+        <button onClick={() => setShowSuccessModal(false)}>
+          {t('settings.general.ok')}
+        </button>
+      </SuccessModal>
     </SettingsContainer>
   );
 };

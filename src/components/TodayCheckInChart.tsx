@@ -367,6 +367,27 @@ interface TodayCheckInChartProps {
 
 const TodayCheckInChart: React.FC<TodayCheckInChartProps> = ({ data, loading, error }) => {
   const { t, isRTL } = useLanguage();
+  
+  // Function to translate subject names for display
+  const translateSubject = (subject: string): string => {
+    const subjectMap: Record<string, string> = {
+      'Management': t('subjects.management'),
+      'Admin Management': t('subjects.adminManagement'),
+      'Quran': t('subjects.quran'),
+      'Arabic': t('subjects.arabic'),
+      'Math': t('subjects.math'),
+      'English': t('subjects.english'),
+      'Science': t('subjects.science'),
+      'Art': t('subjects.art'),
+      'Programming': t('subjects.programming'),
+      'Social studies': t('subjects.socialStudies'),
+      'Fitness': t('subjects.fitness'),
+      'Scouting': t('subjects.scouting'),
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history')
+    };
+    return subjectMap[subject] || subject;
+  };
 
   if (loading) {
     return (
@@ -448,7 +469,7 @@ const TodayCheckInChart: React.FC<TodayCheckInChartProps> = ({ data, loading, er
               </TeacherAvatar>
               <TeacherInfo $isRTL={isRTL}>
                 <TeacherName>{teacher.name}</TeacherName>
-                <TeacherSubject>{teacher.subject}</TeacherSubject>
+                <TeacherSubject>{translateSubject(teacher.subject)}</TeacherSubject>
                 <StatusBadge $status={teacher.status}>
                   {teacher.status === 'checked-out' 
                     ? (isRTL ? 'انصرف' : 'Checked Out')

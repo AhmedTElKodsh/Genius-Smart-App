@@ -398,6 +398,49 @@ const SummaryValue = styled.span<{ isDarkMode: boolean; isRTL: boolean }>`
   font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
 `;
 
+const NotificationBanner = styled.div<{ isDarkMode: boolean; isRTL: boolean; type: 'success' | 'warning' }>`
+  background: ${props => props.type === 'success' 
+    ? 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)' 
+    : 'linear-gradient(135deg, #f44336 0%, #da190b 100%)'
+  };
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+  box-shadow: 0 4px 12px ${props => props.type === 'success' 
+    ? 'rgba(76, 175, 80, 0.3)' 
+    : 'rgba(244, 67, 54, 0.3)'
+  };
+  animation: slideIn 0.5s ease-out;
+  
+  @keyframes slideIn {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const NotificationText = styled.span<{ isRTL: boolean }>`
+  font-size: 14px;
+  font-weight: 500;
+  font-family: ${props => props.isRTL ? 'Tajawal, sans-serif' : 'system-ui, sans-serif'};
+`;
+
+const NotificationIcon = styled.span<{ isRTL?: boolean }>`
+  font-size: 18px;
+  margin-right: ${props => props.isRTL ? '0' : '8px'};
+  margin-left: ${props => props.isRTL ? '8px' : '0'};
+`;
+
 const BottomNavigation = styled.div<{ isDarkMode: boolean }>`
   position: fixed;
   bottom: 0;
@@ -654,6 +697,8 @@ const TeacherTimerPage: React.FC<TeacherTimerPageProps> = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [latestNotification, setLatestNotification] = useState<any>(null);
+  const [showNotification, setShowNotification] = useState(true);
 
   // Helper function to format time for Arabic (AM/PM after time)
   const formatTimeForLocale = (date: Date) => {
@@ -860,6 +905,37 @@ const TeacherTimerPage: React.FC<TeacherTimerPageProps> = () => {
       fetchAttendanceSummary();
     }
   }, [teacherData, fetchAttendanceSummary]);
+
+  // Fetch latest notification when teacher data is available
+  useEffect(() => {
+    const fetchLatestNotification = async () => {
+      if (!teacherData) return;
+      
+      try {
+        const response = await fetch(`http://localhost:5000/api/teachers/${teacherData.id}/notifications`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.notifications && data.notifications.length > 0) {
+            // Get the latest unread notification
+            const unreadNotifications = data.notifications.filter((n: any) => !n.isRead);
+            if (unreadNotifications.length > 0) {
+              setLatestNotification(unreadNotifications[0]);
+              setShowNotification(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    if (teacherData) {
+      fetchLatestNotification();
+      // Check for new notifications every 30 seconds
+      const interval = setInterval(fetchLatestNotification, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [teacherData]);
 
   // Timer logic - only run when not on break
   useEffect(() => {
@@ -1231,6 +1307,23 @@ const TeacherTimerPage: React.FC<TeacherTimerPageProps> = () => {
         </WorkTimeCard>
 
         <SummarySection isDarkMode={isDarkMode} isRTL={isRTL}>
+          {latestNotification && showNotification && (
+            <NotificationBanner 
+              isDarkMode={isDarkMode} 
+              isRTL={isRTL} 
+              type={latestNotification.type}
+              onClick={() => setShowNotification(false)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <NotificationIcon isRTL={isRTL}>{latestNotification.type === 'success' ? '✓' : '!'}</NotificationIcon>
+                <NotificationText isRTL={isRTL}>
+                  {isRTL ? latestNotification.messageAr : latestNotification.message}
+                </NotificationText>
+              </div>
+              <span style={{ cursor: 'pointer', fontSize: '20px' }}>×</span>
+            </NotificationBanner>
+          )}
+          
           <SummaryHeader isRTL={isRTL}>
             <SummaryTitle isDarkMode={isDarkMode} isRTL={isRTL}>{t.summary}</SummaryTitle>
             <FilterDropdown>

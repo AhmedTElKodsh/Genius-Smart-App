@@ -12,6 +12,17 @@ const {
 } = require('../middleware/authorityMiddleware');
 const { SYSTEM_LAYERS } = require('../scripts/implement3TierSystem');
 
+// Helper function to load requests data
+const getRequestsData = () => {
+  try {
+    const requestsPath = path.join(__dirname, '../data/requests.json');
+    return JSON.parse(fs.readFileSync(requestsPath, 'utf8'));
+  } catch (error) {
+    console.error('Error loading requests:', error);
+    return [];
+  }
+};
+
 // Extract manager email from token for authority middleware
 const extractManagerEmail = (req, res, next) => {
   try {
@@ -1104,5 +1115,101 @@ router.get('/:id/remaining-hours', (req, res) => {
   });
 
 
+
+// GET /api/teachers/:id/notifications - Get teacher notifications
+router.get('/:id/notifications', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Load requests data
+    const requests = getRequestsData();
+    
+    // Filter requests for this teacher that have been processed
+    const teacherRequests = requests.filter(r => 
+      r.teacherId === id && 
+      (r.status === 'approved' || r.status === 'rejected' || 
+       r.result === 'Accepted' || r.result === 'Rejected')
+    );
+    
+    // Transform to notifications
+    const notifications = teacherRequests.map(request => {
+      // Translate request types to Arabic
+      const requestTypeAr = {
+        'Late Arrival': 'التأخر',
+        'Early Leave': 'المغادرة المبكرة',
+        'Absence': 'الغياب',
+        'Authorized Absence': 'الغياب المصرح به'
+      }[request.requestType] || request.requestType;
+      
+      return {
+        id: request.id,
+        type: request.result === 'Accepted' || request.status === 'approved' ? 'success' : 'warning',
+        message: request.result === 'Accepted' || request.status === 'approved'
+          ? `Your ${request.requestType} request for ${request.duration} has been approved`
+          : `Your ${request.requestType} request for ${request.duration} has been rejected`,
+        messageAr: request.result === 'Accepted' || request.status === 'approved'
+          ? `تم قبول طلب ${requestTypeAr} الخاص بك لمدة ${request.duration}`
+          : `تم رفض طلب ${requestTypeAr} الخاص بك لمدة ${request.duration}`,
+        date: request.approvedAt || request.updatedAt || request.appliedDate,
+        requestType: request.requestType,
+        duration: request.duration,
+        reason: request.reason,
+        approvedBy: request.approverName || 'Manager',
+        isRead: request.isRead || false
+      };
+    });
+    
+    res.json({
+      success: true,
+      notifications: notifications.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+    });
+    
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch notifications'
+    });
+  }
+});
+
+// GET /api/teachers/:id/balance - Get teacher balance summary
+router.get('/:id/balance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const teachers = loadTeachers();
+    const teacher = teachers.find(t => t.id === id);
+    
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: 'Teacher not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      balance: {
+        remainingLateEarlyHours: teacher.remainingLateEarlyHours || 8,
+        totalLateEarlyHours: teacher.totalLateEarlyHours || 8,
+        usedLateEarlyHours: teacher.usedLateEarlyHours || 0,
+        allowedAbsenceDays: teacher.allowedAbsenceDays || 20,
+        totalAbsenceDays: teacher.totalAbsenceDays || 0,
+        remainingAbsenceDays: teacher.remainingAbsenceDays || 
+          ((teacher.allowedAbsenceDays || 20) - (teacher.totalAbsenceDays || 0)),
+        balanceLastUpdated: teacher.balanceLastUpdated || null
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching balance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch balance'
+    });
+  }
+});
 
 module.exports = router; 

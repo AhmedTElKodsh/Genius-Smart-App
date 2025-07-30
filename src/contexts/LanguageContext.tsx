@@ -5,7 +5,7 @@ export type Language = 'en' | 'ar';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   isRTL: boolean;
 }
 
@@ -214,6 +214,7 @@ const enTranslations = {
 
   // Settings Page
   'settings.title': 'Settings',
+  'settings.personalInfo': 'Personal Info',
   'settings.general': 'General',
   'settings.notifications': 'Notifications',
   'settings.security': 'Security',
@@ -300,6 +301,29 @@ const enTranslations = {
     'settings.holidays.thisYear': 'This Year',
     'settings.holidays.nextYear': 'Next Year',
 
+  // General Settings (Weekends & Holidays)
+  'settings.general.systemTitle': 'System Settings',
+  'settings.general.systemSubtitle': 'Configure weekends and holidays for your organization',
+  'settings.general.weekends': 'Weekend Days',
+  'settings.general.weekendsDesc': 'Select which days are weekends in your organization',
+  'settings.general.holidaysTitle': 'Holidays',
+  'settings.general.holidaysDesc': 'Select holidays from the calendar',
+  'settings.general.selectedHolidays': 'Selected Holidays',
+  'settings.general.noHolidaysSelected': 'No holidays selected',
+  'settings.general.sunday': 'Sunday',
+  'settings.general.monday': 'Monday',
+  'settings.general.tuesday': 'Tuesday',
+  'settings.general.wednesday': 'Wednesday',
+  'settings.general.thursday': 'Thursday',
+  'settings.general.friday': 'Friday',
+  'settings.general.saturday': 'Saturday',
+  'settings.general.saveSettings': 'Save Settings',
+  'settings.general.settingsSaved': 'Settings saved successfully',
+  'settings.general.settingsError': 'Failed to save settings',
+  'settings.general.successTitle': 'Settings Saved Successfully!',
+  'settings.general.successMessage': 'Weekend days and holidays have been saved. These settings will be applied across the entire system.',
+  'settings.general.ok': 'OK',
+
   // Authentication
   'auth.signIn': 'Manager Sign In',
   'auth.signInSubtitle': 'Enter your credentials to access the management panel',
@@ -346,6 +370,7 @@ const enTranslations = {
 
   // Subjects
   'subjects.management': 'Management',
+  'subjects.adminManagement': 'Admin Management',
   'subjects.quran': 'Quran',
   'subjects.arabic': 'Arabic',
   'subjects.math': 'Math',
@@ -357,6 +382,7 @@ const enTranslations = {
   'subjects.fitness': 'Fitness',
   'subjects.scouting': 'Scouting',
   'subjects.nanny': 'Nanny',
+  'subjects.history': 'History',
 
   // Teacher Info
   'teacherInfo.employmentDate': 'Employment Date',
@@ -435,9 +461,10 @@ const enTranslations = {
   'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',  
   'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
   'analytics.teacherPerformanceTracking': 'Teacher Performance Tracking',
-  'analytics.registeredAbsence': 'Registered Absence',
-  'analytics.registeredEarlyLeave': 'Registered Early Leave',
-  'analytics.registeredLateArrival': 'Registered Late Arrival',
+  // Removed duplicates - these are defined earlier
+  // 'analytics.registeredAbsence': 'Registered Absence',
+  // 'analytics.registeredEarlyLeave': 'Registered Early Leave',
+  // 'analytics.registeredLateArrival': 'Registered Late Arrival',
   
   // Analytics KPI Modal
   'analytics.totalTeachersDesc': 'Total number of active teachers in the system across all departments and subjects.',
@@ -464,24 +491,20 @@ const enTranslations = {
   // Collapsible Section Titles
   'analytics.departmentComparisons': 'Department Comparisons',
   'analytics.departmentRequests': 'Department Requests',
-  'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',
-  'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
-  'analytics.teacherPerformanceTracking': 'Teacher Performance Tracking',
+  // Removed duplicates - defined earlier
+  // 'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',
+  // 'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
+  // 'analytics.teacherPerformanceTracking': 'Teacher Performance Tracking',
   
   // Section Descriptions
+  'analytics.attendanceCommitmentDesc': 'Monitor attendance commitment levels to identify teachers with excellent attendance versus those who may need support.',
   'analytics.departmentComparisonsDesc': 'Compare absence, early leave, and late arrival metrics across different departments to identify patterns and areas for improvement.',
   'analytics.departmentRequestsDesc': 'Analyze request patterns for absence, early leave, and late arrival across departments to understand workflow and staffing needs.',
   'analytics.teachersPerformanceComparisonDesc': 'Compare individual teacher performance metrics to identify top performers and those who may need additional support.',
   'analytics.departmentPerformanceTrackingDesc': 'Track department performance trends over time to monitor improvement and identify seasonal patterns.',
   'analytics.teacherPerformanceTrackingDesc': 'Monitor individual teacher performance trends over time to support professional development and recognition.',
   
-  // Department Comparison Charts
-  'analytics.absenceComparison': 'Absence Comparison',
-  'analytics.earlyLeaveComparison': 'Early Leave Comparison',
-  'analytics.lateArrivalComparison': 'Late Arrival Comparison',
-  'analytics.absenceRequests': 'Absence Requests',
-  'analytics.earlyLeaveRequests': 'Early Leave Requests',
-  'analytics.lateArrivalRequests': 'Late Arrival Requests',
+  // Department Comparison Charts - removed duplicates (defined earlier)
   
   // Chart Descriptions
   'analytics.absenceComparisonDesc': 'Compare the number of absent days across different departments to identify which areas have higher absence rates.',
@@ -531,18 +554,9 @@ const enTranslations = {
   'analytics.teacherEarlyLeaveRequestsTracking': 'Teacher Early Leave Requests Tracking',
   'analytics.teacherLateArrivalRequestsTracking': 'Teacher Late Arrival Requests Tracking',
   
-  // Section Descriptions
-  'analytics.teachersPerformanceComparisonDesc': 'Compare individual teacher performance across absence, early leave, and late arrival metrics to identify top performers and those needing support.',
-  'analytics.departmentPerformanceTrackingDesc': 'Track department-level attendance patterns over time to monitor trends, seasonal variations, and improvement progress.',
-  'analytics.teacherPerformanceTrackingDesc': 'Monitor individual teacher attendance patterns over time to identify trends and provide targeted support.',
+  // Section Descriptions - removed duplicates (defined earlier)
   
-  // Chart Descriptions
-  'analytics.absenceComparisonDesc': 'Compare absence rates across departments to identify patterns and outliers.',
-  'analytics.earlyLeaveComparisonDesc': 'Analyze early departure patterns by department to understand workflow needs.',
-  'analytics.lateArrivalComparisonDesc': 'Monitor tardiness levels across departments for punctuality insights.',
-  'analytics.absenceRequestsDesc': 'Track absence request volumes by department to understand planning needs.',
-  'analytics.earlyLeaveRequestsDesc': 'Monitor early leave requests by department for better shift management.',
-  'analytics.lateArrivalRequestsDesc': 'Analyze late arrival requests by department to identify scheduling issues.',
+  // Chart Descriptions - removed duplicates (defined earlier)
 
   
   // Teacher Tracking Descriptions
@@ -810,6 +824,7 @@ const arTranslations = {
 
   // Settings Page
   'settings.title': 'الإعدادات',
+  'settings.personalInfo': 'المعلومات الشخصية',
   'settings.general': 'عام',
   'settings.notifications': 'الإشعارات',
   'settings.security': 'الأمان',
@@ -896,6 +911,29 @@ const arTranslations = {
   'settings.holidays.thisYear': 'هذا العام',
   'settings.holidays.nextYear': 'العام القادم',
 
+  // General Settings (Weekends & Holidays)
+  'settings.general.systemTitle': 'إعدادات النظام',
+  'settings.general.systemSubtitle': 'تكوين عطلات نهاية الأسبوع والإجازات لمؤسستك',
+  'settings.general.weekends': 'أيام نهاية الأسبوع',
+  'settings.general.weekendsDesc': 'حدد أيام عطلة نهاية الأسبوع في مؤسستك',
+  'settings.general.holidaysTitle': 'العطل الرسمية',
+  'settings.general.holidaysDesc': 'اختر العطل من التقويم',
+  'settings.general.selectedHolidays': 'العطل المحددة',
+  'settings.general.noHolidaysSelected': 'لم يتم تحديد أي عطل',
+  'settings.general.sunday': 'الأحد',
+  'settings.general.monday': 'الإثنين',
+  'settings.general.tuesday': 'الثلاثاء',
+  'settings.general.wednesday': 'الأربعاء',
+  'settings.general.thursday': 'الخميس',
+  'settings.general.friday': 'الجمعة',
+  'settings.general.saturday': 'السبت',
+  'settings.general.saveSettings': 'حفظ الإعدادات',
+  'settings.general.settingsSaved': 'تم حفظ الإعدادات بنجاح',
+  'settings.general.settingsError': 'فشل في حفظ الإعدادات',
+  'settings.general.successTitle': 'تم الحفظ بنجاح!',
+  'settings.general.successMessage': 'تم حفظ إعدادات عطلة نهاية الأسبوع والعطل الرسمية. سيتم تطبيق هذه الإعدادات على النظام بأكمله.',
+  'settings.general.ok': 'حسنًا',
+
   // Authentication
   'auth.signIn': 'تسجيل دخول المدير',
   'auth.signInSubtitle': 'أدخل بياناتك للوصول إلى لوحة الإدارة',
@@ -942,6 +980,7 @@ const arTranslations = {
 
   // Subjects
   'subjects.management': 'الإدارة',
+  'subjects.adminManagement': 'إدارة الأنظمة',
   'subjects.quran': 'القرآن',
   'subjects.arabic': 'اللغة العربية',
   'subjects.math': 'الرياضيات',
@@ -951,8 +990,9 @@ const arTranslations = {
   'subjects.programming': 'البرمجة',
   'subjects.socialStudies': 'الدراسات الاجتماعية',
   'subjects.fitness': 'التربية الرياضية',
-  'subjects.scouting': 'البحث العلمي',
-  'subjects.nanny': 'الدادات',
+  'subjects.scouting': 'الكشافة',
+  'subjects.nanny': 'رعاية الأطفال',
+  'subjects.history': 'التاريخ',
 
   // Teacher Info
   'teacherInfo.employmentDate': 'تاريخ التعيين',
@@ -1031,9 +1071,10 @@ const arTranslations = {
   'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',  
   'analytics.departmentPerformanceTracking': 'تتبع أداء الأقسام',
   'analytics.teacherPerformanceTracking': 'تتبع أداء المعلمين',
-  'analytics.registeredAbsence': 'الغياب المسجل',
-  'analytics.registeredEarlyLeave': 'الانصراف المبكر المسجل',
-  'analytics.registeredLateArrival': 'الوصول المتأخر المسجل',
+  // Removed duplicates - these are defined earlier
+  // 'analytics.registeredAbsence': 'الغياب المسجل',
+  // 'analytics.registeredEarlyLeave': 'الانصراف المبكر المسجل',
+  // 'analytics.registeredLateArrival': 'الوصول المتأخر المسجل',
   
   // Analytics KPI Modal
   'analytics.totalTeachersDesc': 'إجمالي عدد المعلمين النشطين في النظام عبر جميع الأقسام والمواد.',
@@ -1060,24 +1101,20 @@ const arTranslations = {
   // Collapsible Section Titles
   'analytics.departmentComparisons': 'مقارنات الأقسام',
   'analytics.departmentRequests': 'طلبات الأقسام',
-  'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',
-  'analytics.departmentPerformanceTracking': 'تتبع أداء الأقسام',
-  'analytics.teacherPerformanceTracking': 'تتبع أداء المعلمين',
+  // Removed duplicates - defined earlier
+  // 'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',
+  // 'analytics.departmentPerformanceTracking': 'تتبع أداء الأقسام',
+  // 'analytics.teacherPerformanceTracking': 'تتبع أداء المعلمين',
   
   // Section Descriptions
-  'analytics.departmentComparisonsDesc': 'قارن مقاييس الغياب والانصراف المبكر والوصول المتأخر عبر الأقسام المختلفة لتحديد الأنماط ومجالات التحسين.',
+  'analytics.attendanceCommitmentDesc': 'مراقبة مستويات التزام الحضور لتحديد المعلمين ذوي الحضور الممتاز مقابل أولئك الذين قد يحتاجون إلى دعم إضافي لتحسين انتظامهم.',
+  'analytics.departmentComparisonsDesc': 'مقارنة أداء الأقسام المختلفة من حيث الغياب والانصراف المبكر والوصول المتأخر لتحديد الأقسام الأكثر انضباطاً والأقسام التي تحتاج إلى تحسين.',
   'analytics.departmentRequestsDesc': 'حلل أنماط الطلبات للغياب والانصراف المبكر والوصول المتأخر عبر الأقسام لفهم سير العمل واحتياجات التوظيف.',
-  'analytics.teachersPerformanceComparisonDesc': 'قارن مقاييس أداء المعلمين الفردي لتحديد المتميزين والذين قد يحتاجون إلى دعم إضافي.',
+  'analytics.teachersPerformanceComparisonDesc': 'تقييم أداء المعلمين بشكل فردي ومقارنة معدلات الحضور والانضباط لتحديد المعلمين المتميزين وتقديم الدعم اللازم للآخرين.',
   'analytics.departmentPerformanceTrackingDesc': 'تتبع اتجاهات أداء الأقسام مع مرور الوقت لمراقبة التحسن وتحديد الأنماط الموسمية.',
   'analytics.teacherPerformanceTrackingDesc': 'راقب اتجاهات أداء المعلمين الفردي مع مرور الوقت لدعم التطوير المهني والتقدير.',
   
-  // Department Comparison Charts
-  'analytics.absenceComparison': 'مقارنة الغياب',
-  'analytics.earlyLeaveComparison': 'مقارنة الانصراف المبكر',
-  'analytics.lateArrivalComparison': 'مقارنة الوصول المتأخر',
-  'analytics.absenceRequests': 'طلبات الغياب',
-  'analytics.earlyLeaveRequests': 'طلبات الانصراف المبكر',
-  'analytics.lateArrivalRequests': 'طلبات الوصول المتأخر',
+  // Department Comparison Charts - removed duplicates (defined earlier)
   
   // Chart Descriptions
   'analytics.absenceComparisonDesc': 'قارن عدد أيام الغياب عبر الأقسام المختلفة لتحديد المناطق التي لديها معدلات غياب أعلى.',
@@ -1119,18 +1156,9 @@ const arTranslations = {
   'analytics.teacherEarlyLeaveRequestsTracking': 'تتبع طلبات الانصراف المبكر للمعلمين',
   'analytics.teacherLateArrivalRequestsTracking': 'تتبع طلبات الوصول المتأخر للمعلمين',
   
-  // Section Descriptions
-  'analytics.teachersPerformanceComparisonDesc': 'قارن أداء المعلمين الفردي عبر مقاييس الغياب والانصراف المبكر والوصول المتأخر لتحديد المتميزين والذين يحتاجون دعماً.',
-  'analytics.departmentPerformanceTrackingDesc': 'تتبع أنماط الحضور على مستوى الأقسام عبر الزمن لمراقبة الاتجاهات والتغيرات الموسمية وتقدم التحسين.',
-  'analytics.teacherPerformanceTrackingDesc': 'راقب أنماط حضور المعلمين الفردية عبر الزمن لتحديد الاتجاهات وتقديم الدعم المستهدف.',
+  // Section Descriptions - removed duplicates (defined earlier)
   
-  // Chart Descriptions
-  'analytics.absenceComparisonDesc': 'قارن معدلات الغياب عبر الأقسام لتحديد الأنماط والحالات الشاذة.',
-  'analytics.earlyLeaveComparisonDesc': 'حلل أنماط الانصراف المبكر حسب القسم لفهم احتياجات سير العمل.',
-  'analytics.lateArrivalComparisonDesc': 'راقب مستويات التأخير عبر الأقسام للحصول على رؤى حول الالتزام بالمواعيد.',
-  'analytics.absenceRequestsDesc': 'تتبع أحجام طلبات الغياب حسب القسم لفهم احتياجات التخطيط.',
-  'analytics.earlyLeaveRequestsDesc': 'راقب طلبات الانصراف المبكر حسب القسم لإدارة أفضل للنوبات.',
-  'analytics.lateArrivalRequestsDesc': 'حلل طلبات الوصول المتأخر حسب القسم لتحديد مشاكل الجدولة.',
+  // Chart Descriptions - removed duplicates (defined earlier)
 
   
   // Analytics KPI Modal Tables
@@ -1220,7 +1248,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const translations = language === 'ar' ? arTranslations : enTranslations;
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    let translation = translations[key as keyof typeof translations] || key;
+    let translation: string = String(translations[key as keyof typeof translations] || key);
     
     // Handle parameter substitution
     if (params) {

@@ -22,6 +22,7 @@ const auditTrailRoutes = require('./routes/auditTrail');
 const holidaysRoutes = require('./routes/holidays');
 const dataTrackingRoutes = require('./routes/dataTracking');
 const analyticsRoutes = require('./routes/analytics');
+const settingsRoutes = require('./routes/settings');
 
 // Initialize Express app
 const app = express();
@@ -89,6 +90,7 @@ if (process.env.CLERK_SECRET_KEY) {
   app.use('/api/clerk/attendance', requireAuth(), attendanceRoutes);
   app.use('/api/clerk/manager', requireAuth(), managerRoutes);
   app.use('/api/clerk/analytics', requireAuth(), analyticsRoutes);
+  app.use('/api/clerk/settings', requireAuth(), settingsRoutes);
 }
 
 // Legacy routes (for backward compatibility during transition)
@@ -103,6 +105,7 @@ app.use('/api/audit', auditTrailRoutes);
 app.use('/api/holidays', holidaysRoutes);
 app.use('/api/tracking', dataTrackingRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Clerk user info endpoint
 if (process.env.CLERK_SECRET_KEY) {

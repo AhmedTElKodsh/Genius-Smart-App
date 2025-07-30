@@ -415,6 +415,27 @@ const TodayAbsencesChart: React.FC<TodayAbsencesChartProps> = ({ data, loading, 
   const { t, isRTL } = useLanguage();
   const [filter, setFilter] = useState<'all' | 'authorized' | 'unauthorized-no-request' | 'unauthorized-rejected'>('all');
   const [selectedTeacher, setSelectedTeacher] = useState<AbsentTeacher | null>(null);
+  
+  // Function to translate subject names for display
+  const translateSubject = (subject: string): string => {
+    const subjectMap: Record<string, string> = {
+      'Management': t('subjects.management'),
+      'Admin Management': t('subjects.adminManagement'),
+      'Quran': t('subjects.quran'),
+      'Arabic': t('subjects.arabic'),
+      'Math': t('subjects.math'),
+      'English': t('subjects.english'),
+      'Science': t('subjects.science'),
+      'Art': t('subjects.art'),
+      'Programming': t('subjects.programming'),
+      'Social studies': t('subjects.socialStudies'),
+      'Fitness': t('subjects.fitness'),
+      'Scouting': t('subjects.scouting'),
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history')
+    };
+    return subjectMap[subject] || subject;
+  };
 
   if (loading) {
     return (
@@ -553,8 +574,8 @@ const TodayAbsencesChart: React.FC<TodayAbsencesChartProps> = ({ data, loading, 
               <TeacherCard key={`${teacher.id}-${index}`} $isRTL={isRTL}>
                 <TeacherHeader $isRTL={isRTL}>
                   <TeacherInfo $isRTL={isRTL}>
-                    <TeacherName $isRTL={isRTL}>{teacher.name}</TeacherName>
-                    <TeacherSubject $isRTL={isRTL}>{teacher.subject}</TeacherSubject>
+                                    <TeacherName $isRTL={isRTL}>{teacher.name}</TeacherName>
+                <TeacherSubject $isRTL={isRTL}>{translateSubject(teacher.subject)}</TeacherSubject>
                   </TeacherInfo>
                   <AbsenceType $type={teacher.absenceType} $isRTL={isRTL}>
                     {getAbsenceTypeLabel(teacher.absenceType)}

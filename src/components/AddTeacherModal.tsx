@@ -352,6 +352,7 @@ interface FormData {
   subject: string;
   workType: string;
   password: string;
+  systemRole: string;
   authorities: {
     canAccessPortal: boolean;
     canAddTeachers: boolean;
@@ -363,10 +364,31 @@ interface FormData {
 }
 
 const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSuccess, managerAuthorities }) => {
-  const { language, translations, isRTL } = useLanguage();
+  const { language, translations, isRTL, t } = useLanguage();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+
+  // Function to translate subject names for display
+  const translateSubject = (subject: string): string => {
+    const subjectMap: Record<string, string> = {
+      'Management': t('subjects.management'),
+      'Quran': t('subjects.quran'),
+      'Arabic': t('subjects.arabic'),
+      'Math': t('subjects.math'),
+      'English': t('subjects.english'),
+      'Science': t('subjects.science'),
+      'Art': t('subjects.art'),
+      'Programming': t('subjects.programming'),
+      'Social studies': t('subjects.socialStudies'),
+      'Fitness': t('subjects.fitness'),
+      'Scouting': t('subjects.scouting'),
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history')
+    };
+    return subjectMap[subject] || subject;
+  };
 
   // Calculate allowed absence days based on employment date
   const calculateAllowedAbsenceDays = (employmentDate: string): number => {
@@ -398,6 +420,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
     subject: '',
     workType: 'Full-time',
     password: '',
+    systemRole: 'EMPLOYEE',
     authorities: {
       canAccessPortal: false,
       canAddTeachers: false,
@@ -434,6 +457,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
   useEffect(() => {
     if (isOpen) {
       fetchSubjects();
+      fetchCurrentUserRole();
     }
   }, [isOpen]);
 
@@ -446,6 +470,18 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
       }
     } catch (error) {
       console.error('Error fetching subjects:', error);
+    }
+  };
+
+  const fetchCurrentUserRole = async () => {
+    try {
+      const managerInfo = localStorage.getItem('managerInfo');
+      if (managerInfo) {
+        const manager = JSON.parse(managerInfo);
+        setCurrentUserRole(manager.role || '');
+      }
+    } catch (error) {
+      console.error('Error getting current user role:', error);
     }
   };
 
@@ -465,6 +501,21 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
       return newFormData;
     });
     setError('');
+  };
+
+  const handleRoleChange = (role: string) => {
+    setFormData(prev => ({
+      ...prev,
+      systemRole: role,
+      authorities: {
+        canAccessPortal: role === 'ADMIN' || role === 'MANAGER',
+        canAddTeachers: role === 'ADMIN',
+        canEditTeachers: role === 'ADMIN',
+        canManageRequests: role === 'ADMIN' || role === 'MANAGER',
+        canDownloadReports: role === 'ADMIN' || role === 'MANAGER',
+        canManageAuthorities: role === 'ADMIN'
+      }
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -543,6 +594,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
         birthdate: `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`,
         employmentDate: formData.employmentDate,
         allowedAbsenceDays: parseInt(formData.allowedAbsenceDays) || 0,
+        systemRole: formData.systemRole,
         authorities: formData.authorities
       };
 
@@ -567,9 +619,11 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
           birthMonth: '',
           birthYear: '',
           employmentDate: '',
+          allowedAbsenceDays: '',
           subject: '',
           workType: 'Full-time',
           password: '',
+          systemRole: 'EMPLOYEE',
           authorities: {
             canAccessPortal: false,
             canAddTeachers: false,
@@ -750,6 +804,21 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
               </HelperText>
             </FormFieldFull>
 
+            {/* Employee Role Selection */}
+            <FormFieldFull>
+              <Label $isRTL={isRTL}>
+                {isRTL ? 'دور الموظف' : 'Employee Role'}
+              </Label>
+              <Select
+                value={formData.systemRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+              >
+                <option value="ADMIN">{isRTL ? 'مدير عام' : 'Admin'}</option>
+                <option value="MANAGER">{isRTL ? 'مدير' : 'Manager'}</option>
+                <option value="EMPLOYEE">{isRTL ? 'موظف' : 'Employee'}</option>
+              </Select>
+            </FormFieldFull>
+
             {managerAuthorities?.canManageAuthorities && (
               <AuthoritySection>
                 <AuthorityTitle>
@@ -851,15 +920,15 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
 
             <FormGrid>
               <FormField>
-                <Label>Teacher's Subject</Label>
+                <Label>{t('addTeacher.subject')}</Label>
                 <Select
                   value={formData.subject}
                   onChange={(e) => handleInputChange('subject', e.target.value)}
                 >
-                  <option value="">Select Subject</option>
+                  <option value="">{t('addTeacher.selectSubject')}</option>
                   {subjects.map(subject => (
                     <option key={subject.id} value={subject.name}>
-                      {subject.name}
+                      {translateSubject(subject.name)}
                     </option>
                   ))}
                 </Select>

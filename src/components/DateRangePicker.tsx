@@ -16,7 +16,11 @@ import {
   addMonths,
   subMonths,
   isToday,
-  isFuture
+  isFuture,
+  startOfQuarter,
+  endOfQuarter,
+  startOfYear,
+  endOfYear
 } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -55,22 +59,23 @@ const DropdownContainer = styled.div<{ $isOpen: boolean; $isRTL?: boolean }>`
   top: 100%;
   right: ${props => props.$isRTL ? 'auto' : '0'};
   left: ${props => props.$isRTL ? '0' : 'auto'};
-  z-index: 1000;
+  z-index: 9999;
   background: #ffffff;
   border: 1px solid #e1e7ec;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 16px;
-  min-width: 280px;
-  max-width: 300px;
+  min-width: 340px;
+  max-width: 360px;
   display: ${props => props.$isOpen ? 'block' : 'none'};
   margin-top: 8px;
   direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const TabContainer = styled.div`
-  display: flex;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   margin-bottom: 16px;
 `;
 
@@ -151,6 +156,7 @@ const DayCell = styled.button<{
   $isOtherMonth: boolean;
   $isFuture: boolean;
   $isWeekend: boolean;
+  $isHoliday?: boolean;
 }>`
   width: 36px;
   height: 36px;
@@ -158,7 +164,7 @@ const DayCell = styled.button<{
   border-radius: 6px;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
-  cursor: ${props => props.$isFuture || props.$isOtherMonth ? 'not-allowed' : 'pointer'};
+  cursor: ${props => props.$isFuture || props.$isOtherMonth || props.$isWeekend || props.$isHoliday ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -166,23 +172,25 @@ const DayCell = styled.button<{
   
   background: ${props => {
     if (props.$isSelected) return '#D6B10E';
-    if (props.$isInRange) return '#FFF3CD';
-    if (props.$isToday) return '#E7E7E7';
-    if (props.$isWeekend && !props.$isOtherMonth) return '#F5F5F5'; // Light gray for Egyptian weekends
+    if (props.$isInRange) return 'rgba(214, 177, 14, 0.15)'; // Light yellow for range
+    if (props.$isToday && !props.$isWeekend && !props.$isHoliday) return '#E7E7E7';
+    if (props.$isHoliday || props.$isWeekend) return '#F5F5F5'; // Gray for weekends and holidays
     return 'transparent';
   }};
   
   color: ${props => {
     if (props.$isFuture || props.$isOtherMonth) return '#ccc';
     if (props.$isSelected) return '#ffffff';
-    if (props.$isWeekend && !props.$isSelected && !props.$isOtherMonth) return '#999999'; // Gray text for weekends
+    if (props.$isHoliday || props.$isWeekend) return '#999999'; // Gray text for weekends and holidays
     if (props.$isToday) return '#141F25';
     return '#141F25';
   }};
   
+  opacity: ${props => (props.$isWeekend || props.$isHoliday) ? 0.6 : 1};
+  
   &:hover {
     background: ${props => {
-      if (props.$isFuture || props.$isOtherMonth) return 'transparent';
+      if (props.$isFuture || props.$isOtherMonth || props.$isWeekend || props.$isHoliday) return props.$isWeekend || props.$isHoliday ? '#F5F5F5' : 'transparent';
       if (props.$isSelected) return '#D6B10E';
       return '#f5f5f5';
     }};
@@ -192,21 +200,27 @@ const DayCell = styled.button<{
 const RangeDisplay = styled.div<{ $isRTL?: boolean }>`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 12px 16px;
-  background: #F3F1E4;
-  border: 1px solid #D6B10E;
+  min-height: 45px;
+  background: #ffffff;
+  border: 2px solid #e1e7ec;
   border-radius: 8px;
   margin-bottom: 16px;
   font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
-  color: #666;
+  color: #141F25;
   direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: center;
+  font-weight: 500;
+  
+  &:focus-within {
+    border-color: #D6B10E;
+  }
 `;
 
 const DoneButton = styled.button<{ $isRTL?: boolean }>`
-  width: auto;
-  min-width: 100px;
+  width: 100%;
   padding: 10px 24px;
   background: #D6B10E;
   color: #ffffff;
@@ -214,20 +228,22 @@ const DoneButton = styled.button<{ $isRTL?: boolean }>`
   border-radius: 8px;
   font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background: #c4a00d;
+    transform: translateY(-1px);
   }
-`;
-
-const DoneButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 export interface DateRange {
@@ -239,15 +255,16 @@ export interface DateRange {
 interface DateRangePickerProps {
   value: DateRange;
   onChange: (range: DateRange) => void;
+  holidays?: Array<{ date: string; name?: string; nameAr?: string; }>;
 }
 
-const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) => {
+const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange, holidays = [] }) => {
   const { t, language } = useLanguage();
   const isRTL = language === 'ar';
   const locale = isRTL ? ar : undefined;
   
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'week' | 'month' | 'custom'>('month');
+  const [activeTab, setActiveTab] = useState<'today' | 'week' | 'month' | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedStart, setSelectedStart] = useState<Date | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<Date | null>(null);
@@ -264,11 +281,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getTodayRange = (): { start: Date; end: Date } => {
+    const now = new Date();
+    return {
+      start: startOfDay(now),
+      end: endOfDay(now)
+    };
+  };
+
   const getThisWeekRange = (): { start: Date; end: Date } => {
     const now = new Date();
-    const start = new Date(now);
-    start.setDate(now.getDate() - 6); // 7 days before (including today = 7 days total)
-    const end = now;
+    const start = startOfWeek(now, { weekStartsOn: 0 }); // Start from Sunday
+    const end = endOfWeek(now, { weekStartsOn: 0 });
     
     return {
       start: startOfDay(start),
@@ -279,7 +303,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
   const getThisMonthRange = (): { start: Date; end: Date } => {
     const now = new Date();
     const start = startOfMonth(now);
-    const end = now; // Up to today, not end of month
+    const end = endOfMonth(now);
     
     return {
       start: startOfDay(start),
@@ -287,35 +311,67 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     };
   };
 
-  const handleTabChange = (tab: 'week' | 'month' | 'custom') => {
+  const getThisQuarterRange = (): { start: Date; end: Date } => {
+    const now = new Date();
+    const start = startOfQuarter(now);
+    const end = endOfQuarter(now);
+    
+    return {
+      start: startOfDay(start),
+      end: endOfDay(end)
+    };
+  };
+
+  const getThisYearRange = (): { start: Date; end: Date } => {
+    const now = new Date();
+    const start = startOfYear(now);
+    const end = endOfYear(now);
+    
+    return {
+      start: startOfDay(start),
+      end: endOfDay(end)
+    };
+  };
+
+  const handleTabChange = (tab: 'today' | 'week' | 'month') => {
     setActiveTab(tab);
     
-    if (tab === 'week') {
-      const range = getThisWeekRange();
-      setSelectedStart(range.start);
-      setSelectedEnd(range.end);
-    } else if (tab === 'month') {
-      const range = getThisMonthRange();
-      setSelectedStart(range.start);
-      setSelectedEnd(range.end);
-    } else {
-      // Custom - reset selection
-      setSelectedStart(null);
-      setSelectedEnd(null);
+    let range: { start: Date; end: Date };
+    
+    switch(tab) {
+      case 'today':
+        range = getTodayRange();
+        break;
+      case 'week':
+        range = getThisWeekRange();
+        break;
+      case 'month':
+        range = getThisMonthRange();
+        break;
     }
+    
+    setSelectedStart(range.start);
+    setSelectedEnd(range.end);
   };
 
   const handleDayClick = (day: Date) => {
     if (isFuture(day) || !isSameMonth(day, currentMonth)) {
       return;
     }
-
-    // Switch to custom mode when manually selecting dates on preset tabs
-    if (activeTab !== 'custom') {
-      setActiveTab('custom');
+    
+    // Check if day is weekend or holiday
+    const isEgyptianWeekend = day.getDay() === 5 || day.getDay() === 6;
+    const dateString = format(day, 'yyyy-MM-dd');
+    const isDayHoliday = holidays.some(holiday => holiday.date === dateString);
+    
+    if (isEgyptianWeekend || isDayHoliday) {
+      return; // Don't allow selection of weekends or holidays
     }
 
-    // Allow manual date selection on all tabs
+    // Clear active tab when manually selecting dates
+    setActiveTab(null);
+
+    // Allow manual date selection
     if (!selectedStart || (selectedStart && selectedEnd)) {
       // Start new selection
       setSelectedStart(day);
@@ -336,22 +392,43 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     if (selectedStart && selectedEnd) {
       // Determine the appropriate label based on actual date range
       let label: string;
+      const locale = isRTL ? ar : undefined;
       
-      // Check if it matches this week
-      const thisWeekRange = getThisWeekRange();
-      if (isSameDay(selectedStart, thisWeekRange.start) && isSameDay(selectedEnd, thisWeekRange.end)) {
-        label = t('common.thisWeek');
+      // Check if it matches today
+      const todayRange = getTodayRange();
+      if (isSameDay(selectedStart, todayRange.start) && isSameDay(selectedEnd, todayRange.end)) {
+        label = t('common.today');
       }
-      // Check if it matches this month
+      // Check if it matches this week
       else {
-        const thisMonthRange = getThisMonthRange();
-        if (isSameDay(selectedStart, thisMonthRange.start) && isSameDay(selectedEnd, thisMonthRange.end)) {
-          label = t('common.thisMonth');
+        const thisWeekRange = getThisWeekRange();
+        if (isSameDay(selectedStart, thisWeekRange.start) && isSameDay(selectedEnd, thisWeekRange.end)) {
+          label = t('common.thisWeek');
         }
-        // Otherwise it's custom - show the actual date range
+        // Check if it matches this month
         else {
-          const locale = isRTL ? ar : undefined;
-          label = `${format(selectedStart, 'd MMM yyyy', { locale })} - ${format(selectedEnd, 'd MMM yyyy', { locale })}`;
+          const thisMonthRange = getThisMonthRange();
+          if (isSameDay(selectedStart, thisMonthRange.start) && isSameDay(selectedEnd, thisMonthRange.end)) {
+            label = t('common.thisMonth');
+          }
+          // Check if it matches this quarter
+          else {
+            const thisQuarterRange = getThisQuarterRange();
+            if (isSameDay(selectedStart, thisQuarterRange.start) && isSameDay(selectedEnd, thisQuarterRange.end)) {
+              label = t('common.thisQuarter');
+            }
+            // Check if it matches this year
+            else {
+              const thisYearRange = getThisYearRange();
+              if (isSameDay(selectedStart, thisYearRange.start) && isSameDay(selectedEnd, thisYearRange.end)) {
+                label = t('common.thisYear');
+              }
+              // Otherwise it's custom - show the actual date range
+              else {
+                label = `${format(selectedStart, 'd MMMM, yyyy', { locale })} - ${format(selectedEnd, 'd MMMM, yyyy', { locale })}`;
+              }
+            }
+          }
         }
       }
       
@@ -359,6 +436,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
         startDate: selectedStart,
         endDate: selectedEnd,
         label: label
+      };
+      onChange(range);
+    } else if (selectedStart && !selectedEnd) {
+      // Allow saving with just start date
+      const locale = isRTL ? ar : undefined;
+      const range: DateRange = {
+        startDate: selectedStart,
+        endDate: selectedStart, // Use same date for end
+        label: format(selectedStart, 'd MMMM, yyyy', { locale })
       };
       onChange(range);
     }
@@ -372,7 +458,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const dayHeaders = t('datePicker.dayHeaders') as string[];
+    // Get day headers based on language
+    const dayHeaders = isRTL 
+      ? ['س', 'ج', 'خ', 'ر', 'ث', 'إ', 'أ'] // Arabic: Sat to Sun
+      : ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // English: Sun to Sat
+    
+    // Check if a date is a holiday
+    const isHoliday = (day: Date): boolean => {
+      const dateString = format(day, 'yyyy-MM-dd');
+      return holidays.some(holiday => holiday.date === dateString);
+    };
     
     return (
       <CalendarGrid>
@@ -388,6 +483,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
           const isDayToday = isToday(day);
           const isDayFuture = isFuture(day);
           const isEgyptianWeekend = day.getDay() === 5 || day.getDay() === 6; // Friday (5) or Saturday (6)
+          const isDayHoliday = isHoliday(day);
           
           return (
             <DayCell
@@ -398,8 +494,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
               $isOtherMonth={!isCurrentMonth}
               $isFuture={isDayFuture}
               $isWeekend={isEgyptianWeekend}
+              $isHoliday={isDayHoliday}
               onClick={() => handleDayClick(day)}
-              disabled={isDayFuture || !isCurrentMonth}
+              disabled={isDayFuture || !isCurrentMonth || isEgyptianWeekend || isDayHoliday}
             >
               {format(day, 'd')}
             </DayCell>
@@ -410,16 +507,32 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
   };
 
   const formatDateRange = () => {
-    if (selectedStart && selectedEnd) {
-      return `${format(selectedStart, 'd MMM', { locale })} - ${format(selectedEnd, 'd MMM', { locale })}`;
-    } else if (selectedStart) {
-      return `${format(selectedStart, 'd MMM', { locale })} - ${t('datePicker.selectEndDate')}`;
+    if (isRTL) {
+      // Arabic format
+      if (selectedStart && selectedEnd) {
+        return `${format(selectedStart, 'd MMMM, yyyy', { locale })} - ${format(selectedEnd, 'd MMMM, yyyy', { locale })}`;
+      } else if (selectedStart) {
+        return `${format(selectedStart, 'd MMMM, yyyy', { locale })} - `;
+      }
+    } else {
+      // English format  
+      if (selectedStart && selectedEnd) {
+        return `${format(selectedStart, 'd MMMM, yyyy')} - ${format(selectedEnd, 'd MMMM, yyyy')}`;
+      } else if (selectedStart) {
+        return `${format(selectedStart, 'd MMMM, yyyy')} - `;
+      }
     }
-    return t('datePicker.selectDateRange');
+    return '';
   };
 
   // Function to get the current display label based on the date range
   const getCurrentDisplayLabel = () => {
+    // Check if it's today
+    const todayRange = getTodayRange();
+    if (isSameDay(value.startDate, todayRange.start) && isSameDay(value.endDate, todayRange.end)) {
+      return t('common.today');
+    }
+    
     // Check if it's this week
     const thisWeekRange = getThisWeekRange();
     if (isSameDay(value.startDate, thisWeekRange.start) && isSameDay(value.endDate, thisWeekRange.end)) {
@@ -430,6 +543,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
     const thisMonthRange = getThisMonthRange();
     if (isSameDay(value.startDate, thisMonthRange.start) && isSameDay(value.endDate, thisMonthRange.end)) {
       return t('common.thisMonth');
+    }
+    
+    // Check if it's this quarter
+    const thisQuarterRange = getThisQuarterRange();
+    if (isSameDay(value.startDate, thisQuarterRange.start) && isSameDay(value.endDate, thisQuarterRange.end)) {
+      return t('common.thisQuarter');
+    }
+    
+    // Check if it's this year
+    const thisYearRange = getThisYearRange();
+    if (isSameDay(value.startDate, thisYearRange.start) && isSameDay(value.endDate, thisYearRange.end)) {
+      return t('common.thisYear');
     }
     
     // Otherwise it's custom
@@ -446,6 +571,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
       <DropdownContainer $isOpen={isOpen} $isRTL={isRTL}>
         <TabContainer>
           <Tab 
+            $isActive={activeTab === 'today'} 
+            $isRTL={isRTL}
+            onClick={() => handleTabChange('today')}
+          >
+            {t('common.today')}
+          </Tab>
+          <Tab 
             $isActive={activeTab === 'week'} 
             $isRTL={isRTL}
             onClick={() => handleTabChange('week')}
@@ -458,13 +590,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
             onClick={() => handleTabChange('month')}
           >
             {t('common.thisMonth')}
-          </Tab>
-          <Tab 
-            $isActive={activeTab === 'custom'} 
-            $isRTL={isRTL}
-            onClick={() => handleTabChange('custom')}
-          >
-            {t('common.custom')}
           </Tab>
         </TabContainer>
 
@@ -481,18 +606,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ value, onChange }) =>
           {renderCalendar()}
         </CalendarContainer>
 
-        {(selectedStart || selectedEnd) && (
-          <RangeDisplay $isRTL={isRTL}>
-            <span>{formatDateRange()}</span>
-            <span>{isRTL ? '‹' : '›'}</span>
-          </RangeDisplay>
-        )}
+        <RangeDisplay $isRTL={isRTL}>
+          <span>{formatDateRange()}</span>
+        </RangeDisplay>
 
-        <DoneButtonContainer>
-          <DoneButton $isRTL={isRTL} onClick={handleDone}>
-            {t('common.done')}
-          </DoneButton>
-        </DoneButtonContainer>
+        <DoneButton $isRTL={isRTL} onClick={handleDone}>
+          {t('common.done')}
+        </DoneButton>
       </DropdownContainer>
     </PickerContainer>
   );

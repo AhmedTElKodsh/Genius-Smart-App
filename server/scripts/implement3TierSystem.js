@@ -59,7 +59,7 @@ const INITIAL_ROLE_ASSIGNMENTS = {
   // Admin - people who should have full access
   ADMIN: [
     'إبراهيم حمدي',
-    'علي توفيق'
+    'عمرو زاهر'
   ],
   // Manager - starting with ماهيتاب مصطفى as requested
   MANAGER: [

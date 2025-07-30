@@ -12,6 +12,7 @@ import EditTeacherModal from '../components/EditTeacherModal';
 import AnalyticsCard from '../components/AnalyticsCard';
 import RequestTypeDetailModal from '../components/RequestTypeDetailModal';
 import AnalyticsKPIModal from '../components/AnalyticsKPIModal';
+import ComparisonDateRangePicker from '../components/ComparisonDateRangePicker';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -37,23 +38,39 @@ ChartJS.register(
   Legend
 );
 
-// Simple BarChart component wrapper
+// Enhanced BarChart component with comparison support
 interface BarChartProps {
   data: Array<{ name: string; value: number }>;
   isDarkMode: boolean;
+  comparisonData?: Array<{ name: string; value: number }>;
+  labels?: { base: string; comparison?: string };
 }
 
-const BarChart: React.FC<BarChartProps> = ({ data, isDarkMode }) => {
+const BarChart: React.FC<BarChartProps> = ({ data, isDarkMode, comparisonData, labels }) => {
+  const datasets = [
+    {
+      label: labels?.base || 'Base Period',
+      data: data.map(item => item.value),
+      backgroundColor: isDarkMode ? '#DAA520' : '#007acc',
+      borderColor: isDarkMode ? '#DAA520' : '#007acc',
+      borderWidth: 1,
+    },
+  ];
+
+  // Add comparison dataset if provided
+  if (comparisonData) {
+    datasets.push({
+      label: labels?.comparison || 'Comparison Period',
+      data: comparisonData.map(item => item.value),
+      backgroundColor: isDarkMode ? '#9370DB' : '#2ECC71',
+      borderColor: isDarkMode ? '#9370DB' : '#2ECC71',
+      borderWidth: 1,
+    });
+  }
+
   const chartData = {
     labels: data.map(item => item.name),
-    datasets: [
-      {
-        data: data.map(item => item.value),
-        backgroundColor: isDarkMode ? '#DAA520' : '#007acc',
-        borderColor: isDarkMode ? '#DAA520' : '#007acc',
-        borderWidth: 1,
-      },
-    ],
+    datasets,
   };
 
   const options = {
@@ -61,7 +78,17 @@ const BarChart: React.FC<BarChartProps> = ({ data, isDarkMode }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false,
+        display: comparisonData ? true : false,
+        position: 'top' as const,
+        labels: {
+          color: isDarkMode ? '#b0b0b0' : '#666',
+          padding: 20,
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
       },
     },
     scales: {
@@ -88,13 +115,16 @@ const BarChart: React.FC<BarChartProps> = ({ data, isDarkMode }) => {
   return <Bar data={chartData} options={options} />;
 };
 
-// Simple DonutChart component wrapper
+// Enhanced DonutChart component wrapper with comparison support
 interface DonutChartProps {
   data: Array<{ name: string; value: number }>;
   isDarkMode: boolean;
+  comparisonData?: Array<{ name: string; value: number }>;
+  labels?: { base: string; comparison?: string };
+  showLegend?: boolean;
 }
 
-const DonutChart: React.FC<DonutChartProps> = ({ data, isDarkMode }) => {
+const DonutChart: React.FC<DonutChartProps> = ({ data, isDarkMode, comparisonData, labels, showLegend = true }) => {
   const chartData = {
     labels: data.map(item => item.name),
     datasets: [
@@ -120,7 +150,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, isDarkMode }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true,
+        display: showLegend,
         position: 'right' as const,
         labels: {
           color: isDarkMode ? '#b0b0b0' : '#666',
@@ -139,6 +169,38 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, isDarkMode }) => {
       }
     },
   };
+
+  // If comparison data is provided, return a split view
+  if (comparisonData) {
+    const comparisonChartData = {
+      ...chartData,
+      datasets: [{
+        ...chartData.datasets[0],
+        data: comparisonData.map(item => item.value),
+      }],
+    };
+
+    return (
+      <div style={{ display: 'flex', gap: '20px', height: '100%', width: '100%' }}>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <h4 style={{ margin: '0 0 10px', fontSize: '14px', color: isDarkMode ? '#b0b0b0' : '#666' }}>
+            {labels?.base || 'Base Period'}
+          </h4>
+          <div style={{ height: 'calc(100% - 30px)' }}>
+            <Doughnut data={chartData} options={options} />
+          </div>
+        </div>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <h4 style={{ margin: '0 0 10px', fontSize: '14px', color: isDarkMode ? '#b0b0b0' : '#666' }}>
+            {labels?.comparison || 'Comparison Period'}
+          </h4>
+          <div style={{ height: 'calc(100% - 30px)' }}>
+            <Doughnut data={comparisonChartData} options={options} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return <Doughnut data={chartData} options={options} />;
 };
@@ -732,6 +794,17 @@ const StatisticsHeader = styled.div`
   gap: 16px;
 `;
 
+const StatisticsTitle = styled.div<{ isRTL: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-direction: ${props => props.isRTL ? 'row-reverse' : 'row'};
+  
+  h2 {
+    margin: 0;
+  }
+`;
+
 const StatisticsFilters = styled.div`
   display: flex;
   gap: 12px;
@@ -820,9 +893,10 @@ const ChartCard = styled.div`
   padding: 24px;
   min-height: 350px;
   max-height: 450px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
+  position: relative;
 `;
 
 const ChartHeader = styled.div`
@@ -844,6 +918,8 @@ const ChartControls = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 10;
 `;
 
 const ChartToggle = styled.button<{ $isActive: boolean }>`
@@ -916,7 +992,7 @@ const ChartContent = styled.div`
   border: 2px dashed #e1e7ec;
   border-radius: 8px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 `;
 
 const FullWidthChart = styled.div`
@@ -925,7 +1001,8 @@ const FullWidthChart = styled.div`
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
   
   .chart-container {
     width: 100%;
@@ -1125,6 +1202,31 @@ interface StatisticsData {
   weeklyPatterns: Record<string, any>;
   attendanceSummary: any;
   requestSummary: any;
+  totalTeachers?: number;
+  attendanceRate?: number;
+  topPerformers?: number;
+  atRisk?: number;
+}
+
+// Type for KPI modal data
+interface KPIModalData {
+  value: number;
+  trend?: string;
+  previousPeriod?: number;
+  breakdown?: Array<{ label: string; value: number }>;
+  teachers?: Array<{
+    id: string;
+    name: string;
+    department: string;
+    attendance: number;
+    absences: number;
+    punctuality: number;
+    performance: string;
+    lateArrivals: number;
+    earlyLeaves: number;
+    workHours: number;
+    status: 'excellent' | 'good' | 'average' | 'poor' | 'atRisk';
+  }>;
 }
 
 const Teachers: React.FC = () => {
@@ -1161,7 +1263,7 @@ const Teachers: React.FC = () => {
   // KPI modal state for analytics
   const [showKPIModal, setShowKPIModal] = useState(false);
   const [selectedKPI, setSelectedKPI] = useState<'totalTeachers' | 'attendanceRate' | 'topPerformers' | 'atRisk' | 'departments'>('totalTeachers');
-  const [kpiModalData, setKpiModalData] = useState<any>(null);
+  const [kpiModalData, setKpiModalData] = useState<KPIModalData | null>(null);
   
   // Analytics data for reports
   const [analyticsData, setAnalyticsData] = useState({
@@ -1185,6 +1287,19 @@ const Teachers: React.FC = () => {
   const [comparisonPeriod, setComparisonPeriod] = useState<string>('week');
   const [comparisonData, setComparisonData] = useState<StatisticsData | null>(null);
   const [comparisonLoading, setComparisonLoading] = useState(false);
+  
+  // Individual chart comparison states
+  const [chartComparisonModes, setChartComparisonModes] = useState<{[key: string]: boolean}>({
+    attendance: false,
+    department: false,
+    weekly: false
+  });
+  
+  const [chartComparisonPeriods, setChartComparisonPeriods] = useState<{[key: string]: any}>({
+    attendance: null,
+    department: null,
+    weekly: null
+  });
 
   // Collapsible sections state
   const [departmentsComparisonOpen, setDepartmentsComparisonOpen] = useState(false);
@@ -1198,6 +1313,7 @@ const Teachers: React.FC = () => {
   const translateSubject = (subject: string): string => {
     const subjectMap: Record<string, string> = {
       'Management': t('subjects.management'),
+      'Admin Management': t('subjects.adminManagement'),
       'Quran': t('subjects.quran'),
       'Arabic': t('subjects.arabic'),
       'Math': t('subjects.math'),
@@ -1208,7 +1324,8 @@ const Teachers: React.FC = () => {
       'Social studies': t('subjects.socialStudies'),
       'Fitness': t('subjects.fitness'),
       'Scouting': t('subjects.scouting'),
-      'Nanny': t('subjects.nanny')
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history')
     };
     return subjectMap[subject] || subject;
   };
@@ -1588,7 +1705,7 @@ const Teachers: React.FC = () => {
     setSelectedKPI(kpiType);
     
     // Prepare data based on KPI type and current statistics
-    let modalData = { value: 0, teachers: [] };
+    let modalData: KPIModalData = { value: 0, teachers: [] };
     
     if (statisticsData) {
       // Prepare teacher data based on KPI type
@@ -1981,9 +2098,9 @@ const Teachers: React.FC = () => {
     return (
       <TeachersContainer>
         <Sidebar onAddTeacher={handleAddTeacher} />
-                  <MainContent $isRTL={isRTL}>
-            <LoadingContainer>Loading teachers data...</LoadingContainer>
-          </MainContent>
+        <MainContent $isRTL={isRTL}>
+          <LoadingContainer>Loading teachers data...</LoadingContainer>
+        </MainContent>
       </TeachersContainer>
     );
   }
@@ -2082,7 +2199,7 @@ const Teachers: React.FC = () => {
                       <TeacherName>{teacher.name}</TeacherName>
                       <SubjectContainer>
                         <SubjectIcon>
-                          {teacher.subject.charAt(0).toUpperCase()}
+                          {translateSubject(teacher.subject).charAt(0).toUpperCase()}
                         </SubjectIcon>
                         <SubjectName>{translateSubject(teacher.subject)}</SubjectName>
                       </SubjectContainer>
@@ -2111,7 +2228,13 @@ const Teachers: React.FC = () => {
         {activeTab === 'statistics' && (
           <StatisticsContainer>
             <StatisticsHeader>
-              <h2>{t('teachers.analytics')}</h2>
+              <StatisticsTitle isRTL={isRTL}>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={handleDateRangeChange}
+                />
+                <h2>{t('teachers.analytics')}</h2>
+              </StatisticsTitle>
               <StatisticsFilters>
                 <FilterSelect value={statisticsPeriod} onChange={handleStatisticsPeriodChange}>
                   <option value="today">{t('periods.today')}</option>
@@ -2159,36 +2282,44 @@ const Teachers: React.FC = () => {
                     <ChartHeader>
                       <ChartTitle>{t('analytics.attendanceCommitmentLevel')}</ChartTitle>
                       <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
+                        <ComparisonDateRangePicker
+                          isActive={chartComparisonModes.attendance}
+                          onPeriodsChange={(periods) => {
+                            setChartComparisonModes(prev => ({ ...prev, attendance: true }));
+                            setChartComparisonPeriods(prev => ({ ...prev, attendance: periods }));
+                            console.log('Attendance comparison periods:', periods);
+                            // TODO: Fetch comparison data for attendance chart
+                          }}
+                          onClose={() => {
+                            setChartComparisonModes(prev => ({ ...prev, attendance: false }));
+                            setChartComparisonPeriods(prev => ({ ...prev, attendance: null }));
+                          }}
+                        />
                       </ChartControls>
                     </ChartHeader>
                     
                     {/* Chart Description */}
                     <div style={{ 
                       padding: '0 16px 8px', 
-                      fontSize: '11px', 
+                      fontSize: '14px', 
                       color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
+                      fontStyle: 'italic',
+                      textAlign: isRTL ? 'right' : 'left',
+                      direction: isRTL ? 'rtl' : 'ltr'
                     }}>
                       {t('analytics.attendanceCommitmentDesc')}
                     </div>
                     
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
+                    {chartComparisonModes.attendance && chartComparisonPeriods.attendance && (
+                      <div style={{ 
+                        padding: '0 16px 8px', 
+                        fontSize: '13px', 
+                        color: '#DAA520',
+                        textAlign: 'center' 
+                      }}>
+                        {isRTL ? 'مقارنة بين الفترات المحددة' : 'Comparing selected periods'}
+                      </div>
+                    )}
                     
                     <ChartContent>
                       <div className="chart-container" style={{ 
@@ -2372,36 +2503,34 @@ const Teachers: React.FC = () => {
                         >
                           {t('analytics.earlyLeave')}
                         </ChartToggle>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
+                        <ComparisonDateRangePicker
+                          isActive={chartComparisonModes.department}
+                          onPeriodsChange={(periods) => {
+                            setChartComparisonModes(prev => ({ ...prev, department: true }));
+                            setChartComparisonPeriods(prev => ({ ...prev, department: periods }));
+                            console.log('Department comparison periods:', periods);
+                            // TODO: Fetch comparison data for department chart
+                          }}
+                          onClose={() => {
+                            setChartComparisonModes(prev => ({ ...prev, department: false }));
+                            setChartComparisonPeriods(prev => ({ ...prev, department: null }));
+                          }}
+                        />
                       </ChartControls>
                     </ChartHeader>
                     
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.departmentPerformanceDesc')}
-                    </div>
+
                     
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
+                    {chartComparisonModes.department && chartComparisonPeriods.department && (
+                      <div style={{ 
+                        padding: '0 16px 8px', 
+                        fontSize: '13px', 
+                        color: '#DAA520',
+                        textAlign: 'center' 
+                      }}>
+                        {isRTL ? 'مقارنة بين الفترات المحددة' : 'Comparing selected periods'}
+                      </div>
+                    )}
                     
                     <ChartContent>
                       <div className="chart-container" style={{ 
@@ -2471,36 +2600,34 @@ const Teachers: React.FC = () => {
                       >
                         Circle Chart
                       </ChartToggle>
-                      <ComparisonToggle 
-                        $isActive={isComparisonMode}
-                        onClick={handleComparisonToggle}
-                      >
-                        {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                      </ComparisonToggle>
+                      <ComparisonDateRangePicker
+                        isActive={chartComparisonModes.weekly}
+                        onPeriodsChange={(periods) => {
+                          setChartComparisonModes(prev => ({ ...prev, weekly: true }));
+                          setChartComparisonPeriods(prev => ({ ...prev, weekly: periods }));
+                          console.log('Weekly comparison periods:', periods);
+                          // TODO: Fetch comparison data for weekly chart
+                        }}
+                        onClose={() => {
+                          setChartComparisonModes(prev => ({ ...prev, weekly: false }));
+                          setChartComparisonPeriods(prev => ({ ...prev, weekly: null }));
+                        }}
+                      />
                     </ChartControls>
                   </ChartHeader>
                   
-                  {/* Chart Description */}
-                  <div style={{ 
-                    padding: '0 16px 8px', 
-                    fontSize: '11px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic' 
-                  }}>
-                    {t('analytics.weeklyAttendancePatternsDesc')}
-                  </div>
                   
-                  <ComparisonControls $isVisible={isComparisonMode}>
-                    <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                    <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                      <option value="today">{t('periods.today')}</option>
-                      <option value="week">{t('periods.week')}</option>
-                      <option value="month">{t('periods.month')}</option>
-                      <option value="quarter">{t('periods.quarter')}</option>
-                      <option value="year">{t('periods.year')}</option>
-                    </ComparisonSelect>
-                    <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                  </ComparisonControls>
+                  
+                  {chartComparisonModes.weekly && chartComparisonPeriods.weekly && (
+                    <div style={{ 
+                      padding: '0 16px 8px', 
+                      fontSize: '13px', 
+                      color: '#DAA520',
+                      textAlign: 'center' 
+                    }}>
+                      {isRTL ? 'مقارنة بين الفترات المحددة' : 'Comparing selected periods'}
+                    </div>
+                  )}
                   
                   <div className="chart-container">
                     <div style={{ 
@@ -2576,677 +2703,11 @@ const Teachers: React.FC = () => {
                   </div>
                 </FullWidthChart>
 
-                {/* New Comparison Charts Grid */}
-                <ChartsGrid>
-                  {/* Absence Comparison Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.absenceComparison')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.absenceComparisonDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 8 },
-                                    { name: 'Math', value: 12 },
-                                    { name: 'English', value: 6 },
-                                    { name: 'Arabic', value: 15 },
-                                    { name: 'History', value: 10 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 12 },
-                                    { name: 'Math', value: 9 },
-                                    { name: 'English', value: 8 },
-                                    { name: 'Arabic', value: 18 },
-                                    { name: 'History', value: 14 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Science', value: 8 },
-                                { name: 'Math', value: 12 },
-                                { name: 'English', value: 6 },
-                                { name: 'Arabic', value: 15 },
-                                { name: 'History', value: 10 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-
-                  {/* Early Leaves Comparison Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.earlyLeavesComparison')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.earlyLeavesComparisonDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 5 },
-                                    { name: 'Math', value: 7 },
-                                    { name: 'English', value: 3 },
-                                    { name: 'Arabic', value: 9 },
-                                    { name: 'History', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 7 },
-                                    { name: 'Math', value: 4 },
-                                    { name: 'English', value: 5 },
-                                    { name: 'Arabic', value: 11 },
-                                    { name: 'History', value: 8 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Science', value: 5 },
-                                { name: 'Math', value: 7 },
-                                { name: 'English', value: 3 },
-                                { name: 'Arabic', value: 9 },
-                                { name: 'History', value: 6 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-
-                  {/* Late Arrival Comparison Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.lateArrivalComparison')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.lateArrivalComparisonDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 4 },
-                                    { name: 'Math', value: 8 },
-                                    { name: 'English', value: 2 },
-                                    { name: 'Arabic', value: 11 },
-                                    { name: 'History', value: 7 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Science', value: 6 },
-                                    { name: 'Math', value: 5 },
-                                    { name: 'English', value: 4 },
-                                    { name: 'Arabic', value: 13 },
-                                    { name: 'History', value: 9 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Science', value: 4 },
-                                { name: 'Math', value: 8 },
-                                { name: 'English', value: 2 },
-                                { name: 'Arabic', value: 11 },
-                                { name: 'History', value: 7 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-                </ChartsGrid>
-
-                {/* Request Analysis Charts Grid */}
-                <ChartsGrid>
-                  {/* Absence Requests Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.absenceRequests')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.absenceRequestsDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 45 },
-                                    { name: 'Accepted', value: 32 },
-                                    { name: 'Rejected', value: 13 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 38 },
-                                    { name: 'Accepted', value: 28 },
-                                    { name: 'Rejected', value: 10 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Applied', value: 45 },
-                                { name: 'Accepted', value: 32 },
-                                { name: 'Rejected', value: 13 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-
-                  {/* Early Leave Requests Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.earlyLeaveRequests')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.earlyLeaveRequestsDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 28 },
-                                    { name: 'Accepted', value: 22 },
-                                    { name: 'Rejected', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 31 },
-                                    { name: 'Accepted', value: 25 },
-                                    { name: 'Rejected', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Applied', value: 28 },
-                                { name: 'Accepted', value: 22 },
-                                { name: 'Rejected', value: 6 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-
-                  {/* Late Arrival Requests Chart */}
-                  <ChartCard>
-                    <ChartHeader>
-                      <ChartTitle>{t('analytics.lateArrivalRequests')}</ChartTitle>
-                      <ChartControls>
-                        <ComparisonToggle 
-                          $isActive={isComparisonMode}
-                          onClick={handleComparisonToggle}
-                        >
-                          {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                        </ComparisonToggle>
-                      </ChartControls>
-                    </ChartHeader>
-                    
-                    {/* Chart Description */}
-                    <div style={{ 
-                      padding: '0 16px 8px', 
-                      fontSize: '11px', 
-                      color: isDarkMode ? '#b0b0b0' : '#666', 
-                      fontStyle: 'italic' 
-                    }}>
-                      {t('analytics.lateArrivalRequestsDesc')}
-                    </div>
-                    
-                    <ComparisonControls $isVisible={isComparisonMode}>
-                      <ComparisonLabel>{t('comparison.compareWith')}</ComparisonLabel>
-                      <ComparisonSelect value={comparisonPeriod} onChange={handleComparisonPeriodChange}>
-                        <option value="today">{t('periods.today')}</option>
-                        <option value="week">{t('periods.week')}</option>
-                        <option value="month">{t('periods.month')}</option>
-                        <option value="quarter">{t('periods.quarter')}</option>
-                        <option value="year">{t('periods.year')}</option>
-                      </ComparisonSelect>
-                      <ComparisonLabel>{t('comparison.vs')} {t('comparison.current')} {t(`periods.${statisticsPeriod}`)}</ComparisonLabel>
-                    </ComparisonControls>
-                    
-                    <ChartContent>
-                      <div className="chart-container" style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 19 },
-                                    { name: 'Accepted', value: 14 },
-                                    { name: 'Rejected', value: 5 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Applied', value: 22 },
-                                    { name: 'Accepted', value: 16 },
-                                    { name: 'Rejected', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Applied', value: 19 },
-                                { name: 'Accepted', value: 14 },
-                                { name: 'Rejected', value: 5 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </ChartContent>
-                  </ChartCard>
-                </ChartsGrid>
-
                 {/* Teacher Ranking Table */}
                 <TableSection>
                   <TableTitle>{t('analytics.teacherPerformanceRanking')}</TableTitle>
                   <StatsTable>
-                    <StatsTableHeader>
+                    <StatsTableHeader> 
                       <StatsTableHeaderRow>
                         <StatsTableHeaderCell $alignLeft={true}>{t('analytics.teacher')}</StatsTableHeaderCell>
                         <StatsTableHeaderCell>{t('analytics.department')}</StatsTableHeaderCell>
@@ -3284,1585 +2745,9 @@ const Teachers: React.FC = () => {
                     </StatsTableBody>
                   </StatsTable>
                 </TableSection>
-
-                {/* New Collapsible Sections */}
-                
-                {/* Department Comparisons */}
-                <CollapsibleSectionComponent
-                  title={t('analytics.departmentComparisons')}
-                  isOpen={departmentComparisonsOpen}
-                  onToggle={() => setDepartmentComparisonsOpen(!departmentComparisonsOpen)}
-                >
-                  {/* Section Description */}
-                  <div style={{ 
-                    padding: '0 20px 16px', 
-                    fontSize: '14px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic',
-                    borderBottom: '1px solid #e1e7ec',
-                    marginBottom: '20px'
-                  }}>
-                    {t('analytics.departmentComparisonsDesc')}
-                  </div>
-
-                  <SectionChartsGrid>
-                    {/* Absence Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.absenceComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.absenceComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 15 },
-                                    { name: 'Science', value: 12 },
-                                    { name: 'English', value: 18 },
-                                    { name: 'Arabic', value: 8 },
-                                    { name: 'History', value: 10 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 12 },
-                                    { name: 'Science', value: 10 },
-                                    { name: 'English', value: 16 },
-                                    { name: 'Arabic', value: 6 },
-                                    { name: 'History', value: 8 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 15 },
-                                { name: 'Science', value: 12 },
-                                { name: 'English', value: 18 },
-                                { name: 'Arabic', value: 8 },
-                                { name: 'History', value: 10 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Early Leave Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.earlyLeaveComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.earlyLeaveComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 5 },
-                                    { name: 'Science', value: 8 },
-                                    { name: 'English', value: 3 },
-                                    { name: 'Arabic', value: 6 },
-                                    { name: 'History', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 3 },
-                                    { name: 'Science', value: 6 },
-                                    { name: 'English', value: 2 },
-                                    { name: 'Arabic', value: 4 },
-                                    { name: 'History', value: 3 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 5 },
-                                { name: 'Science', value: 8 },
-                                { name: 'English', value: 3 },
-                                { name: 'Arabic', value: 6 },
-                                { name: 'History', value: 4 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Late Arrival Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.lateArrivalComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.lateArrivalComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 7 },
-                                    { name: 'Science', value: 9 },
-                                    { name: 'English', value: 5 },
-                                    { name: 'Arabic', value: 6 },
-                                    { name: 'History', value: 8 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 5 },
-                                    { name: 'Science', value: 7 },
-                                    { name: 'English', value: 4 },
-                                    { name: 'Arabic', value: 4 },
-                                    { name: 'History', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 7 },
-                                { name: 'Science', value: 9 },
-                                { name: 'English', value: 5 },
-                                { name: 'Arabic', value: 6 },
-                                { name: 'History', value: 8 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-                  </SectionChartsGrid>
-                </CollapsibleSectionComponent>
-
-                {/* Department Requests */}
-                <CollapsibleSectionComponent
-                  title={t('analytics.departmentRequests')}
-                  isOpen={departmentRequestsOpen}
-                  onToggle={() => setDepartmentRequestsOpen(!departmentRequestsOpen)}
-                >
-                  {/* Section Description */}
-                  <div style={{ 
-                    padding: '0 20px 16px', 
-                    fontSize: '14px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic',
-                    borderBottom: '1px solid #e1e7ec',
-                    marginBottom: '20px'
-                  }}>
-                    {t('analytics.departmentRequestsDesc')}
-                  </div>
-
-                  <SectionChartsGrid>
-                    {/* Absence Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.absenceRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.absenceRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 12 },
-                                    { name: 'Science', value: 15 },
-                                    { name: 'English', value: 9 },
-                                    { name: 'Arabic', value: 11 },
-                                    { name: 'History', value: 13 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 10 },
-                                    { name: 'Science', value: 12 },
-                                    { name: 'English', value: 7 },
-                                    { name: 'Arabic', value: 9 },
-                                    { name: 'History', value: 11 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 12 },
-                                { name: 'Science', value: 15 },
-                                { name: 'English', value: 9 },
-                                { name: 'Arabic', value: 11 },
-                                { name: 'History', value: 13 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Early Leave Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.earlyLeaveRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.earlyLeaveRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 6 },
-                                    { name: 'Science', value: 8 },
-                                    { name: 'English', value: 4 },
-                                    { name: 'Arabic', value: 7 },
-                                    { name: 'History', value: 5 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 4 },
-                                    { name: 'Science', value: 6 },
-                                    { name: 'English', value: 3 },
-                                    { name: 'Arabic', value: 5 },
-                                    { name: 'History', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 6 },
-                                { name: 'Science', value: 8 },
-                                { name: 'English', value: 4 },
-                                { name: 'Arabic', value: 7 },
-                                { name: 'History', value: 5 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Late Arrival Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.lateArrivalRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.lateArrivalRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 4 },
-                                    { name: 'Science', value: 6 },
-                                    { name: 'English', value: 3 },
-                                    { name: 'Arabic', value: 5 },
-                                    { name: 'History', value: 7 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Math', value: 3 },
-                                    { name: 'Science', value: 4 },
-                                    { name: 'English', value: 2 },
-                                    { name: 'Arabic', value: 4 },
-                                    { name: 'History', value: 5 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Math', value: 4 },
-                                { name: 'Science', value: 6 },
-                                { name: 'English', value: 3 },
-                                { name: 'Arabic', value: 5 },
-                                { name: 'History', value: 7 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-                  </SectionChartsGrid>
-                </CollapsibleSectionComponent>
-
-                {/* Teachers Performance Comparison */}
-                <CollapsibleSectionComponent
-                  title={t('analytics.teachersPerformanceComparison')}
-                  isOpen={teachersComparisonOpen}
-                  onToggle={() => setTeachersComparisonOpen(!teachersComparisonOpen)}
-                >
-                  {/* Section Description */}
-                  <div style={{ 
-                    padding: '0 20px 16px', 
-                    fontSize: '14px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic',
-                    borderBottom: '1px solid #e1e7ec',
-                    marginBottom: '20px'
-                  }}>
-                    {t('analytics.teachersPerformanceComparisonDesc')}
-                  </div>
-
-                  <SectionChartsGrid>
-                    {/* Teacher Absence Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherAbsenceComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherAbsenceComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 5 },
-                                    { name: 'Sara Hassan', value: 8 },
-                                    { name: 'Mohamed Omar', value: 3 },
-                                    { name: 'Fatima Nour', value: 12 },
-                                    { name: 'Hassan Ibrahim', value: 6 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 3 },
-                                    { name: 'Sara Hassan', value: 6 },
-                                    { name: 'Mohamed Omar', value: 2 },
-                                    { name: 'Fatima Nour', value: 10 },
-                                    { name: 'Hassan Ibrahim', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 5 },
-                                { name: 'Sara Hassan', value: 8 },
-                                { name: 'Mohamed Omar', value: 3 },
-                                { name: 'Fatima Nour', value: 12 },
-                                { name: 'Hassan Ibrahim', value: 6 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Early Leave Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherEarlyLeaveComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherEarlyLeaveComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 2 },
-                                    { name: 'Sara Hassan', value: 4 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 6 },
-                                    { name: 'Hassan Ibrahim', value: 3 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 1 },
-                                    { name: 'Sara Hassan', value: 2 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 4 },
-                                    { name: 'Hassan Ibrahim', value: 2 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 2 },
-                                { name: 'Sara Hassan', value: 4 },
-                                { name: 'Mohamed Omar', value: 1 },
-                                { name: 'Fatima Nour', value: 6 },
-                                { name: 'Hassan Ibrahim', value: 3 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Late Arrival Comparison Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherLateArrivalComparison')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherLateArrivalComparisonDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 3 },
-                                    { name: 'Sara Hassan', value: 7 },
-                                    { name: 'Mohamed Omar', value: 2 },
-                                    { name: 'Fatima Nour', value: 9 },
-                                    { name: 'Hassan Ibrahim', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 2 },
-                                    { name: 'Sara Hassan', value: 5 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 7 },
-                                    { name: 'Hassan Ibrahim', value: 3 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 3 },
-                                { name: 'Sara Hassan', value: 7 },
-                                { name: 'Mohamed Omar', value: 2 },
-                                { name: 'Fatima Nour', value: 9 },
-                                { name: 'Hassan Ibrahim', value: 4 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Absence Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherAbsenceRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherAbsenceRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 8 },
-                                    { name: 'Sara Hassan', value: 12 },
-                                    { name: 'Mohamed Omar', value: 5 },
-                                    { name: 'Fatima Nour', value: 15 },
-                                    { name: 'Hassan Ibrahim', value: 9 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 6 },
-                                    { name: 'Sara Hassan', value: 10 },
-                                    { name: 'Mohamed Omar', value: 4 },
-                                    { name: 'Fatima Nour', value: 13 },
-                                    { name: 'Hassan Ibrahim', value: 7 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 8 },
-                                { name: 'Sara Hassan', value: 12 },
-                                { name: 'Mohamed Omar', value: 5 },
-                                { name: 'Fatima Nour', value: 15 },
-                                { name: 'Hassan Ibrahim', value: 9 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Early Leave Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherEarlyLeaveRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherEarlyLeaveRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 4 },
-                                    { name: 'Sara Hassan', value: 6 },
-                                    { name: 'Mohamed Omar', value: 2 },
-                                    { name: 'Fatima Nour', value: 8 },
-                                    { name: 'Hassan Ibrahim', value: 5 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 3 },
-                                    { name: 'Sara Hassan', value: 4 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 6 },
-                                    { name: 'Hassan Ibrahim', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 4 },
-                                { name: 'Sara Hassan', value: 6 },
-                                { name: 'Mohamed Omar', value: 2 },
-                                { name: 'Fatima Nour', value: 8 },
-                                { name: 'Hassan Ibrahim', value: 5 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Late Arrival Requests Chart */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherLateArrivalRequests')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      
-                      {/* Chart Description */}
-                      <div style={{ 
-                        padding: '0 16px 8px', 
-                        fontSize: '11px', 
-                        color: isDarkMode ? '#b0b0b0' : '#666', 
-                        fontStyle: 'italic' 
-                      }}>
-                        {t('analytics.teacherLateArrivalRequestsDesc')}
-                      </div>
-
-                      <ChartContent>
-                        {isComparisonMode ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '300px'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 3 },
-                                    { name: 'Sara Hassan', value: 5 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 7 },
-                                    { name: 'Hassan Ibrahim', value: 4 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart 
-                                  data={[
-                                    { name: 'Ahmed Ali', value: 2 },
-                                    { name: 'Sara Hassan', value: 3 },
-                                    { name: 'Mohamed Omar', value: 1 },
-                                    { name: 'Fatima Nour', value: 5 },
-                                    { name: 'Hassan Ibrahim', value: 3 }
-                                  ]} 
-                                  isDarkMode={isDarkMode} 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ height: '300px', width: '100%' }}>
-                            <BarChart 
-                              data={[
-                                { name: 'Ahmed Ali', value: 3 },
-                                { name: 'Sara Hassan', value: 5 },
-                                { name: 'Mohamed Omar', value: 1 },
-                                { name: 'Fatima Nour', value: 7 },
-                                { name: 'Hassan Ibrahim', value: 4 }
-                              ]} 
-                              isDarkMode={isDarkMode} 
-                            />
-                          </div>
-                        )}
-                      </ChartContent>
-                    </ChartCard>
-                  </SectionChartsGrid>
-                </CollapsibleSectionComponent>
-
-                {/* Department Performance Tracking */}
-                <CollapsibleSectionComponent
-                  title={t('analytics.departmentPerformanceTracking')}
-                  isOpen={departmentTrackingOpen}
-                  onToggle={() => setDepartmentTrackingOpen(!departmentTrackingOpen)}
-                >
-                  {/* Section Description */}
-                  <div style={{ 
-                    padding: '0 20px 16px', 
-                    fontSize: '14px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic',
-                    borderBottom: '1px solid #e1e7ec',
-                    marginBottom: '20px'
-                  }}>
-                    {t('analytics.departmentPerformanceTrackingDesc')}
-                  </div>
-
-                  <SectionChartsGrid>
-                    {/* Department Registered Absence Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentRegisteredAbsenceTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 25 },
-                              { name: 'Feb', value: 30 },
-                              { name: 'Mar', value: 22 },
-                              { name: 'Apr', value: 35 },
-                              { name: 'May', value: 28 },
-                              { name: 'Jun', value: 31 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Department Registered Early Leaves Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentRegisteredEarlyLeavesTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 12 },
-                              { name: 'Feb', value: 15 },
-                              { name: 'Mar', value: 9 },
-                              { name: 'Apr', value: 18 },
-                              { name: 'May', value: 14 },
-                              { name: 'Jun', value: 16 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Department Registered Late Arrival Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentRegisteredLateArrivalTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 18 },
-                              { name: 'Feb', value: 22 },
-                              { name: 'Mar', value: 16 },
-                              { name: 'Apr', value: 25 },
-                              { name: 'May', value: 20 },
-                              { name: 'Jun', value: 23 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Department Absence Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentAbsenceRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 35 },
-                              { name: 'Feb', value: 42 },
-                              { name: 'Mar', value: 38 },
-                              { name: 'Apr', value: 45 },
-                              { name: 'May', value: 40 },
-                              { name: 'Jun', value: 43 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Department Early Leave Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentEarlyLeaveRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 20 },
-                              { name: 'Feb', value: 25 },
-                              { name: 'Mar', value: 18 },
-                              { name: 'Apr', value: 28 },
-                              { name: 'May', value: 22 },
-                              { name: 'Jun', value: 26 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Department Late Arrival Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.departmentLateArrivalRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 15 },
-                              { name: 'Feb', value: 18 },
-                              { name: 'Mar', value: 12 },
-                              { name: 'Apr', value: 21 },
-                              { name: 'May', value: 16 },
-                              { name: 'Jun', value: 19 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-                  </SectionChartsGrid>
-                </CollapsibleSectionComponent>
-
-                {/* Teacher Performance Tracking */}
-                <CollapsibleSectionComponent
-                  title={t('analytics.teacherPerformanceTracking')}
-                  isOpen={teacherTrackingOpen}
-                  onToggle={() => setTeacherTrackingOpen(!teacherTrackingOpen)}
-                >
-                  {/* Section Description */}
-                  <div style={{ 
-                    padding: '0 20px 16px', 
-                    fontSize: '14px', 
-                    color: isDarkMode ? '#b0b0b0' : '#666', 
-                    fontStyle: 'italic',
-                    borderBottom: '1px solid #e1e7ec',
-                    marginBottom: '20px'
-                  }}>
-                    {t('analytics.teacherPerformanceTrackingDesc')}
-                  </div>
-
-                  <SectionChartsGrid>
-                    {/* Teacher Registered Absence Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherRegisteredAbsenceTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 3 },
-                              { name: 'Feb', value: 5 },
-                              { name: 'Mar', value: 2 },
-                              { name: 'Apr', value: 7 },
-                              { name: 'May', value: 4 },
-                              { name: 'Jun', value: 6 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Registered Early Leaves Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherRegisteredEarlyLeavesTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 1 },
-                              { name: 'Feb', value: 2 },
-                              { name: 'Mar', value: 1 },
-                              { name: 'Apr', value: 3 },
-                              { name: 'May', value: 2 },
-                              { name: 'Jun', value: 2 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Registered Late Arrival Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherRegisteredLateArrivalTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 2 },
-                              { name: 'Feb', value: 4 },
-                              { name: 'Mar', value: 1 },
-                              { name: 'Apr', value: 5 },
-                              { name: 'May', value: 3 },
-                              { name: 'Jun', value: 4 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Absence Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherAbsenceRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 5 },
-                              { name: 'Feb', value: 8 },
-                              { name: 'Mar', value: 4 },
-                              { name: 'Apr', value: 10 },
-                              { name: 'May', value: 7 },
-                              { name: 'Jun', value: 9 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Early Leave Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherEarlyLeaveRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 3 },
-                              { name: 'Feb', value: 4 },
-                              { name: 'Mar', value: 2 },
-                              { name: 'Apr', value: 6 },
-                              { name: 'May', value: 3 },
-                              { name: 'Jun', value: 5 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-
-                    {/* Teacher Late Arrival Requests Tracking */}
-                    <ChartCard>
-                      <ChartHeader>
-                        <ChartTitle>{t('analytics.teacherLateArrivalRequestsTracking')}</ChartTitle>
-                        <ChartControls>
-                          <ComparisonToggle 
-                            $isActive={isComparisonMode}
-                            onClick={handleComparisonToggle}
-                          >
-                            {isComparisonMode ? t('comparison.hideComparison') : t('comparison.comparePeriods')}
-                          </ComparisonToggle>
-                        </ChartControls>
-                      </ChartHeader>
-                      <ChartContent>
-                        <div style={{ height: '300px', width: '100%' }}>
-                          <BarChart 
-                            data={[
-                              { name: 'Jan', value: 2 },
-                              { name: 'Feb', value: 3 },
-                              { name: 'Mar', value: 1 },
-                              { name: 'Apr', value: 4 },
-                              { name: 'May', value: 2 },
-                              { name: 'Jun', value: 3 }
-                            ]} 
-                            isDarkMode={isDarkMode} 
-                          />
-                        </div>
-                      </ChartContent>
-                    </ChartCard>
-                  </SectionChartsGrid>
-                </CollapsibleSectionComponent>
-
               </>
             ) : (
-              <EmptyState>
-                <EmptyIcon>📊</EmptyIcon>
-                <h3>No Statistics Available</h3>
-                <p>Statistics data is currently unavailable. Please try again later.</p>
-              </EmptyState>
+              <LoadingContainer>No statistics data available</LoadingContainer>
             )}
           </StatisticsContainer>
         )}
@@ -4949,7 +2834,7 @@ const Teachers: React.FC = () => {
                 >
                   ‹
                 </PaginationButton>
-                <span>{t('Page')} {currentPage}</span>
+                <span>Page {currentPage} of {totalPages}</span>
                 <PaginationButton
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
@@ -4957,15 +2842,6 @@ const Teachers: React.FC = () => {
                   ›
                 </PaginationButton>
               </PaginationInfo>
-              
-              <ExportButtonsContainer>
-                <ExportButton onClick={handleExportPDF}>
-                  {t('reports.exportPDF')}
-                </ExportButton>
-                <ExportButton onClick={handleExportExcel}>
-                  {t('reports.exportExcel')}
-                </ExportButton>
-              </ExportButtonsContainer>
             </PaginationContainer>
           </>
         )}
@@ -5006,4 +2882,4 @@ const Teachers: React.FC = () => {
   );
 };
 
-export default Teachers; 
+export default Teachers;

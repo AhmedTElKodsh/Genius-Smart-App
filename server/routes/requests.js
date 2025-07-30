@@ -384,17 +384,90 @@ router.put('/:id',
     requests[requestIndex].approvedAt = new Date().toISOString();
     requests[requestIndex].canBeRevokedBy = req.user.role === 'MANAGER' ? 'ADMIN' : null;
     
-    // Deduct hours from teacher's balance if request is accepted and has hours
-    if (result === 'Accepted' && requests[requestIndex].hours) {
+    // Deduct hours/days from teacher's balance if request is accepted
+    if (result === 'Accepted') {
       const requestType = requests[requestIndex].requestType;
+      const request = requests[requestIndex];
+      let deductionSuccess = false;
+      
+      // Calculate amount to deduct based on request type and duration
       if (requestType === 'Late Arrival' || requestType === 'Early Leave') {
-        const hoursToDeduct = requests[requestIndex].hours;
-        const deductionSuccess = updateTeacherHours(requests[requestIndex].teacherId, hoursToDeduct);
+        let hoursToDeduct = request.hours;
         
-        if (deductionSuccess) {
-          console.log(`✅ Deducted ${hoursToDeduct} hours from teacher ${requests[requestIndex].name}`);
-        } else {
-          console.error(`❌ Failed to deduct hours for teacher ${requests[requestIndex].name}`);
+        // If hours not provided, try to parse from duration
+        if (!hoursToDeduct && request.duration) {
+          const hoursMatch = request.duration.match(/(\d+)\s*hour/i);
+          if (hoursMatch) {
+            hoursToDeduct = parseInt(hoursMatch[1]);
+          }
+        }
+        
+        if (hoursToDeduct) {
+          const updateResult = updateTeacherBalance(request.teacherId, requestType, hoursToDeduct);
+          deductionSuccess = updateResult.success;
+          requests[requestIndex].grantedHours = hoursToDeduct;
+          
+          if (deductionSuccess) {
+            requests[requestIndex].remainingBalance = updateResult.remainingBalance;
+            console.log(`✅ Deducted ${hoursToDeduct} hours from teacher ${request.name}. Remaining: ${updateResult.remainingBalance} hours`);
+          } else {
+            console.error(`❌ Failed to deduct hours for teacher ${request.name}`);
+          }
+        }
+      } else if (requestType === 'Absence' || requestType === 'Authorized Absence') {
+        // Calculate days from request duration
+        let daysToDeduct = request.days;
+        
+        // If days not provided, calculate from dates
+        if (!daysToDeduct && request.duration) {
+          // Try to parse dates from duration string
+          if (request.duration.includes(' - ')) {
+            const parts = request.duration.split(' - ');
+            if (parts.length === 2) {
+              const startStr = parts[0].trim();
+              const endStr = parts[1].trim();
+              
+              // Check if it's same date (single day absence)
+              if (startStr === endStr || endStr.includes(startStr)) {
+                daysToDeduct = 1;
+              } else {
+                // Parse and calculate days between dates
+                try {
+                  const startDate = new Date(startStr);
+                  const endDate = new Date(endStr);
+                  if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                    daysToDeduct = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+                  }
+                } catch (e) {
+                  console.error('Error parsing dates from duration:', e);
+                  daysToDeduct = 1; // Default to 1 day
+                }
+              }
+            }
+          } else {
+            // Single date format, assume 1 day
+            daysToDeduct = 1;
+          }
+        }
+        
+        // If still no days calculated, try from date fields
+        if (!daysToDeduct && request.fromDate && request.toDate) {
+          const from = new Date(request.fromDate);
+          const to = new Date(request.toDate);
+          daysToDeduct = Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1;
+        }
+        
+        if (daysToDeduct) {
+          const updateResult = updateTeacherBalance(request.teacherId, requestType, daysToDeduct);
+          deductionSuccess = updateResult.success;
+          requests[requestIndex].grantedDays = daysToDeduct;
+          
+          if (deductionSuccess) {
+            requests[requestIndex].remainingBalance = updateResult.remainingBalance;
+            console.log(`✅ Deducted ${daysToDeduct} days from teacher ${request.name}. Remaining: ${updateResult.remainingBalance} days`);
+          } else {
+            console.error(`❌ Failed to deduct days for teacher ${request.name}`);
+          }
         }
       }
     }
@@ -454,24 +527,55 @@ const getTeacherData = (teacherId) => {
   }
 };
 
-// Helper function to update teacher remaining hours
-const updateTeacherHours = (teacherId, hoursToDeduct) => {
+// Helper function to update teacher remaining hours and absence days
+const updateTeacherBalance = (teacherId, requestType, amount) => {
   try {
     const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
     const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
     
     const teacherIndex = teachersData.findIndex(teacher => teacher.id === teacherId);
-    if (teacherIndex === -1) return false;
+    if (teacherIndex === -1) return { success: false };
     
-    teachersData[teacherIndex].remainingLateEarlyHours = 
-      (teachersData[teacherIndex].remainingLateEarlyHours || 4) - hoursToDeduct;
+    const teacher = teachersData[teacherIndex];
+    let remainingBalance = 0;
     
+    if (requestType === 'Late Arrival' || requestType === 'Early Leave') {
+      // Update remaining late/early hours
+      const currentRemaining = teacher.remainingLateEarlyHours || 8;
+      const totalUsed = (teacher.totalLateEarlyHours || 8) - currentRemaining;
+      
+      teacher.remainingLateEarlyHours = Math.max(0, currentRemaining - amount);
+      teacher.usedLateEarlyHours = totalUsed + amount;
+      remainingBalance = teacher.remainingLateEarlyHours;
+      
+      console.log(`Updated ${teacher.name}: ${amount} hours deducted. Remaining: ${teacher.remainingLateEarlyHours} hours`);
+    } else if (requestType === 'Absence' || requestType === 'Authorized Absence') {
+      // Update absence days
+      const currentUsed = teacher.totalAbsenceDays || 0;
+      const allowed = teacher.allowedAbsenceDays || 20;
+      
+      teacher.totalAbsenceDays = currentUsed + amount;
+      teacher.remainingAbsenceDays = Math.max(0, allowed - teacher.totalAbsenceDays);
+      remainingBalance = teacher.remainingAbsenceDays;
+      
+      console.log(`Updated ${teacher.name}: ${amount} days deducted. Used: ${teacher.totalAbsenceDays}/${allowed} days`);
+    }
+    
+    // Update the last modified date
+    teacher.balanceLastUpdated = new Date().toISOString();
+    
+    teachersData[teacherIndex] = teacher;
     fs.writeFileSync(teachersPath, JSON.stringify(teachersData, null, 2));
-    return true;
+    return { success: true, remainingBalance };
   } catch (error) {
-    console.error('Error updating teacher hours:', error);
-    return false;
+    console.error('Error updating teacher balance:', error);
+    return { success: false };
   }
+};
+
+// Keep the old function for backward compatibility
+const updateTeacherHours = (teacherId, hoursToDeduct) => {
+  return updateTeacherBalance(teacherId, 'Late Arrival', hoursToDeduct);
 };
 
 // POST /api/requests - Submit a new request from teacher
@@ -849,6 +953,59 @@ router.post('/cleanup',
     res.status(500).json({
       success: false,
       message: 'Failed to perform cleanup',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/requests/non-admin-handled - Get requests handled by non-admin managers (Admin only)
+router.get('/non-admin-handled', 
+  extractUserAndRole, 
+  requireRole(ROLES.ADMIN),
+  (req, res) => {
+  try {
+    const allRequests = getRequestsData();
+    
+    // Filter requests that were handled by non-admin managers
+    const nonAdminHandledRequests = allRequests.filter(request => {
+      // Check if request was approved/rejected
+      const isHandled = request.status && ['approved', 'rejected'].includes(request.status.toLowerCase());
+      // Check if it was handled by a non-admin manager
+      const handledByNonAdmin = request.approverRole && request.approverRole !== 'ADMIN';
+      
+      return isHandled && handledByNonAdmin;
+    });
+
+    // Group by handler
+    const groupedByHandler = nonAdminHandledRequests.reduce((acc, request) => {
+      const handlerKey = request.approverName || 'Unknown Manager';
+      if (!acc[handlerKey]) {
+        acc[handlerKey] = {
+          managerId: request.approvedBy,
+          managerName: request.approverName,
+          managerRole: request.approverRole,
+          requests: []
+        };
+      }
+      acc[handlerKey].requests.push({
+        ...request,
+        canBeRevoked: true // Admin can revoke decisions made by non-admin managers
+      });
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      message: 'Non-admin handled requests retrieved successfully',
+      data: groupedByHandler,
+      totalCount: nonAdminHandledRequests.length
+    });
+    
+  } catch (error) {
+    console.error('Error fetching non-admin handled requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch non-admin handled requests',
       error: error.message
     });
   }

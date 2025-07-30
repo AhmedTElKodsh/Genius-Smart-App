@@ -56,27 +56,49 @@ const extractUserAndRole = (req, res, next) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token || !token.startsWith('gse_')) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Unauthorized: Invalid token'
+        message: 'Unauthorized: No token provided'
       });
     }
 
-    // Extract user ID from token
-    const parts = token.split('_');
-    if (parts.length < 3) {
+    let userId, userEmail, userRole;
+    
+    // Check if it's a JWT token
+    if (token.includes('.')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'genius-smart-secret-key');
+        userId = decoded.userId;
+        userEmail = decoded.email;
+        userRole = decoded.role;
+      } catch (error) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Invalid token'
+        });
+      }
+    } else if (token.startsWith('gse_')) {
+      // Handle old format tokens
+      const parts = token.split('_');
+      if (parts.length < 3) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Invalid token format'
+        });
+      }
+      userId = parts.slice(1, -1).join('_');
+    } else {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized: Invalid token format'
       });
     }
-
-    const userId = parts.slice(1, -1).join('_');
     
     // Load user data
     const teachers = loadTeachers();
-    const user = teachers.find(t => t.id === userId);
+    const user = teachers.find(t => t.id === userId || t.email === userEmail);
 
     if (!user || user.status !== 'Active') {
       return res.status(401).json({

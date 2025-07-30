@@ -104,39 +104,15 @@ const MetricLabel = styled.div<{ isDarkMode: boolean }>`
   font-weight: 500;
 `;
 
-const Description = styled.div<{ isDarkMode: boolean }>`
+const Description = styled.div<{ isDarkMode: boolean; isRTL?: boolean }>`
   background: ${props => props.isDarkMode ? '#404040' : '#f8f9fa'};
   border-radius: 12px;
   padding: 16px;
   line-height: 1.5;
   font-size: 14px;
   margin-bottom: 16px;
-`;
-
-const InsightsList = styled.ul<{ isDarkMode: boolean }>`
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px 0;
-`;
-
-const InsightItem = styled.li<{ isDarkMode: boolean; isRTL: boolean }>`
-  background: ${props => props.isDarkMode ? '#404040' : '#f8f9fa'};
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  display: flex;
-  align-items: flex-start;
+  text-align: ${props => props.isRTL ? 'right' : 'left'};
   direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
-  
-  &:before {
-    content: "•";
-    color: #DAA520;
-    font-weight: bold;
-    ${props => props.isRTL ? 'margin-left: 8px;' : 'margin-right: 8px;'}
-    margin-top: 2px;
-    flex-shrink: 0;
-  }
 `;
 
 const TableSection = styled.div<{ isDarkMode: boolean }>`
@@ -530,7 +506,7 @@ const AnalyticsKPIModal: React.FC<AnalyticsKPIModalProps> = ({
         </Header>
 
         <Content isDarkMode={isDarkMode}>
-          <Description isDarkMode={isDarkMode}>
+          <Description isDarkMode={isDarkMode} isRTL={isRTL}>
             {content.description}
           </Description>
 
@@ -546,26 +522,6 @@ const AnalyticsKPIModal: React.FC<AnalyticsKPIModalProps> = ({
               </MetricCard>
             ))}
           </MetricGrid>
-
-          {content.insights.length > 0 && (
-            <>
-              <h3 style={{ 
-                color: isDarkMode ? '#DAA520' : '#1f2937', 
-                marginBottom: '16px',
-                fontSize: '18px',
-                fontWeight: '600'
-              }}>
-                {t('analytics.keyInsights') || 'Key Insights'}
-              </h3>
-              <InsightsList isDarkMode={isDarkMode}>
-                {content.insights.map((insight, index) => (
-                  <InsightItem key={index} isDarkMode={isDarkMode} isRTL={isRTL}>
-                    {insight}
-                  </InsightItem>
-                ))}
-              </InsightsList>
-            </>
-          )}
 
           {data.teachers && data.teachers.length > 0 && (
             <TableSection isDarkMode={isDarkMode}>

@@ -589,6 +589,26 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   const [error, setError] = useState('');
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
 
+  // Function to translate subject names for display
+  const translateSubject = (subject: string): string => {
+    const subjectMap: Record<string, string> = {
+      'Management': t('subjects.management'),
+      'Quran': t('subjects.quran'),
+      'Arabic': t('subjects.arabic'),
+      'Math': t('subjects.math'),
+      'English': t('subjects.english'),
+      'Science': t('subjects.science'),
+      'Art': t('subjects.art'),
+      'Programming': t('subjects.programming'),
+      'Social studies': t('subjects.socialStudies'),
+      'Fitness': t('subjects.fitness'),
+      'Scouting': t('subjects.scouting'),
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history')
+    };
+    return subjectMap[subject] || subject;
+  };
+
   // Calculate allowed absence days based on employment date
   const calculateAllowedAbsenceDays = (employmentDate: string): number => {
     if (!employmentDate) return 0;
@@ -1137,11 +1157,11 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                      onChange={(e) => handleInputChange('subject', e.target.value)}
                    >
                      <option value="">{t('addTeacher.selectSubject')}</option>
-                     {subjects.map(subject => (
-                       <option key={subject.id} value={subject.name}>
-                         {subject.name}
-                       </option>
-                     ))}
+                                         {subjects.map(subject => (
+                      <option key={subject.id} value={subject.name}>
+                        {translateSubject(subject.name)}
+                      </option>
+                    ))}
                    </Select>
                  </FormField>
                  
@@ -1208,10 +1228,25 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                      {t('addTeacher.allowedAbsenceDaysHelper')}
                    </HelperText>
                  </FormField>
-               </FormGrid>
+                             </FormGrid>
 
-               <AuthoritiesContainer>
-                 <Label $isRTL={isRTL}>{t('addTeacher.authorities')}</Label>
+              {/* Employee Role Selection */}
+              <FormFieldFull>
+                <Label $isRTL={isRTL}>
+                  {isRTL ? 'دور الموظف' : 'Employee Role'}
+                </Label>
+                <Select
+                  value={formData.systemRole}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                >
+                  <option value="ADMIN">{isRTL ? 'مدير عام' : 'Admin'}</option>
+                  <option value="MANAGER">{isRTL ? 'مدير' : 'Manager'}</option>
+                  <option value="EMPLOYEE">{isRTL ? 'موظف' : 'Employee'}</option>
+                </Select>
+              </FormFieldFull>
+
+              <AuthoritiesContainer>
+                <Label $isRTL={isRTL}>{t('addTeacher.authorities')}</Label>
                  <AuthoritiesGrid>
                    <AuthorityItem $isRTL={isRTL}>
                      <AuthorityCheckbox

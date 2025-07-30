@@ -1,10 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday, isThisWeek, isThisMonth, differenceInDays } from 'date-fns';
 import Sidebar from '../components/Sidebar';
 import AddTeacherModal from '../components/AddTeacherModal';
+import ConfirmationDialog from '../components/ConfirmationDialog';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
+
+// Global styles for toast animations
+const GlobalStyles = createGlobalStyle`
+  @keyframes slideDown {
+    from {
+      transform: translate(-50%, -100%);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, -100%);
+      opacity: 0;
+    }
+  }
+`;
 
 // Styled components
 const RequestsContainer = styled.div`
@@ -330,6 +357,9 @@ interface Request {
   appliedDate: string;
   reason: string;
   result?: string;
+  hours?: number;
+  days?: number;
+  teacherId?: string;
 }
 
 const Requests: React.FC = () => {
@@ -340,14 +370,31 @@ const Requests: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [showDelayed, setShowDelayed] = useState(false);
   const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
+  const [requestToConfirm, setRequestToConfirm] = useState<Request | null>(null);
+  const [nonAdminHandled, setNonAdminHandled] = useState<any>({});
+  const [showNonAdminHandled, setShowNonAdminHandled] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { t, isRTL } = useLanguage();
 
-  // Check authentication
+  // Check authentication and determine if user is admin
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (!token) {
       navigate('/manager/signin');
       return;
+    }
+    
+    // Check if user is admin
+    const managerData = localStorage.getItem('managerData');
+    if (managerData) {
+      try {
+        const manager = JSON.parse(managerData);
+        setIsAdmin(manager.role === 'ADMIN' || manager.managerLevel === 'admin');
+      } catch (error) {
+        console.error('Error parsing manager data:', error);
+      }
     }
   }, [navigate]);
 
@@ -370,6 +417,21 @@ const Requests: React.FC = () => {
         } else {
           console.error('Failed to fetch requests');
         }
+        
+        // If admin, also fetch non-admin handled requests
+        if (isAdmin) {
+          const nonAdminResponse = await fetch('http://localhost:5000/api/requests/non-admin-handled', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (nonAdminResponse.ok) {
+            const nonAdminResult = await nonAdminResponse.json();
+            setNonAdminHandled(nonAdminResult.data || {});
+          }
+        }
       } catch (error) {
         console.error('Error fetching requests:', error);
       } finally {
@@ -378,7 +440,7 @@ const Requests: React.FC = () => {
     };
 
     fetchRequests();
-  }, []);
+  }, [isAdmin]);
 
   // Modal handlers
   const handleAddTeacher = () => {
@@ -462,39 +524,105 @@ const Requests: React.FC = () => {
     setSelectedRequest(null);
   };
 
-  const handleRequestAction = async (action: 'accept' | 'reject', request?: Request) => {
+  const handleRequestAction = (action: 'accept' | 'reject', request?: Request) => {
     const targetRequest = request || selectedRequest;
     if (!targetRequest) return;
 
+    setConfirmAction(action);
+    setRequestToConfirm(targetRequest);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!requestToConfirm) return;
+
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:5000/api/requests/${targetRequest.id}`, {
+      const response = await fetch(`http://localhost:5000/api/requests/${requestToConfirm.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          result: action === 'accept' ? 'Accepted' : 'Rejected'
+          result: confirmAction === 'accept' ? 'Accepted' : 'Rejected'
         }),
       });
 
       if (response.ok) {
-        // Remove the request from the list
-        setRequests(prev => prev.filter(req => req.id !== targetRequest.id));
-        setSelectedRequest(null);
-        console.log(`Request ${action}ed successfully:`, targetRequest.name);
+        const updatedRequest = await response.json();
         
-        // Optionally show success message to user
-        // You can implement a toast notification here if desired
+        // Remove the request from the list
+        setRequests(prev => prev.filter(req => req.id !== requestToConfirm.id));
+        setSelectedRequest(null);
+        setShowConfirmDialog(false);
+        setRequestToConfirm(null);
+        console.log(`Request ${confirmAction}ed successfully:`, requestToConfirm.name);
+        
+        // Build success message with granted hours/days info
+        let successMessage = confirmAction === 'accept' 
+          ? (isRTL ? 'تم قبول الطلب بنجاح' : 'Request accepted successfully')
+          : (isRTL ? 'تم رفض الطلب بنجاح' : 'Request rejected successfully');
+          
+        if (confirmAction === 'accept' && updatedRequest.data) {
+          const { grantedHours, grantedDays, remainingBalance } = updatedRequest.data;
+          if (grantedHours) {
+            successMessage += isRTL 
+              ? ` - تم خصم ${grantedHours} ${grantedHours === 1 ? 'ساعة' : 'ساعات'} من رصيد المعلم`
+              : ` - ${grantedHours} hour${grantedHours > 1 ? 's' : ''} deducted from teacher's balance`;
+            if (remainingBalance !== undefined) {
+              successMessage += isRTL 
+                ? ` (المتبقي: ${remainingBalance} ${remainingBalance === 1 ? 'ساعة' : 'ساعات'})`
+                : ` (${remainingBalance} hour${remainingBalance !== 1 ? 's' : ''} remaining)`;
+            }
+          } else if (grantedDays) {
+            successMessage += isRTL 
+              ? ` - تم خصم ${grantedDays} ${grantedDays === 1 ? 'يوم' : 'أيام'} من رصيد المعلم`
+              : ` - ${grantedDays} day${grantedDays > 1 ? 's' : ''} deducted from teacher's balance`;
+            if (remainingBalance !== undefined) {
+              successMessage += isRTL 
+                ? ` (المتبقي: ${remainingBalance} ${remainingBalance === 1 ? 'يوم' : 'أيام'})`
+                : ` (${remainingBalance} day${remainingBalance !== 1 ? 's' : ''} remaining)`;
+            }
+          }
+        }
+        
+        // You can implement a toast notification here
+        // For now, using a styled alert
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = `
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: ${confirmAction === 'accept' ? '#4CAF50' : '#f44336'};
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 10001;
+          animation: slideDown 0.3s ease-out;
+          max-width: 80%;
+          text-align: center;
+        `;
+        alertDiv.textContent = successMessage;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+          alertDiv.style.animation = 'slideUp 0.3s ease-out';
+          setTimeout(() => document.body.removeChild(alertDiv), 300);
+        }, 4000);
       } else {
         const errorData = await response.json();
         console.error('Failed to update request:', errorData);
-        alert(`Failed to ${action} request: ${errorData.message || 'Unknown error'}`);
+        setShowConfirmDialog(false);
+        alert(`${isRTL ? 'فشل في' : 'Failed to'} ${confirmAction} ${isRTL ? 'الطلب' : 'request'}: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error updating request:', error);
-      alert(`Network error: Failed to ${action} request. Please try again.`);
+      setShowConfirmDialog(false);
+      alert(`${isRTL ? 'فشل في' : 'Failed to'} ${confirmAction} ${isRTL ? 'الطلب. يرجى المحاولة مرة أخرى.' : 'request. Please try again.'}`);
     }
   };
 
@@ -553,8 +681,10 @@ const Requests: React.FC = () => {
   }
 
   return (
-    <RequestsContainer>
-      <Sidebar onAddTeacher={handleAddTeacher} />
+    <>
+      <GlobalStyles />
+      <RequestsContainer>
+        <Sidebar onAddTeacher={handleAddTeacher} />
       <MainContent $isRTL={isRTL}>
         <Header>
           <TabContainer>
@@ -601,8 +731,8 @@ const Requests: React.FC = () => {
         {/* This Month */}
         {thisMonth.length > 0 && renderRequestsList(thisMonth, t('common.thisMonth'))}
         
-        {/* Delayed */}
-        {delayed.length > 0 && (
+        {/* Delayed Requests (visible to all managers) */}
+        {delayed.length > 0 && !isAdmin && (
           <CategorySection>
             <CategoryHeader 
               $isDelayed={true}
@@ -642,6 +772,75 @@ const Requests: React.FC = () => {
                   </RequestItem>
                 ))}
               </RequestsList>
+            )}
+          </CategorySection>
+        )}
+        
+        {/* Non-Admin Handled Requests (visible to admin only) */}
+        {isAdmin && Object.keys(nonAdminHandled).length > 0 && (
+          <CategorySection>
+            <CategoryHeader 
+              $isDelayed={true}
+              onClick={() => setShowNonAdminHandled(!showNonAdminHandled)}
+            >
+              {isRTL ? 'الطلبات المعالجة من قبل المديرين' : 'Requests Handled by Managers'} ({Object.values(nonAdminHandled).reduce((total: number, manager: any) => total + (manager.requests ? manager.requests.length : 0), 0)}) {showNonAdminHandled ? '▼' : '▶'}
+            </CategoryHeader>
+            {showNonAdminHandled && (
+              <div>
+                {Object.entries(nonAdminHandled).map(([managerName, managerData]: any) => (
+                  <div key={managerData.managerId} style={{ marginBottom: '20px' }}>
+                    <h4 style={{ 
+                      fontFamily: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif",
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#666',
+                      marginBottom: '10px',
+                      paddingLeft: isRTL ? '0' : '10px',
+                      paddingRight: isRTL ? '10px' : '0'
+                    }}>
+                      {managerName} ({managerData.requests.length} {isRTL ? 'طلبات' : 'requests'})
+                    </h4>
+                    <RequestsList>
+                      {managerData.requests.map((request: any) => (
+                        <RequestItem key={request.id} style={{ 
+                          opacity: 0.8,
+                          borderColor: request.status === 'approved' ? '#4CAF50' : '#f44336'
+                        }}>
+                          <RequestRow>
+                            <TeacherName $isRTL={isRTL}>{request.name}</TeacherName>
+                            
+                            <RequestDetails>
+                              <RequestLabel $isRTL={isRTL}>{t('requests.appliedDuration')}</RequestLabel>
+                              <RequestValue $isRTL={isRTL}>{request.duration}</RequestValue>
+                            </RequestDetails>
+                            
+                            <RequestType $isRTL={isRTL}>
+                              {translateRequestType(request.requestType)}
+                              <br />
+                              <span style={{ fontSize: '12px', color: request.status === 'approved' ? '#4CAF50' : '#f44336' }}>
+                                {request.status === 'approved' 
+                                  ? (isRTL ? 'تمت الموافقة' : 'Approved')
+                                  : (isRTL ? 'تم الرفض' : 'Rejected')}
+                              </span>
+                            </RequestType>
+                            
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                              fontSize: '12px',
+                              color: '#666',
+                              minWidth: '200px'
+                            }}>
+                              {new Date(request.approvedAt).toLocaleDateString()}
+                            </div>
+                          </RequestRow>
+                        </RequestItem>
+                      ))}
+                    </RequestsList>
+                  </div>
+                ))}
+              </div>
             )}
           </CategorySection>
         )}
@@ -702,7 +901,27 @@ const Requests: React.FC = () => {
         onClose={handleCloseTeacherModal}
         onSuccess={handleTeacherAdded}
       />
+      
+      <ConfirmationDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmAction}
+        type={confirmAction}
+        request={requestToConfirm ? {
+          name: requestToConfirm.name,
+          requestType: requestToConfirm.requestType,
+          duration: requestToConfirm.duration,
+          hours: requestToConfirm.hours,
+          days: requestToConfirm.days,
+          reason: requestToConfirm.reason
+        } : {
+          name: '',
+          requestType: '',
+          duration: ''
+        }}
+      />
     </RequestsContainer>
+    </>
   );
 };
 
