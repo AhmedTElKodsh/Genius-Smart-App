@@ -72,9 +72,10 @@ function saveManagerData(manager) {
     
     fs.writeFileSync(filePath, JSON.stringify(manager, null, 2), 'utf8');
     console.log('Manager profile saved successfully');
-    
+    return true; // Indicate success
   } catch (error) {
     console.error('Error saving manager data:', error);
+    return false; // Indicate failure
   }
 }
 
@@ -279,20 +280,27 @@ router.put('/profile', verifyToken, (req, res) => {
     };
     
     // Save updated profile
-    saveManagerData(updatedManager);
+    const savedSuccessfully = saveManagerData(updatedManager);
     
-    // Log profile update
-    console.log(`Manager profile updated: ${updatedManager.email}`);
-    
-    // Remove sensitive information from response
-    const responseData = { ...updatedManager };
-    delete responseData.passwordHash;
-    
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      data: responseData
-    });
+    if (savedSuccessfully) {
+      // Log profile update
+      console.log(`Manager profile updated: ${updatedManager.email}`);
+      
+      // Remove sensitive information from response
+      const responseData = { ...updatedManager };
+      delete responseData.passwordHash;
+      
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        data: responseData
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update profile'
+      });
+    }
     
   } catch (error) {
     console.error('Error updating manager profile:', error);
@@ -373,15 +381,22 @@ router.put('/notifications', verifyToken, (req, res) => {
       updatedAt: new Date().toISOString()
     };
     
-    saveManagerData(updatedManager);
+    const savedSuccessfully = saveManagerData(updatedManager);
     
-    console.log('Notification preferences updated:', notifications);
-    
-    res.json({
-      success: true,
-      message: 'Notification preferences updated successfully',
-      data: updatedManager.notifications
-    });
+    if (savedSuccessfully) {
+      console.log('Notification preferences updated:', notifications);
+      
+      res.json({
+        success: true,
+        message: 'Notification preferences updated successfully',
+        data: updatedManager.notifications
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update notification preferences'
+      });
+    }
     
   } catch (error) {
     console.error('Error updating notification preferences:', error);
@@ -446,14 +461,21 @@ router.post('/change-password', verifyToken, async (req, res) => {
       updatedAt: new Date().toISOString()
     };
     
-    saveManagerData(updatedManager);
+    const savedSuccessfully = saveManagerData(updatedManager);
     
-    console.log('Manager password changed successfully');
-    
-    res.json({
-      success: true,
-      message: 'Password changed successfully'
-    });
+    if (savedSuccessfully) {
+      console.log('Manager password changed successfully');
+      
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to change password'
+      });
+    }
     
   } catch (error) {
     console.error('Error changing password:', error);
@@ -544,15 +566,22 @@ router.post('/upload-image', verifyToken, (req, res) => {
       updatedAt: new Date().toISOString()
     };
     
-    saveManagerData(updatedManager);
+    const savedSuccessfully = saveManagerData(updatedManager);
     
-    res.json({
-      success: true,
-      message: 'Profile image updated successfully',
-      data: {
-        profileImage: imageData
-      }
-    });
+    if (savedSuccessfully) {
+      res.json({
+        success: true,
+        message: 'Profile image updated successfully',
+        data: {
+          profileImage: imageData
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image'
+      });
+    }
     
   } catch (error) {
     console.error('Error uploading profile image:', error);
@@ -613,6 +642,125 @@ router.get('/settings', verifyToken, (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch settings',
+      error: error.message
+    });
+  }
+});
+
+// GET /general-settings - Get weekend and holiday settings
+router.get('/general-settings', (req, res) => {
+  try {
+    const managerData = getManagerData();
+    
+    // Get general settings or return defaults
+    const generalSettings = managerData.generalSettings || {
+      weekendDays: [5, 6], // Default: Friday (5) and Saturday (6)
+      nationalHolidays: []
+    };
+    
+    res.json({
+      success: true,
+      message: 'General settings retrieved successfully',
+      data: generalSettings
+    });
+    
+  } catch (error) {
+    console.error('Error fetching general settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch general settings',
+      error: error.message
+    });
+  }
+});
+
+router.put('/general-settings', (req, res) => {
+  try {
+    const { weekendDays, nationalHolidays } = req.body;
+    
+    // Read current manager data
+    const managerData = getManagerData();
+    
+    // Update general settings
+    if (!managerData.generalSettings) {
+      managerData.generalSettings = {};
+    }
+    
+    // Update weekend days
+    if (weekendDays !== undefined) {
+      managerData.generalSettings.weekendDays = weekendDays;
+    }
+    
+    // Update national holidays
+    if (nationalHolidays !== undefined) {
+      managerData.generalSettings.nationalHolidays = nationalHolidays;
+    }
+    
+    // Save the updated data
+    const savedSuccessfully = saveManagerData(managerData);
+    
+    if (savedSuccessfully) {
+      res.json({
+        success: true,
+        message: 'General settings updated successfully',
+        data: {
+          weekendDays: managerData.generalSettings.weekendDays,
+          nationalHolidays: managerData.generalSettings.nationalHolidays
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to save general settings'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error updating general settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update general settings',
+      error: error.message
+    });
+  }
+});
+
+// GET /all - Get all managers (Admin only)
+router.get('/all', (req, res) => {
+  try {
+    const userId = req.headers['user-id'];
+    const managersPath = path.join(__dirname, '..', 'data', 'managers.json');
+    const managers = JSON.parse(fs.readFileSync(managersPath, 'utf8'));
+    
+    // Check if requester is admin
+    const requester = managers.find(m => m.id === userId);
+    if (!requester || requester.systemRole !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admins can view all managers'
+      });
+    }
+    
+    // Return managers with limited info
+    const managersInfo = managers.map(m => ({
+      id: m.id,
+      name: m.name,
+      nameArabic: m.nameArabic,
+      email: m.email,
+      systemRole: m.systemRole,
+      department: m.department,
+      status: m.status
+    }));
+    
+    res.json({
+      success: true,
+      data: managersInfo
+    });
+  } catch (error) {
+    console.error('Error fetching managers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch managers',
       error: error.message
     });
   }

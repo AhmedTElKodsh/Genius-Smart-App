@@ -22,6 +22,7 @@ const auditTrailRoutes = require('./routes/auditTrail');
 const holidaysRoutes = require('./routes/holidays');
 const dataTrackingRoutes = require('./routes/dataTracking');
 const analyticsRoutes = require('./routes/analytics');
+const requestAuditRoutes = require('./routes/requestAudit');
 
 // Initialize Express app
 const app = express();
@@ -42,7 +43,14 @@ app.use(cors({
     'http://localhost:3006',
     'http://localhost:4000', 
     'http://localhost:5173',
-    'http://localhost:5176'
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5176',
+    'http://localhost:5177',
+    'http://localhost:5178',
+    'http://localhost:5179',
+    'http://localhost:5180',
+    'http://localhost:5181'
   ], // Frontend URLs
   credentials: true
 }));
@@ -103,6 +111,7 @@ app.use('/api/audit', auditTrailRoutes);
 app.use('/api/holidays', holidaysRoutes);
 app.use('/api/tracking', dataTrackingRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/request-audit', requestAuditRoutes);
 
 // Clerk user info endpoint
 if (process.env.CLERK_SECRET_KEY) {

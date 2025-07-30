@@ -651,7 +651,9 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       subject,
       workType,
       password,
-      birthdate
+      birthdate,
+      systemRole,
+      authorities
     } = req.body;
 
     // Validate required fields
@@ -698,6 +700,59 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       age--;
     }
 
+    // Process role (default to EMPLOYEE if not provided)
+    const processedRole = systemRole || 'EMPLOYEE';
+    
+    // Process authorities based on role or provided authorities
+    let processedAuthorities = [];
+    if (authorities) {
+      // Convert authorities object to array format
+      if (authorities.canAccessPortal) processedAuthorities.push('managerPortal');
+      if (authorities.canAddTeachers) processedAuthorities.push('addTeachers');
+      if (authorities.canEditTeachers) processedAuthorities.push('editTeachers');
+      if (authorities.canManageRequests) processedAuthorities.push('manageRequests');
+      if (authorities.canDownloadReports) processedAuthorities.push('downloadReports');
+      if (authorities.canManageAuthorities) processedAuthorities.push('manageAuthorities');
+    } else {
+      // Default authorities based on role
+      switch (processedRole) {
+        case 'ADMIN':
+          processedAuthorities = [
+            'managerPortal',
+            'addTeachers',
+            'editTeachers',
+            'manageRequests',
+            'downloadReports',
+            'manageAuthorities',
+            'Accept and Reject All Requests',
+            'Manage User Authorities',
+            'Manage Teacher and Employee Details',
+            'View Detailed Reports and Analytics',
+            'Add and Remove Teachers and Employees',
+            'Teacher Hours Tracking',
+            'Download Reports'
+          ];
+          break;
+        case 'MANAGER':
+          processedAuthorities = [
+            'managerPortal',
+            'manageRequests',
+            'downloadReports',
+            'Accept and Reject Employee Requests',
+            'View Reports',
+            'Download Reports',
+            'Teacher Hours Tracking'
+          ];
+          break;
+        case 'EMPLOYEE':
+        default:
+          processedAuthorities = [
+            'Teacher Hours Tracking'
+          ];
+          break;
+      }
+    }
+
     // Create new teacher object
     const newTeacher = {
       id: uuidv4(),
@@ -715,6 +770,20 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       password: hashedPassword,
       plainPassword: password, // Store for reference (remove in production)
       status: 'Active',
+      // Role-related fields
+      role: processedRole,
+      roleLevel: SYSTEM_LAYERS[processedRole]?.level || 1,
+      roleName: SYSTEM_LAYERS[processedRole]?.name || 'Employee',
+      roleNameAr: SYSTEM_LAYERS[processedRole]?.nameAr || 'موظف',
+      authorities: processedAuthorities,
+      roleDescription: SYSTEM_LAYERS[processedRole]?.description || 'Basic teacher access',
+      canAccessManagerPortal: processedRole === 'ADMIN' || processedRole === 'MANAGER',
+      canAccessTeacherPortal: true,
+      canApproveRequests: processedRole === 'ADMIN' || processedRole === 'MANAGER',
+      canApproveManagerRequests: processedRole === 'ADMIN',
+      canRevokeActions: processedRole === 'ADMIN',
+      canViewAuditTrail: processedRole === 'ADMIN',
+      isPerformanceTracked: processedRole === 'MANAGER' || processedRole === 'EMPLOYEE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -1065,7 +1134,7 @@ const updateSubjectCounts = () => {
   }
 };
 
-// GET /api/teachers/:id/remaining-hours - Get teacher's remaining late/early hours
+// GET /api/teachers/:id/remaining-hours - Get teacher's remaining late/early hours (including pending requests)
 router.get('/:id/remaining-hours', (req, res) => {
   try {
     const teacherId = req.params.id;
@@ -1081,16 +1150,43 @@ router.get('/:id/remaining-hours', (req, res) => {
       });
     }
     
-    const remainingHours = teacher.remainingLateEarlyHours || 4;
+    // Get teacher's base remaining hours
+    const baseRemainingHours = teacher.remainingLateEarlyHours || 4;
     const totalHours = teacher.totalLateEarlyHours || 4;
-    const usedHours = totalHours - remainingHours;
+    
+    // Check for pending Late Arrival and Early Leave requests
+    const requestsFilePath = path.join(__dirname, '..', 'data', 'requests.json');
+    let pendingHours = 0;
+    
+    try {
+      const requestsData = JSON.parse(fs.readFileSync(requestsFilePath, 'utf8'));
+      
+      // Calculate total hours from pending Late Arrival and Early Leave requests
+      pendingHours = requestsData
+        .filter(request => 
+          request.teacherId === teacherId && 
+          (request.status === 'pending' || request.status === 'Pending') && 
+          (request.requestType === 'Late Arrival' || request.requestType === 'Early Leave') &&
+          request.hours > 0
+        )
+        .reduce((total, request) => total + request.hours, 0);
+        
+    } catch (requestsError) {
+      console.log('No requests file found or error reading requests:', requestsError.message);
+    }
+    
+    // Calculate effective remaining hours (base remaining - pending hours)
+    const effectiveRemainingHours = Math.max(0, baseRemainingHours - pendingHours);
+    const usedHours = totalHours - baseRemainingHours;
     
     res.json({
       success: true,
       data: {
-        remainingHours,
+        remainingHours: effectiveRemainingHours,
         totalHours,
-        usedHours
+        usedHours,
+        pendingHours, // Include pending hours for transparency
+        baseRemainingHours // Include base remaining for debugging
       }
     });
     
@@ -1102,6 +1198,76 @@ router.get('/:id/remaining-hours', (req, res) => {
     });
   }
   });
+
+// GET /api/teachers/:id/notifications - Get notifications for a specific teacher
+router.get('/:id/notifications', async (req, res) => {
+  try {
+    const teachers = readTeachers();
+    const teacher = teachers.find(t => t.id === req.params.id);
+    
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: 'Teacher not found'
+      });
+    }
+    
+    // Return notifications, default to empty array if none exist
+    const notifications = teacher.notifications || [];
+    
+    res.json({
+      success: true,
+      data: notifications,
+      unreadCount: notifications.filter(n => !n.read).length
+    });
+    
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch notifications',
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/teachers/:id/notifications/:notificationId/read - Mark notification as read
+router.put('/:id/notifications/:notificationId/read', async (req, res) => {
+  try {
+    const teachers = readTeachers();
+    const teacherIndex = teachers.findIndex(t => t.id === req.params.id);
+    
+    if (teacherIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Teacher not found'
+      });
+    }
+    
+    const teacher = teachers[teacherIndex];
+    if (!teacher.notifications) teacher.notifications = [];
+    
+    const notificationIndex = teacher.notifications.findIndex(n => n.id === req.params.notificationId);
+    if (notificationIndex !== -1) {
+      teacher.notifications[notificationIndex].read = true;
+      teachers[teacherIndex] = teacher;
+      writeTeachers(teachers);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Notification marked as read'
+    });
+    
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update notification',
+      error: error.message
+    });
+  }
+});
 
 
 

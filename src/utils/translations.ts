@@ -1,5 +1,44 @@
 export const translations = {
   en: {
+    // Requests
+    requests: {
+      allRequests: 'All Requests',
+      absenceRequests: 'Absence Requests',
+      earlyLeaveRequests: 'Early Leave Requests',
+      lateRequests: 'Late Requests',
+      auditTrail: 'Audit Trail',
+      noRequests: 'No Requests',
+      noRequestsDesc: 'No pending requests at the moment',
+      LateArrival: 'Late Arrival',
+      EarlyLeave: 'Early Leave',
+      Absence: 'Absence'
+    },
+
+    // Audit Trail
+    audit: {
+      requestAuditTrail: 'Request Audit Trail',
+      adminOnly: 'Only administrators can view the audit trail',
+      totalActions: 'Total Actions',
+      approvals: 'Approvals',
+      rejections: 'Rejections',
+      activeManagers: 'Active Managers',
+      actionType: 'Action Type',
+      allActions: 'All Actions',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      performedBy: 'Performed By',
+      allManagers: 'All Managers',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      applyFilters: 'Apply Filters',
+      noAudits: 'No audit entries found',
+      timestamp: 'Timestamp',
+      action: 'Action',
+      teacher: 'Teacher',
+      requestType: 'Request Type',
+      role: 'Role',
+      reason: 'Reason'
+    },
     // Header
     greeting: (name: string) => `Hey, ${name}`,
     subtitle: "Mark your attendance!",
@@ -191,6 +230,7 @@ export const translations = {
     'teachers.noTeachers': 'No Teachers Found',
     'teachers.noTeachersDesc': 'No teachers match your current filters',
     'teachers.allSubjects': 'All Subjects',
+    'teachers.subjectFilter': 'Subject Filter',
     'teachers.searchTeachers': 'Search teachers...',
     
     // Analytics KPIs
@@ -205,6 +245,33 @@ export const translations = {
     'analytics.departmentPerformance': 'Department Performance',
     'analytics.weeklyAttendancePatterns': 'Weekly Attendance Patterns',
     'analytics.teacherPerformanceRanking': 'Teacher Performance Ranking',
+    'analytics.attendanceCommitmentLevel': 'Attendance Commitment Level',
+    'analytics.selectDateRange': 'Select Date Range',
+    'analytics.absenceComparison': 'Absence Comparison',
+    'analytics.earlyLeavesComparison': 'Early Leaves Comparison',
+    'analytics.lateArrivalComparison': 'Late Arrival Comparison',
+    'analytics.departmentComparisons': 'Department Comparisons',
+    'analytics.departmentRequests': 'Department Requests',
+    'analytics.absenceRequests': 'Absence Requests',
+    'analytics.earlyLeaveRequests': 'Early Leave Requests',
+    'analytics.lateArrivalRequests': 'Late Arrival Requests',
+    'analytics.teachersPerformanceComparison': 'Teachers Performance Comparison',
+    'analytics.departmentPerformanceTracking': 'Department Performance Tracking',
+    
+    // Analytics Chart Descriptions
+    'analytics.attendanceCommitmentDesc': 'Shows the distribution of teachers by their attendance commitment levels',
+    'analytics.departmentPerformanceDesc': 'Compare performance metrics across different departments',
+    'analytics.weeklyAttendancePatternsDesc': 'Analyze attendance patterns throughout the week',
+    'analytics.absenceComparisonDesc': 'Compare absence rates across different departments',
+    'analytics.earlyLeavesComparisonDesc': 'Compare early leave requests across departments',
+    'analytics.lateArrivalComparisonDesc': 'Compare late arrival incidents across departments',
+    'analytics.departmentComparisonsDesc': 'Compare department performance metrics including absence, early leave, and late arrival rates',
+    'analytics.departmentRequestsDesc': 'Analyze request patterns across different departments including approval and rejection rates',
+    'analytics.absenceRequestsDesc': 'Track absence request submissions, approvals, and rejections by department',
+    'analytics.earlyLeaveRequestsDesc': 'Monitor early leave request patterns and approval rates across departments',
+    'analytics.lateArrivalRequestsDesc': 'Analyze late arrival request trends and management decisions by department',
+    'analytics.teachersPerformanceComparisonDesc': 'Compare individual teacher performance metrics and attendance patterns',
+    'analytics.departmentPerformanceTrackingDesc': 'Track long-term performance trends and improvements across all departments',
     
     // Analytics Table Headers
     'analytics.teacher': 'Teacher',
@@ -216,6 +283,9 @@ export const translations = {
     // Analytics Chart Labels
     'analytics.attendance': 'Attendance',
     'analytics.punctualityChart': 'Punctuality',
+    'analytics.absence': 'Absence',
+    'analytics.earlyLeave': 'Early Leave',
+    'analytics.lateArrival': 'Late Arrival',
     
     // Comparison Labels
     'comparison.comparePeriods': 'Compare Periods',
@@ -252,12 +322,26 @@ export const translations = {
     'common.hours': 'Hours',
     'Page': 'Page',
     
+    // Common date range options
+    'common.today': 'Today',
+    'common.thisWeek': 'This Week',
+    'common.thisMonth': 'This Month',
+    'common.thisQuarter': 'This Quarter',
+    'common.thisYear': 'This Year',
+    'common.custom': 'Custom',
+    'common.done': 'Done',
+    
+    // Date Picker
+    'datePicker.selectEndDate': 'Select End Date',
+    'datePicker.selectDateRange': 'Select Date Range',
+    
     // Form Labels
     'form.employmentDate': 'Employment Date *',
     'form.allowedAbsenceDays': 'Allowed Absence Days',
 
     // Subjects
     subjects: {
+      subjects: "Subjects",
       subject: "Subject",
       management: "Management",
       quran: "Quran",
@@ -305,6 +389,121 @@ export const translations = {
         Contract: "Contract"
       }
     },
+
+    // Settings
+    settings: {
+      personalInfoTab: "Personal Info",
+      generalTab: "General",
+      securityTab: "Security",
+      notificationsTab: "Notifications",
+      holidaysTab: "Holidays",
+      language: "Language",
+      english: "English",
+      arabic: "العربية",
+      languageNote: "Changes will take effect immediately",
+      
+      personalInfo: {
+        title: "Personal Information",
+        subtitle: "Manage your personal details and profile information",
+        uploadButton: "Upload Profile Picture",
+        firstName: "First Name",
+        firstNamePlaceholder: "Enter your first name",
+        lastName: "Last Name", 
+        lastNamePlaceholder: "Enter your last name",
+        email: "Email Address",
+        emailPlaceholder: "Enter your email address",
+        phone: "Phone Number",
+        phonePlaceholder: "Enter your phone number",
+        address: "Address",
+        addressPlaceholder: "Enter your address",
+        dateOfBirth: "Date of Birth",
+        save: "Save Changes"
+      },
+
+      general: {
+        title: "General Settings",
+        subtitle: "Configure work schedules, weekends, and system preferences",
+        weekendDays: "Weekend Days",
+        weekendDaysSubtitle: "Select which days are considered weekends (non-working days)",
+        nationalHolidays: "National Holidays",
+        nationalHolidaysSubtitle: "Select dates that are national holidays for the current year",
+        selectWeekendDays: "Select Weekend Days",
+        selectedHolidays: "Selected Holidays",
+        selectedHolidaysSubtitle: "Review and manage your selected holiday dates",
+        removeHoliday: "Remove Holiday",
+        clearAllHolidays: "Clear All",
+        holidayCount: (count: number) => `${count} holiday${count !== 1 ? 's' : ''} selected`,
+        save: "Save Settings",
+        saveSuccess: (weekendCount: number, holidayCount: number) => {
+          const weekendDays = weekendCount > 0 ? `${weekendCount} weekend day${weekendCount !== 1 ? 's' : ''}` : 'No weekend days';
+          const holidays = holidayCount > 0 ? `${holidayCount} holiday${holidayCount !== 1 ? 's' : ''}` : 'no holidays';
+          return `✅ Successfully saved! ${weekendDays} configured and ${holidays} selected for the year.`;
+        }
+      },
+
+      security: {
+        title: "Change Password",
+        subtitle: "Update your account password for enhanced security",
+        currentPassword: "Current Password",
+        newPassword: "New Password",
+        confirmPassword: "Confirm Password"
+      },
+
+      notifications: {
+        title: "Notification Preferences",
+        subtitle: "Choose which notifications you'd like to receive",
+        allNotifications: "All Notifications",
+        earlyArrival: "Early Arrival Notifications",
+        lateArrival: "Late Arrival Notifications", 
+        earlyLeaves: "Early Leave Notifications",
+        lateLeaves: "Late Leave Notifications",
+        absentsTeachers: "Absent Teachers Notifications",
+        dailyReports: "Daily Reports",
+        weeklyReports: "Weekly Reports",
+        monthlyReports: "Monthly Reports",
+        yearlyReports: "Yearly Reports",
+        testTitle: "Test Notifications",
+        testDesc: "Send test notifications to verify your settings",
+        testEarlyLeave: "Test Early Leave",
+        testAbsence: "Test Absence", 
+        testLateArrival: "Test Late Arrival"
+      },
+
+      holidays: {
+        title: "Holiday Management",
+        subtitle: "Manage school holidays and special dates",
+        upcomingHolidays: "Upcoming Holidays",
+        addHoliday: "Add Holiday",
+        editHoliday: "Edit",
+        deleteHoliday: "Delete",
+        confirmDelete: "Are you sure you want to delete this holiday?",
+        noHolidays: "No holidays scheduled",
+        addFirst: "Add your first holiday to get started",
+        holidayName: "Holiday Name (English)",
+        holidayNamePlaceholder: "Enter holiday name in English",
+        holidayNameAr: "Holiday Name (Arabic)",
+        holidayNameArPlaceholder: "Enter holiday name in Arabic",
+        holidayDate: "Holiday Date",
+        description: "Description",
+        descriptionPlaceholder: "Enter description",
+        isRecurring: "Recurring Holiday",
+        recurringNote: "Recurring annually",
+        cancel: "Cancel",
+        save: "Save Holiday"
+      }
+    },
+
+    // Common
+    common: {
+      loading: "Loading...",
+      save: "Save",
+      cancel: "Cancel",
+      delete: "Delete",
+      edit: "Edit",
+      add: "Add",
+      confirm: "Confirm",
+      back: "Back"
+    }
   },
   
   ar: {
@@ -502,6 +701,7 @@ export const translations = {
     'teachers.noTeachers': 'لم يتم العثور على معلمين',
     'teachers.noTeachersDesc': 'لا يوجد معلمون يطابقون المرشحات المحددة',
     'teachers.allSubjects': 'جميع المواد',
+    'teachers.subjectFilter': 'تصفية المواد',
     'teachers.searchTeachers': 'البحث عن المعلمين...',
     
     // Analytics KPIs
@@ -516,6 +716,33 @@ export const translations = {
     'analytics.departmentPerformance': 'أداء الأقسام',
     'analytics.weeklyAttendancePatterns': 'أنماط الحضور الأسبوعية',
     'analytics.teacherPerformanceRanking': 'ترتيب أداء المعلمين',
+    'analytics.attendanceCommitmentLevel': 'مستوى الالتزام بالحضور',
+    'analytics.selectDateRange': 'اختر نطاق التاريخ',
+    'analytics.absenceComparison': 'مقارنة الغياب',
+    'analytics.earlyLeavesComparison': 'مقارنة المغادرة المبكرة',
+    'analytics.lateArrivalComparison': 'مقارنة الوصول المتأخر',
+    'analytics.departmentComparisons': 'مقارنة الأقسام',
+    'analytics.departmentRequests': 'طلبات الأقسام',
+    'analytics.absenceRequests': 'طلبات الغياب',
+    'analytics.earlyLeaveRequests': 'طلبات المغادرة المبكرة',
+    'analytics.lateArrivalRequests': 'طلبات الوصول المتأخر',
+    'analytics.teachersPerformanceComparison': 'مقارنة أداء المعلمين',
+    'analytics.departmentPerformanceTracking': 'تتبع الأداء الطويل المدى',
+    
+    // Analytics Chart Descriptions
+    'analytics.attendanceCommitmentDesc': 'يظهر توزيع المعلمين بناءً على مستويات الالتزام بالحضور',
+    'analytics.departmentPerformanceDesc': 'قارن مقاييس الأداء عبر الأقسام المختلفة',
+    'analytics.weeklyAttendancePatternsDesc': 'قم بتحليل أنماط الحضور خلال الأسبوع',
+    'analytics.absenceComparisonDesc': 'قارن معدلات الغياب عبر الأقسام المختلفة',
+    'analytics.earlyLeavesComparisonDesc': 'قارن طلبات المغادرة المبكرة عبر الأقسام',
+    'analytics.lateArrivalComparisonDesc': 'قارن حوادث الوصول المتأخر عبر الأقسام',
+    'analytics.departmentComparisonsDesc': 'قارن مقاييس أداء الأقسام بما يشمل الغياب والمغادرة المبكرة والوصول المتأخر',
+    'analytics.departmentRequestsDesc': 'قم بتحليل أنماط طلبات الأقسام بما يشمل معدلات الموافقة والرفض',
+    'analytics.absenceRequestsDesc': 'تتبع إرسال طلبات الغياب والموافقة والرفض بالأقسام',
+    'analytics.earlyLeaveRequestsDesc': 'مراقبة أنماط طلبات المغادرة المبكرة ومعدلات الموافقة عبر الأقسام',
+    'analytics.lateArrivalRequestsDesc': 'تحليل أنماط الطلبات المتأخرة والقرارات الإدارية بالأقسام',
+    'analytics.teachersPerformanceComparisonDesc': 'قارن مقاييس أداء المعلمين الفردية وأنماط الحضور',
+    'analytics.departmentPerformanceTrackingDesc': 'تتبع الأداء الطويل المدى والتحسينات عبر جميع الأقسام',
     
     // Analytics Table Headers
     'analytics.teacher': 'المعلم',
@@ -527,6 +754,9 @@ export const translations = {
     // Analytics Chart Labels
     'analytics.attendance': 'الحضور',
     'analytics.punctualityChart': 'الالتزام',
+    'analytics.absence': 'الغياب',
+    'analytics.earlyLeave': 'المغادرة المبكرة',
+    'analytics.lateArrival': 'الوصول المتأخر',
     
     // Comparison Labels
     'comparison.comparePeriods': 'مقارنة الفترات',
@@ -563,12 +793,26 @@ export const translations = {
     'common.hours': 'ساعات',
     'Page': 'الصفحة',
     
+    // Common date range options
+    'common.today': 'اليوم',
+    'common.thisWeek': 'هذا الأسبوع',
+    'common.thisMonth': 'هذا الشهر',
+    'common.thisQuarter': 'هذا الربع',
+    'common.thisYear': 'هذا العام',
+    'common.custom': 'تحديد مخصص',
+    'common.done': 'تم',
+    
+    // Date Picker
+    'datePicker.selectEndDate': 'اختر تاريخ النهاية',
+    'datePicker.selectDateRange': 'اختر نطاق التاريخ',
+    
     // Form Labels
     'form.employmentDate': 'تاريخ التعيين *',
     'form.allowedAbsenceDays': 'أيام الاجازة المتاحة',
 
     // Subjects
     subjects: {
+      subjects: "المواد",
       subject: "المادة",
       management: "الإدارة",
       quran: "القرآن الكريم",
@@ -620,6 +864,122 @@ export const translations = {
         Contract: "عقد"
       }
     },
+
+    // Settings
+    settings: {
+      personalInfoTab: "معلومات شخصية",
+      generalTab: "الإعدادات العامة",
+      securityTab: "الأمان",
+      notificationsTab: "الإشعارات",
+      holidaysTab: "العطل المدرسية",
+      language: "اللغة",
+      english: "الإنجليزية",
+      arabic: "العربية",
+      languageNote: "سيظهر التغيير فوراً",
+      
+      personalInfo: {
+        title: "معلومات شخصية",
+        subtitle: "إدارة التفاصيل الشخصية ومعلومات الملف الشخصي",
+        uploadButton: "رفع صورة الملف الشخصي",
+        firstName: "الاسم الأول",
+        firstNamePlaceholder: "أدخل اسمك الأول",
+        lastName: "الاسم الأخير", 
+        lastNamePlaceholder: "أدخل اسمك الأخير",
+        email: "البريد الإلكتروني",
+        emailPlaceholder: "أدخل عنوان بريدك الإلكتروني",
+        phone: "رقم الهاتف",
+        phonePlaceholder: "أدخل رقم هاتفك",
+        address: "العنوان",
+        addressPlaceholder: "أدخل عنوانك",
+        dateOfBirth: "تاريخ الميلاد",
+        save: "حفظ التغييرات"
+      },
+
+      general: {
+        title: "الإعدادات العامة",
+        subtitle: "تكوين جداول العمل والأسابيع وتفضيلات النظام",
+        weekendDays: "أيام الأسبوع",
+        weekendDaysSubtitle: "حدد أي أيام يعتبر أسبوعاً (أيام عطلة)",
+        nationalHolidays: "العطل الوطنية",
+        nationalHolidaysSubtitle: "حدد التواريخ التي تعتبر عطل وطنية للعام الحالي",
+        selectWeekendDays: "اختر أيام الأسبوع",
+
+        selectedHolidays: "العطل المحددة",
+        selectedHolidaysSubtitle: "مراجعة وإدارة التواريخ العطل المحددة",
+        removeHoliday: "إزالة العطلة",
+        clearAllHolidays: "مسح الكل",
+        holidayCount: (count: number) => `${count} عطلة${count !== 1 ? 'ة' : ''} محددة`,
+        save: "حفظ الإعدادات",
+        saveSuccess: (weekendCount: number, holidayCount: number) => {
+          const weekendDays = weekendCount > 0 ? `${weekendCount} ${weekendCount === 1 ? 'يوم' : weekendCount === 2 ? 'يومين' : 'أيام'} نهاية أسبوع` : 'بدون أيام نهاية أسبوع';
+          const holidays = holidayCount > 0 ? `${holidayCount} ${holidayCount === 1 ? 'عطلة' : holidayCount === 2 ? 'عطلتين' : 'عطل'}` : 'بدون عطل';
+          return `✅ تم الحفظ بنجاح! تم تكوين ${weekendDays} وتحديد ${holidays} للسنة.`;
+        }
+      },
+
+      security: {
+        title: "تغيير كلمة المرور",
+        subtitle: "تحديث كلمة مرور حسابك للأمان المحسن",
+        currentPassword: "كلمة المرور الحالية",
+        newPassword: "كلمة المرور الجديدة",
+        confirmPassword: "تأكيد كلمة المرور"
+      },
+
+      notifications: {
+        title: "تفضيلات الإشعارات",
+        subtitle: "اختر الإشعارات التي ترغب في تلقيها",
+        allNotifications: "جميع الإشعارات",
+        earlyArrival: "إشعارات الوصول المبكر",
+        lateArrival: "إشعارات الوصول المتأخر", 
+        earlyLeaves: "إشعارات المغادرة المبكرة",
+        lateLeaves: "إشعارات المغادرة المتأخرة",
+        absentsTeachers: "إشعارات المعلمين المتغيبين",
+        dailyReports: "تقارير يومية",
+        weeklyReports: "تقارير أسبوعية",
+        monthlyReports: "تقارير شهرية",
+        yearlyReports: "تقارير سنوية",
+        testTitle: "إشعارات الاختبار",
+        testDesc: "إرسال إشعارات الاختبار للتأكد من إعداداتك",
+        testEarlyLeave: "اختبار المغادرة المبكرة",
+        testAbsence: "اختبار الغياب", 
+        testLateArrival: "اختبار الوصول المتأخر"
+      },
+
+      holidays: {
+        title: "إدارة العطل المدرسية",
+        subtitle: "إدارة العطل المدرسية والتواريخ الخاصة",
+        upcomingHolidays: "العطل القادمة",
+        addHoliday: "إضافة عطلة",
+        editHoliday: "تعديل",
+        deleteHoliday: "حذف",
+        confirmDelete: "هل أنت متأكد من حذف هذه العطلة؟",
+        noHolidays: "لا توجد عطل مجدولة",
+        addFirst: "أضف أول عطلة لتبدأ",
+        holidayName: "اسم العطلة (الإنجليزية)",
+        holidayNamePlaceholder: "أدخل اسم العطلة في الإنجليزية",
+        holidayNameAr: "اسم العطلة (العربية)",
+        holidayNameArPlaceholder: "أدخل اسم العطلة في العربية",
+        holidayDate: "تاريخ العطلة",
+        description: "الوصف",
+        descriptionPlaceholder: "أدخل الوصف",
+        isRecurring: "عطلة متكررة",
+        recurringNote: "تكرار سنوياً",
+        cancel: "إلغاء",
+        save: "حفظ العطلة"
+      }
+    },
+
+    // Common
+    common: {
+      loading: "جاري التحميل...",
+      save: "حفظ",
+      cancel: "إلغاء",
+      delete: "حذف",
+      edit: "تعديل",
+      add: "إضافة",
+      confirm: "تأكيد",
+      back: "رجوع"
+    }
   }
 };
 

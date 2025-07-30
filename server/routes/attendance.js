@@ -2,14 +2,9 @@ const express = require('express');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
+const { isWeekend, isHoliday, isWorkingDay } = require('../utils/dateUtils');
 
 const router = express.Router();
-
-// Helper function to check if a date is an Egyptian weekend (Friday = 5, Saturday = 6)
-const isEgyptianWeekend = (date) => {
-  const dayOfWeek = new Date(date).getDay();
-  return dayOfWeek === 5 || dayOfWeek === 6; // Friday (5) or Saturday (6)
-};
 
 // Helper function to load attendance data
 const loadAttendanceData = async () => {
@@ -954,7 +949,7 @@ router.get('/notifications/:teacherId', async (req, res) => {
       const recordDate = new Date(record.date);
       
       // Check for late arrivals (after 8:00 AM) - exclude Egyptian weekends
-      if (record.checkInTime && !isEgyptianWeekend(record.dateISO || record.date)) {
+      if (record.checkInTime && !isWeekend(record.dateISO || record.date)) {
         const checkInTime = new Date(`1970-01-01T${record.checkInTime}`);
         const eightAM = new Date('1970-01-01T08:00:00');
         if (checkInTime > eightAM) {
@@ -966,7 +961,7 @@ router.get('/notifications/:teacherId', async (req, res) => {
       }
 
       // Check for early leaves (before 4:00 PM without permission) - exclude Egyptian weekends
-      if (record.checkOutTime && !record.hasPermission && !isEgyptianWeekend(record.dateISO || record.date)) {
+      if (record.checkOutTime && !record.hasPermission && !isWeekend(record.dateISO || record.date)) {
         const checkOutTime = new Date(`1970-01-01T${record.checkOutTime}`);
         const fourPM = new Date('1970-01-01T16:00:00');
         if (checkOutTime < fourPM) {
@@ -978,7 +973,7 @@ router.get('/notifications/:teacherId', async (req, res) => {
       }
 
       // Check for unauthorized absence (exclude Egyptian weekends - Friday & Saturday)
-      if (!record.checkInTime && !record.hasPermission && !isEgyptianWeekend(record.dateISO || record.date)) {
+      if (!record.checkInTime && !record.hasPermission && !isWeekend(record.dateISO || record.date)) {
         patterns.unauthorizedAbsence.push({
           date: record.date
         });

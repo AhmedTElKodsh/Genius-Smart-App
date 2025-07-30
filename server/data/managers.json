@@ -15,13 +15,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": true
+      "canManageAuthorities": true,
+      "canViewAuditTrail": true
     },
     "phone": "+9661092938667",
     "employmentDate": "2020-10-07",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Admin"
   },
   {
     "id": "MGR_be6e2e34",
@@ -39,13 +41,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661012306778",
     "employmentDate": "2021-08-11",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_3ac308cf",
@@ -63,13 +67,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661007789469",
     "employmentDate": "2020-09-05",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_8164bfad",
@@ -87,13 +93,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661016171132",
     "employmentDate": "2021-11-07",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_65bb6838",
@@ -111,13 +119,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661091073666",
     "employmentDate": "2022-10-07",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_956e64fa",
@@ -135,13 +145,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661123663726",
     "employmentDate": "2024-06-29",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_751c125d",
@@ -159,13 +171,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661017878976",
     "employmentDate": "2020-09-07",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_f9e0402e",
@@ -183,13 +197,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661101572707",
     "employmentDate": "2024-01-05",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_e28edbcf",
@@ -207,13 +223,15 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661016224104",
     "employmentDate": "2023-01-30",
     "createdAt": "2025-07-25",
     "lastLogin": null,
-    "status": "Active"
+    "status": "Active",
+    "systemRole": "Manager"
   },
   {
     "id": "MGR_9d21697e",
@@ -231,11 +249,39 @@
       "canEditTeachers": true,
       "canManageRequests": true,
       "canDownloadReports": true,
-      "canManageAuthorities": false
+      "canManageAuthorities": false,
+      "canViewAuditTrail": false
     },
     "phone": "+9661020193765",
     "employmentDate": "2022-06-03",
     "createdAt": "2025-07-25",
+    "lastLogin": null,
+    "status": "Active",
+    "systemRole": "Manager"
+  },
+  {
+    "id": "MGR_o007zqxu",
+    "email": "amr_zaher1@hotmail.com",
+    "password": "$2b$10$rCV1jh9vRI3R8wsILgzf0O/K3asB307JWho/xtX3FtraJeny2pJ6K",
+    "plainPassword": "iq3D$AZeKm",
+    "name": "عمرو زاهر",
+    "nameArabic": "عمرو زاهر",
+    "role": "Manager",
+    "systemRole": "Admin",
+    "department": "Management",
+    "managerLevel": "admin",
+    "authorities": {
+      "canAccessPortal": true,
+      "canAddTeachers": true,
+      "canEditTeachers": true,
+      "canManageRequests": true,
+      "canDownloadReports": true,
+      "canManageAuthorities": true,
+      "canViewAuditTrail": true
+    },
+    "phone": "201069033223",
+    "employmentDate": "2025-07-27",
+    "createdAt": "2025-07-30",
     "lastLogin": null,
     "status": "Active"
   }

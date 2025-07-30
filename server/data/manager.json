@@ -27,5 +27,16 @@
     "weeklyReports": true,
     "monthlyReports": true,
     "yearlyReports": true
+  },
+  "generalSettings": {
+    "weekendDays": [
+      5,
+      6
+    ],
+    "nationalHolidays": [
+      "2025-01-01T00:00:00.000Z",
+      "2025-07-28T21:00:00.000Z",
+      "2025-07-29T21:00:00.000Z"
+    ]
   }
 }

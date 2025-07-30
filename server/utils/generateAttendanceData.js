@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { isWeekend, isHoliday, isWorkingDay } = require('./dateUtils');
 
 // Helper function to get date range between two dates
 function getDatesInRange(startDate, endDate) {
@@ -147,6 +148,12 @@ async function generateAttendanceData() {
         const dateISO = formatDateISO(date);
         const dateFormatted = formatDate(date);
         
+        // Check if it's a working day
+        if (!isWorkingDay(date)) {
+          // Skip weekends and holidays
+          continue;
+        }
+
         // Check if this date falls within any approved leaves or absences
         const permittedLeave = teacherRequests.find(req => 
           req.type === 'PERMITTED_LEAVES' && 
@@ -164,16 +171,7 @@ async function generateAttendanceData() {
         let checkOut = '';
         let totalHours = 0;
         
-        // Skip weekends (Saturday = 6, Sunday = 0 in Egypt context, but let's assume Saturday and Sunday are weekends)
-        const dayOfWeek = date.getDay();
-        const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Friday and Saturday in Egypt
-        
-        if (isWeekend) {
-          attendance = 'Weekend';
-          checkIn = '';
-          checkOut = '';
-          totalHours = 0;
-        } else if (permittedLeave || authorizedAbsence) {
+        if (permittedLeave || authorizedAbsence) {
           attendance = 'Permitted Leave';
           checkIn = '';
           checkOut = '';

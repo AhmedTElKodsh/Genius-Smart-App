@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
 
 // Load system roles and hierarchy rules
 const loadSystemRoles = () => {
@@ -53,32 +54,98 @@ const logAction = async (actionData) => {
 // Extract user info from token and verify role permissions
 const extractUserAndRole = (req, res, next) => {
   try {
+    console.log('🔍 extractUserAndRole middleware called');
+    console.log('📋 Headers:', req.headers.authorization);
+    
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token || !token.startsWith('gse_')) {
+    console.log('🎫 Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
+    if (!token) {
+      console.log('❌ No token provided');
       return res.status(401).json({
         success: false,
-        message: 'Unauthorized: Invalid token'
+        message: 'Unauthorized: No token provided'
       });
     }
 
-    // Extract user ID from token
-    const parts = token.split('_');
-    if (parts.length < 3) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized: Invalid token format'
-      });
+    let userId;
+    
+    // Handle two token types: custom gse_ tokens and JWT tokens
+    if (token.startsWith('gse_')) {
+      console.log('🔧 Using custom GSE token format');
+      // Custom token format: gse_userId_timestamp
+      const parts = token.split('_');
+      if (parts.length < 3) {
+        console.log('❌ Invalid GSE token format');
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Invalid token format'
+        });
+      }
+      userId = parts.slice(1, -1).join('_');
+      console.log('👤 GSE User ID:', userId);
+    } else {
+      console.log('🔧 Using JWT token format');
+      // JWT token format
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'genius-smart-secret-key');
+        userId = decoded.userId;
+        console.log('👤 JWT User ID:', userId);
+        console.log('🎯 JWT Decoded:', { userId: decoded.userId, email: decoded.email, role: decoded.role });
+      } catch (jwtError) {
+        console.error('❌ JWT verification error:', jwtError.message);
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Invalid token'
+        });
+      }
     }
-
-    const userId = parts.slice(1, -1).join('_');
     
     // Load user data
     const teachers = loadTeachers();
-    const user = teachers.find(t => t.id === userId);
+    let user = teachers.find(t => t.id === userId);
+    
+    // If not found in teachers, check managers
+    if (!user) {
+      const managersPath = path.join(__dirname, '..', 'data', 'managers.json');
+      try {
+        const managers = JSON.parse(fs.readFileSync(managersPath, 'utf8'));
+        const manager = managers.find(m => m.id === userId);
+        if (manager) {
+          // Convert manager data to user format
+          user = {
+            id: manager.id,
+            name: manager.name,
+            email: manager.email,
+            status: manager.status,
+            role: manager.role,
+            roleLevel: manager.managerLevel === 'admin' ? 3 : 2,
+            roleName: manager.systemRole || 'Manager',
+            roleNameAr: manager.systemRole === 'Admin' ? 'مسؤول' : 'مدير',
+            systemRole: manager.systemRole,
+            authorities: Object.keys(manager.authorities || {}).filter(k => manager.authorities[k]),
+            canAccessManagerPortal: true,
+            canAccessTeacherPortal: false,
+            canApproveRequests: manager.authorities?.canManageRequests || false,
+            canApproveManagerRequests: manager.systemRole === 'Admin',
+            canRevokeActions: manager.systemRole === 'Admin',
+            canViewAuditTrail: manager.systemRole === 'Admin',
+            isPerformanceTracked: false
+          };
+        }
+      } catch (error) {
+        console.error('Error loading managers:', error);
+      }
+    }
+
+    console.log('🔍 Looking for user with ID:', userId);
+    console.log('👥 Total teachers loaded:', teachers.length);
+    console.log('👤 User found:', user ? `${user.name} (${user.email})` : 'NOT FOUND');
 
     if (!user || user.status !== 'Active') {
+      console.log('❌ User not found or inactive');
       return res.status(401).json({
         success: false,
         message: 'Unauthorized: User not found or inactive'
@@ -94,6 +161,7 @@ const extractUserAndRole = (req, res, next) => {
       roleLevel: user.roleLevel,
       roleName: user.roleName,
       roleNameAr: user.roleNameAr,
+      systemRole: user.systemRole || (user.roleLevel === 3 ? 'Admin' : 'Manager'),
       authorities: user.authorities,
       canAccessManagerPortal: user.canAccessManagerPortal,
       canAccessTeacherPortal: user.canAccessTeacherPortal,
@@ -148,7 +216,21 @@ const requireAuthority = (authority) => {
       });
     }
 
-    if (!req.user.authorities.includes(authority)) {
+    // Check if user has the exact authority
+    let hasAuthority = req.user.authorities.includes(authority);
+
+    // Special handling for hierarchical request authorities
+    if (!hasAuthority && authority === 'Accept and Reject Employee Requests') {
+      // Admin with "Accept and Reject All Requests" can also approve employee requests
+      hasAuthority = req.user.authorities.includes('Accept and Reject All Requests');
+    }
+    
+    if (!hasAuthority && authority === 'Accept and Reject Manager Requests') {
+      // Admin with "Accept and Reject All Requests" can also approve manager requests
+      hasAuthority = req.user.authorities.includes('Accept and Reject All Requests');
+    }
+
+    if (!hasAuthority) {
       return res.status(403).json({
         success: false,
         message: `Forbidden: Missing required authority: ${authority}`,

@@ -384,19 +384,53 @@ router.put('/:id',
     requests[requestIndex].approvedAt = new Date().toISOString();
     requests[requestIndex].canBeRevokedBy = req.user.role === 'MANAGER' ? 'ADMIN' : null;
     
-    // Deduct hours from teacher's balance if request is accepted and has hours
-    if (result === 'Accepted' && requests[requestIndex].hours) {
-      const requestType = requests[requestIndex].requestType;
+    // Handle request approval or rejection
+    const requestType = requests[requestIndex].requestType;
+    const teacherId = requests[requestIndex].teacherId;
+    
+    if (result === 'Accepted') {
+      // Deduct hours/days from teacher's balance if request is accepted
       if (requestType === 'Late Arrival' || requestType === 'Early Leave') {
-        const hoursToDeduct = requests[requestIndex].hours;
-        const deductionSuccess = updateTeacherHours(requests[requestIndex].teacherId, hoursToDeduct);
+        // Handle hours deduction for Late Arrival and Early Leave
+        const hoursToDeduct = requests[requestIndex].hours || 0;
+        if (hoursToDeduct > 0) {
+          const deductionResult = updateTeacherHoursAndTrack(teacherId, hoursToDeduct, requestType);
+          
+          if (deductionResult.success) {
+            console.log(`✅ Deducted ${hoursToDeduct} hours from teacher ${requests[requestIndex].name}`);
+            requests[requestIndex].deductionApplied = true;
+            requests[requestIndex].deductionAmount = hoursToDeduct;
+            requests[requestIndex].deductionType = 'hours';
+          } else {
+            console.error(`❌ Failed to deduct hours for teacher ${requests[requestIndex].name}: ${deductionResult.error}`);
+          }
+        }
+      } else if (requestType === 'Absence') {
+        // Handle days deduction for Absence
+        const daysToDeduct = requests[requestIndex].duration || 1;
+        const deductionResult = updateTeacherAbsenceDays(teacherId, daysToDeduct);
         
-        if (deductionSuccess) {
-          console.log(`✅ Deducted ${hoursToDeduct} hours from teacher ${requests[requestIndex].name}`);
+        if (deductionResult.success) {
+          console.log(`✅ Deducted ${daysToDeduct} days from teacher ${requests[requestIndex].name}`);
+          requests[requestIndex].deductionApplied = true;
+          requests[requestIndex].deductionAmount = daysToDeduct;
+          requests[requestIndex].deductionType = 'days';
         } else {
-          console.error(`❌ Failed to deduct hours for teacher ${requests[requestIndex].name}`);
+          console.error(`❌ Failed to deduct days for teacher ${requests[requestIndex].name}: ${deductionResult.error}`);
         }
       }
+    } else if (result === 'Rejected') {
+      // Add rejection notification
+      addTeacherNotification(teacherId, {
+        type: 'request_rejected',
+        title: getRequestTypeTitle(requestType) + ' Request Rejected',
+        titleAr: getRequestTypeTitleAr(requestType) + ' - تم رفض الطلب',
+        message: `Your ${requestType.toLowerCase()} request has been rejected.`,
+        messageAr: `تم رفض طلب ${getRequestTypeAr(requestType)} الخاص بك.`,
+        date: new Date().toISOString(),
+        read: false,
+        category: 'request'
+      });
     }
     
     // Keep the processed request in the database (don't remove it immediately)
@@ -424,12 +458,36 @@ router.put('/:id',
       console.log('❌ Teacher email not found for notification');
     }
     
+    // Log to audit trail
+    const auditEntry = logAuditTrail({
+      actionType: result === 'Accepted' ? 'approve' : 'reject',
+      requestId: requestId,
+      requestType: request.requestType,
+      teacherId: request.teacherId,
+      teacherName: request.name,
+      performedBy: req.user.id,
+      performerName: req.user.name,
+      performerRole: req.user.systemRole || req.user.role,
+      performerEmail: req.user.email,
+      details: {
+        previousStatus: 'pending',
+        newStatus: result.toLowerCase(),
+        reason: request.reason
+      },
+      metadata: {
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        sessionId: req.sessionID
+      }
+    });
+    
     console.log(`Request ${requestId} ${result.toLowerCase()} successfully`);
     
     res.json({
       success: true,
       message: `Request ${result.toLowerCase()} successfully`,
-      data: requests[requestIndex]
+      data: requests[requestIndex],
+      auditId: auditEntry?.id
     });
     
   } catch (error) {
@@ -441,6 +499,29 @@ router.put('/:id',
     });
   }
 });
+
+// Helper function to log audit trail
+const logAuditTrail = (action) => {
+  try {
+    const auditPath = path.join(__dirname, '..', 'data', 'action_audit.json');
+    const auditData = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+    
+    const auditEntry = {
+      id: uuidv4(),
+      ...action,
+      timestamp: new Date().toISOString()
+    };
+    
+    auditData.audits.push(auditEntry);
+    fs.writeFileSync(auditPath, JSON.stringify(auditData, null, 2));
+    
+    console.log('✅ Audit trail logged:', auditEntry.id);
+    return auditEntry;
+  } catch (error) {
+    console.error('❌ Error logging audit trail:', error);
+    return null;
+  }
+};
 
 // Helper function to get teacher data by ID
 const getTeacherData = (teacherId) => {
@@ -454,8 +535,8 @@ const getTeacherData = (teacherId) => {
   }
 };
 
-// Helper function to update teacher remaining hours
-const updateTeacherHours = (teacherId, hoursToDeduct) => {
+// Helper function to add notification to teacher
+const addTeacherNotification = (teacherId, notification) => {
   try {
     const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
     const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
@@ -463,14 +544,170 @@ const updateTeacherHours = (teacherId, hoursToDeduct) => {
     const teacherIndex = teachersData.findIndex(teacher => teacher.id === teacherId);
     if (teacherIndex === -1) return false;
     
-    teachersData[teacherIndex].remainingLateEarlyHours = 
-      (teachersData[teacherIndex].remainingLateEarlyHours || 4) - hoursToDeduct;
+    const teacher = teachersData[teacherIndex];
+    if (!teacher.notifications) teacher.notifications = [];
     
+    teacher.notifications.push({
+      id: `notif_${Date.now()}`,
+      ...notification
+    });
+    
+    teachersData[teacherIndex] = teacher;
     fs.writeFileSync(teachersPath, JSON.stringify(teachersData, null, 2));
     return true;
   } catch (error) {
-    console.error('Error updating teacher hours:', error);
+    console.error('Error adding teacher notification:', error);
     return false;
+  }
+};
+
+// Helper functions for request type translations
+const getRequestTypeTitle = (type) => {
+  const titles = {
+    'Absence': 'Absence',
+    'Late Arrival': 'Late Arrival',
+    'Early Leave': 'Early Leave'
+  };
+  return titles[type] || type;
+};
+
+const getRequestTypeTitleAr = (type) => {
+  const titles = {
+    'Absence': 'طلب غياب',
+    'Late Arrival': 'طلب تأخير',
+    'Early Leave': 'طلب انصراف مبكر'
+  };
+  return titles[type] || type;
+};
+
+const getRequestTypeAr = (type) => {
+  const types = {
+    'Absence': 'الغياب',
+    'Late Arrival': 'التأخير',
+    'Early Leave': 'الانصراف المبكر'
+  };
+  return types[type] || type;
+};
+
+// Helper function to update teacher remaining hours and track cumulative usage
+const updateTeacherHoursAndTrack = (teacherId, hoursToDeduct, requestType) => {
+  try {
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+    
+    const teacherIndex = teachersData.findIndex(teacher => teacher.id === teacherId);
+    if (teacherIndex === -1) return { success: false, error: 'Teacher not found' };
+    
+    const teacher = teachersData[teacherIndex];
+    
+    // Initialize tracking fields if they don't exist
+    if (!teacher.usedLateEarlyHours) teacher.usedLateEarlyHours = 0;
+    if (!teacher.usedLateArrivalHours) teacher.usedLateArrivalHours = 0;
+    if (!teacher.usedEarlyLeaveHours) teacher.usedEarlyLeaveHours = 0;
+    if (!teacher.lateEarlyHistory) teacher.lateEarlyHistory = [];
+    
+    // Check if teacher has enough hours remaining
+    const currentRemaining = teacher.remainingLateEarlyHours || 4;
+    if (currentRemaining < hoursToDeduct) {
+      return { success: false, error: 'Insufficient hours remaining' };
+    }
+    
+    // Update remaining hours
+    teacher.remainingLateEarlyHours = currentRemaining - hoursToDeduct;
+    teacher.usedLateEarlyHours = (teacher.usedLateEarlyHours || 0) + hoursToDeduct;
+    
+    // Track specific type usage
+    if (requestType === 'Late Arrival') {
+      teacher.usedLateArrivalHours = (teacher.usedLateArrivalHours || 0) + hoursToDeduct;
+    } else if (requestType === 'Early Leave') {
+      teacher.usedEarlyLeaveHours = (teacher.usedEarlyLeaveHours || 0) + hoursToDeduct;
+    }
+    
+    // Add to history
+    teacher.lateEarlyHistory.push({
+      date: new Date().toISOString(),
+      type: requestType,
+      hours: hoursToDeduct,
+      remainingAfter: teacher.remainingLateEarlyHours
+    });
+    
+    // Add notification
+    if (!teacher.notifications) teacher.notifications = [];
+    teacher.notifications.push({
+      id: `notif_${Date.now()}`,
+      type: 'request_approved',
+      title: requestType === 'Late Arrival' ? 'Late Arrival Request Approved' : 'Early Leave Request Approved',
+      titleAr: requestType === 'Late Arrival' ? 'تمت الموافقة على طلب التأخير' : 'تمت الموافقة على طلب الانصراف المبكر',
+      message: `Your ${requestType.toLowerCase()} request for ${hoursToDeduct} hour(s) has been approved. Remaining hours: ${teacher.remainingLateEarlyHours}`,
+      messageAr: `تمت الموافقة على طلب ${requestType === 'Late Arrival' ? 'التأخير' : 'الانصراف المبكر'} لمدة ${hoursToDeduct} ساعة. الساعات المتبقية: ${teacher.remainingLateEarlyHours}`,
+      date: new Date().toISOString(),
+      read: false,
+      category: 'request'
+    });
+    
+    teachersData[teacherIndex] = teacher;
+    fs.writeFileSync(teachersPath, JSON.stringify(teachersData, null, 2));
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating teacher hours:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Helper function to update teacher remaining absence days
+const updateTeacherAbsenceDays = (teacherId, daysToDeduct) => {
+  try {
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+    
+    const teacherIndex = teachersData.findIndex(teacher => teacher.id === teacherId);
+    if (teacherIndex === -1) return { success: false, error: 'Teacher not found' };
+    
+    const teacher = teachersData[teacherIndex];
+    
+    // Initialize tracking fields if they don't exist
+    if (!teacher.usedAbsenceDays) teacher.usedAbsenceDays = 0;
+    if (!teacher.absenceHistory) teacher.absenceHistory = [];
+    if (teacher.remainingAbsenceDays === undefined) {
+      teacher.remainingAbsenceDays = teacher.allowedAbsenceDays || 12;
+    }
+    
+    // Check if teacher has enough days remaining
+    if (teacher.remainingAbsenceDays < daysToDeduct) {
+      return { success: false, error: 'Insufficient absence days remaining' };
+    }
+    
+    // Update remaining days
+    teacher.remainingAbsenceDays -= daysToDeduct;
+    teacher.usedAbsenceDays = (teacher.usedAbsenceDays || 0) + daysToDeduct;
+    
+    // Add to history
+    teacher.absenceHistory.push({
+      date: new Date().toISOString(),
+      days: daysToDeduct,
+      remainingAfter: teacher.remainingAbsenceDays
+    });
+    
+    // Add notification
+    if (!teacher.notifications) teacher.notifications = [];
+    teacher.notifications.push({
+      id: `notif_${Date.now()}`,
+      type: 'request_approved',
+      title: 'Absence Request Approved',
+      titleAr: 'تمت الموافقة على طلب الغياب',
+      message: `Your absence request for ${daysToDeduct} day(s) has been approved. Remaining absence days: ${teacher.remainingAbsenceDays}`,
+      messageAr: `تمت الموافقة على طلب الغياب لمدة ${daysToDeduct} يوم. أيام الغياب المتبقية: ${teacher.remainingAbsenceDays}`,
+      date: new Date().toISOString(),
+      read: false,
+      category: 'request'
+    });
+    
+    teachersData[teacherIndex] = teacher;
+    fs.writeFileSync(teachersPath, JSON.stringify(teachersData, null, 2));
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating teacher absence days:', error);
+    return { success: false, error: error.message };
   }
 };
 

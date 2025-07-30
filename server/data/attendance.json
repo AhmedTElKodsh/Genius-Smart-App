@@ -18638,5 +18638,43 @@
     "overtime": 0,
     "regularHours": 0,
     "notes": " ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified"
+  },
+  {
+    "id": "attendance-1753846931765-7b8rkjyeg",
+    "teacherId": "88574e76-66ba-485b-9822-fb28ac6d391c",
+    "name": "إبراهيم حمدي",
+    "date": "July 30, 2025",
+    "dateISO": "2025-07-30",
+    "attendance": "Active",
+    "checkIn": "06:51 AM",
+    "checkOut": "06:51 AM",
+    "currentSessionCheckOut": null,
+    "permittedLeaves": "",
+    "authorizedAbsence": "",
+    "totalHours": 0.02,
+    "sessions": [
+      {
+        "checkIn": "06:42 AM",
+        "checkOut": "06:42 AM",
+        "hours": 0
+      },
+      {
+        "checkIn": "06:50 AM",
+        "checkOut": "06:50 AM",
+        "hours": 0
+      },
+      {
+        "checkIn": "06:50 AM",
+        "checkOut": "06:51 AM",
+        "hours": 0.02
+      }
+    ],
+    "subject": "Admin Management",
+    "workType": "Full-time",
+    "isOvertimeSession": true,
+    "createdAt": "2025-07-30T03:42:11.765Z",
+    "overtime": 0.02,
+    "regularHours": 0,
+    "notes": " ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified ساعات عمل إضافية - تم تأكيد الموقع / Overtime session - location verified"
   }
 ]
