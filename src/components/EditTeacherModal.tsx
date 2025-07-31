@@ -839,7 +839,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
       employmentDate: teacher.employmentDate || '',
       allowedAbsenceDays: teacher.allowedAbsenceDays?.toString() || '',
       authorities: teacher.authorities || [],
-      systemRole: teacher.role || 'EMPLOYEE'
+      systemRole: teacher.systemRole || 'EMPLOYEE'
     });
   };
 

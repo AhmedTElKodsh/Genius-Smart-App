@@ -611,6 +611,16 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
     setError('');
   };
 
+  const handleAuthorityChange = (authorityKey: string, value: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      authorities: {
+        ...prev.authorities,
+        [authorityKey]: value
+      }
+    }));
+  };
+
   // Get default authorities for a role (as boolean object for form)
   const getDefaultAuthoritiesForRole = (role: string) => {
     switch (role) {
@@ -998,10 +1008,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                     type="checkbox"
                     id="canAccessPortal"
                     checked={formData.authorities.canAccessPortal}
-                    onChange={(e) => handleInputChange('authorities', {
-                      ...formData.authorities,
-                      canAccessPortal: e.target.checked
-                    })}
+                    onChange={(e) => handleAuthorityChange('canAccessPortal', e.target.checked)}
                   />
                   <AuthorityLabel htmlFor="canAccessPortal" $isRTL={isRTL}>
                     {isRTL ? 'الوصول إلى بوابة المدير والمتابعات الداخلية' : 'Access to Manager Portal and Internal Tracking'}
@@ -1013,10 +1020,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                     type="checkbox"
                     id="canAddTeachers"
                     checked={formData.authorities.canAddTeachers}
-                    onChange={(e) => handleInputChange('authorities', {
-                      ...formData.authorities,
-                      canAddTeachers: e.target.checked
-                    })}
+                    onChange={(e) => handleAuthorityChange('canAddTeachers', e.target.checked)}
                   />
                   <AuthorityLabel htmlFor="canAddTeachers" $isRTL={isRTL}>
                     {isRTL ? 'إضافة معلمين جدد' : 'Add New Teachers'}
@@ -1028,10 +1032,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                     type="checkbox"
                     id="canEditTeachers"
                     checked={formData.authorities.canEditTeachers}
-                    onChange={(e) => handleInputChange('authorities', {
-                      ...formData.authorities,
-                      canEditTeachers: e.target.checked
-                    })}
+                    onChange={(e) => handleAuthorityChange('canEditTeachers', e.target.checked)}
                   />
                   <AuthorityLabel htmlFor="canEditTeachers" $isRTL={isRTL}>
                     {isRTL ? 'تعديل معلومات المعلمين الحاليين' : 'Edit Existing Teachers Info'}
@@ -1043,10 +1044,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                     type="checkbox"
                     id="canManageRequests"
                     checked={formData.authorities.canManageRequests}
-                    onChange={(e) => handleInputChange('authorities', {
-                      ...formData.authorities,
-                      canManageRequests: e.target.checked
-                    })}
+                    onChange={(e) => handleAuthorityChange('canManageRequests', e.target.checked)}
                   />
                   <AuthorityLabel htmlFor="canManageRequests" $isRTL={isRTL}>
                     {isRTL ? 'قبول ورفض طلبات المعلمين' : 'Accept and Reject Teachers\' Requests'}
@@ -1058,10 +1056,7 @@ const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose, onSu
                     type="checkbox"
                     id="canDownloadReports"
                     checked={formData.authorities.canDownloadReports}
-                    onChange={(e) => handleInputChange('authorities', {
-                      ...formData.authorities,
-                      canDownloadReports: e.target.checked
-                    })}
+                    onChange={(e) => handleAuthorityChange('canDownloadReports', e.target.checked)}
                   />
                   <AuthorityLabel htmlFor="canDownloadReports" $isRTL={isRTL}>
                     {isRTL ? 'تحميل التقارير' : 'Download Reports'}
