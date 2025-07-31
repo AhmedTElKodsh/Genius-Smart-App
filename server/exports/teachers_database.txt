@@ -1,0 +1,284 @@
+=== GENIUS SMART EDUCATION - TEACHERS DATABASE ===
+
+Total Teachers: 31
+
+COMPLETE TEACHER LIST:
+
+1. زينب عاطف
+   Email: Zizeatef@gmail.com
+   Password: lqUsG7vAQ@
+   Department: Arabic
+   Role: EMPLOYEE (موظف)
+   Phone: 201102103767
+   Work Type: Full-time
+   Status: Active
+
+2. ضحي سعد الدين
+   Email: ddodo3451@gmail.com
+   Password: y8cGdd@Ofs
+   Department: Arabic
+   Role: EMPLOYEE (موظف)
+   Phone: 201013527189
+   Work Type: Full-time
+   Status: Active
+
+3. هاجر منصور
+   Email: mansourhager985@gmail.com
+   Password: hxGru0Jncu
+   Department: Arabic
+   Role: EMPLOYEE (موظف)
+   Phone: 201026123577
+   Work Type: Full-time
+   Status: Active
+
+4. ايات فوزي
+   Email: foozayat@gmail.com
+   Password: C86fZ3iKzV
+   Department: Art
+   Role: EMPLOYEE (موظف)
+   Phone: 201113371847
+   Work Type: Full-time
+   Status: Active
+
+5. حنين
+   Email: Sarahzaki03@gmail.com
+   Password: 1FzptL0iGy
+   Department: Assistant
+   Role: EMPLOYEE (موظف)
+   Phone: 201019550168
+   Work Type: Full-time
+   Status: Active
+
+6. فاطمة عبد الودود
+   Email: Fatma.abdelwadod@gmail.com
+   Password: JOuXhp7ue0
+   Department: Assistant
+   Role: EMPLOYEE (موظف)
+   Phone: 201146513433
+   Work Type: Full-time
+   Status: Active
+
+7. شيماء حسن
+   Email: ammazmwzh@gmail.com
+   Password: H0e$#DayW@
+   Department: Canteen
+   Role: EMPLOYEE (موظف)
+   Phone: 201206455159
+   Work Type: Full-time
+   Status: Active
+
+8. سحر ناجي
+   Email: reelban73@gmail.com
+   Password: V0XRSw#c7i
+   Department: Childcare
+   Role: EMPLOYEE (موظف)
+   Phone: 201157507968
+   Work Type: Full-time
+   Status: Active
+
+9. صابرين عيسى
+   Email: gsgsghsgvzg@gmail.com
+   Password: V$40TAB3xD
+   Department: Childcare
+   Role: EMPLOYEE (موظف)
+   Phone: N/A
+   Work Type: Full-time
+   Status: Active
+
+10. رحاب عادل
+   Email: rehabadel252127@gmail.com
+   Password: B8I%%ojEif
+   Department: English
+   Role: EMPLOYEE (موظف)
+   Phone: 201140989001
+   Work Type: Full-time
+   Status: Active
+
+11. منار عمرو
+   Email: manaramrhashem@gmail.com
+   Password: BgdcK4o38$
+   Department: English
+   Role: EMPLOYEE (موظف)
+   Phone: 201015673562
+   Work Type: Full-time
+   Status: Active
+
+12. همام حسام
+   Email: homamdimashky@gmail.com
+   Password: q1aeZLjjkb
+   Department: English
+   Role: EMPLOYEE (موظف)
+   Phone: 201093695877
+   Work Type: Part-time
+   Status: Active
+
+13. محمود الصباحي
+   Email: beeko3000@gmail.com
+   Password: 3W6OdjlThw
+   Department: Fitness
+   Role: EMPLOYEE (موظف)
+   Phone: 201000199325
+   Work Type: Part-time
+   Status: Active
+
+14. أسماء رفعت
+   Email: asmaa.tota.12345@gmail.com
+   Password: fKQp@uCXNJ
+   Department: Floor Admin
+   Role: EMPLOYEE (موظف)
+   Phone: 201123663726
+   Work Type: Full-time
+   Status: Active
+
+15. عادل محمد
+   Email: adelmohamed18t5506@gmail.com
+   Password: 5@joyOK$rT
+   Department: HR
+   Role: EMPLOYEE (موظف)
+   Phone: 201101572707
+   Work Type: Full-time
+   Status: Active
+
+16. نورهان عادل
+   Email: na765581@gmail.com
+   Password: dezyIiGU1F
+   Department: KG Manager
+   Role: EMPLOYEE (موظف)
+   Phone: 201017878976
+   Work Type: Full-time
+   Status: Active
+
+17. عمرو صلاح
+   Email: badrsalah525@gmail.com
+   Password: 0XKBpgvoCr
+   Department: Logistics
+   Role: EMPLOYEE (موظف)
+   Phone: 201091073666
+   Work Type: Full-time
+   Status: Active
+
+18. أميرة شرف
+   Email: amairasharaf63@gmail.com
+   Password: duy$amhdes
+   Department: Management
+   Role: MANAGER (مدير)
+   Phone: 201016171132
+   Work Type: Full-time
+   Status: Active
+
+19. إبراهيم حمدي
+   Email: ibrahimmizo55@gmail.com
+   Password: 4@!L6icFjn
+   Department: Management
+   Role: ADMIN (مدير عام)
+   Phone: 201092938667
+   Work Type: Full-time
+   Status: Active
+
+20. اسماء كحيل
+   Email: asmaa.m.kohail@gmail.com
+   Password: KWBJmO#fKj
+   Department: Management
+   Role: MANAGER (مدير)
+   Phone: 201020193765
+   Work Type: Full-time
+   Status: Active
+
+21. عمرو زاهر
+   Email: amr_zaher1@hotmail.com
+   Password: iq3D$AZeKm
+   Department: Management
+   Role: ADMIN (مدير عام)
+   Phone: 201069033223
+   Work Type: Full-time
+   Status: Active
+
+22. ماهيتاب مصطفى
+   Email: mahetabmostafa92@gmail.com
+   Password: !UBBtD7eEK
+   Department: Management
+   Role: MANAGER (مدير)
+   Phone: 201007789469
+   Work Type: Full-time
+   Status: Active
+
+23. ابراهيم أحمد
+   Email: ibrahimahmed51620@gmail.com
+   Password: cc3uoQIqR1
+   Department: Mentor
+   Role: EMPLOYEE (موظف)
+   Phone: 201016224104
+   Work Type: Full-time
+   Status: Active
+
+24. سارة علي
+   Email: Sarahzaki03@gmail.com
+   Password: yN#1HoR5Gu
+   Department: Programming
+   Role: EMPLOYEE (موظف)
+   Phone: 201023778899
+   Work Type: Part-time
+   Status: Active
+
+25. الزهراء عصام
+   Email: alzahraaessam999@gmail.com
+   Password: BaYC9L#wuS
+   Department: Quran
+   Role: EMPLOYEE (موظف)
+   Phone: 201021959341
+   Work Type: Full-time
+   Status: Active
+
+26. ايمان محمد
+   Email: em5146990@gmail.com
+   Password: 8pHhChBGUV
+   Department: Quran
+   Role: EMPLOYEE (موظف)
+   Phone: 201063076840
+   Work Type: Full-time
+   Status: Active
+
+27. محمود السيد
+   Email: midomax817@gmail.com
+   Password: aKA5by7Kft
+   Department: Quran
+   Role: EMPLOYEE (موظف)
+   Phone: 201150423493
+   Work Type: Full-time
+   Status: Active
+
+28. علي توفيق
+   Email: Alyytawfik5@gmail.com
+   Password: RS62xXfppf
+   Department: Sales
+   Role: EMPLOYEE (موظف)
+   Phone: 201012306778
+   Work Type: Full-time
+   Status: Active
+
+29. أميرة ناجي
+   Email: amiranagy901@gmail.com
+   Password: @Ux!2rc1Fb
+   Department: Science
+   Role: EMPLOYEE (موظف)
+   Phone: 201118225638
+   Work Type: Full-time
+   Status: Active
+
+30. هبة حربي
+   Email: hebaharby49@gmail.com
+   Password: jp0nwfXCzU
+   Department: Science
+   Role: EMPLOYEE (موظف)
+   Phone: 201016219707
+   Work Type: Full-time
+   Status: Active
+
+31. محمد عصام
+   Email: mohamdilkhshen@gmail.com
+   Password: 4@e3B3P1cW
+   Department: Security
+   Role: EMPLOYEE (موظف)
+   Phone: 201143136065
+   Work Type: Full-time
+   Status: Active

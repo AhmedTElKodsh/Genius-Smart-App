@@ -1696,6 +1696,14 @@ const Teachers: React.FC = () => {
     return subjectMap[subject] || subject;
   };
 
+  const translateWorkType = (workType: string) => {
+    const workTypeMap: { [key: string]: string } = {
+      'Full-time': t('teachers.workType.fullTime'),
+      'Part-time': t('teachers.workType.partTime')
+    };
+    return workTypeMap[workType] || workType;
+  };
+
   // Fetch current user data from backend
   const fetchCurrentUserData = async () => {
     try {
@@ -2282,7 +2290,7 @@ const Teachers: React.FC = () => {
 
       const tableData = reportsData.map(report => [
         report.name,
-        report.workType,
+        translateWorkType(report.workType),
         report.attends,
         report.authorizedAbsence,
         report.unauthorizedAbsence,
@@ -2387,7 +2395,7 @@ const Teachers: React.FC = () => {
       // Prepare the data for Excel export
       const excelData = reportsData.map(report => ({
         [t('reports.teacher')]: report.name,
-        [t('reports.workType')]: report.workType,
+        [t('reports.workType')]: translateWorkType(report.workType),
         [t('reports.attends')]: report.attends,
         [t('reports.authorizedAbsence')]: report.authorizedAbsence,
         [t('reports.unauthorizedAbsence')]: report.unauthorizedAbsence,
@@ -3730,7 +3738,7 @@ const Teachers: React.FC = () => {
                       <TableCell $alignLeft={true} $isRTL={isRTL}>{report.name}</TableCell>
                       <TableCell>
                         <WorkTypeBadge $workType={report.workType}>
-                          {report.workType}
+                          {translateWorkType(report.workType)}
                         </WorkTypeBadge>
                       </TableCell>
                       <TableCell>{report.attends}</TableCell>
