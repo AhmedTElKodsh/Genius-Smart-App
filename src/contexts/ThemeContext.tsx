@@ -28,15 +28,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return (saved as Theme) || 'light';
   });
 
+  const updateFavicon = (isDark: boolean) => {
+    const favicon = document.querySelector('link[rel="icon"]');
+    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    const shortcutIcon = document.querySelector('link[rel="shortcut icon"]');
+    
+    const faviconPath = isDark ? '/light-logo-page.png' : '/logo-page.png';
+    
+    if (favicon) {
+      (favicon as HTMLLinkElement).href = faviconPath;
+    }
+    if (appleTouchIcon) {
+      (appleTouchIcon as HTMLLinkElement).href = faviconPath;
+    }
+    if (shortcutIcon) {
+      (shortcutIcon as HTMLLinkElement).href = faviconPath;
+    }
+  };
+
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
+    updateFavicon(newTheme === 'dark');
   };
 
-  // Initialize theme attribute on mount
+  // Initialize theme attribute and favicon on mount
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    updateFavicon(theme === 'dark');
   }, [theme]);
 
   const isDarkMode = theme === 'dark';

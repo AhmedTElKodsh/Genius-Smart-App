@@ -92,19 +92,20 @@ const CloseButton = styled.button`
   }
 `;
 
-const TabContainer = styled.div`
+const TabContainer = styled.div<{ $isRTL?: boolean }>`
   display: flex;
   gap: 0;
   margin: 0 32px;
   border-bottom: 1px solid #e1e7ec;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
-const Tab = styled.button<{ $isActive: boolean }>`
+const Tab = styled.button<{ $isActive: boolean; $isRTL?: boolean }>`
   padding: 16px 24px;
   background: ${props => props.$isActive ? '#D6B10E' : 'transparent'};
   color: ${props => props.$isActive ? '#ffffff' : '#666'};
   border: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -154,15 +155,17 @@ const Label = styled.label<{ $isRTL?: boolean }>`
   width: 100%;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ $isRTL?: boolean }>`
   padding: 16px 20px;
   border: 2px solid #e1e7ec;
   border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   background: #f8f9fa;
   color: #141F25;
   transition: all 0.3s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
   
   &::placeholder {
     color: #999;
@@ -181,16 +184,18 @@ const Input = styled.input`
   }
 `;
 
-const Select = styled.select`
+const Select = styled.select<{ $isRTL?: boolean }>`
   padding: 16px 20px;
   border: 2px solid #e1e7ec;
   border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
   font-size: 16px;
   background: #f8f9fa;
   color: #141F25;
   cursor: pointer;
   transition: all 0.3s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
   
   &:focus {
     outline: none;
@@ -531,6 +536,79 @@ const AuthorityCheckbox = styled.input`
   cursor: pointer;
 `;
 
+const RoleNotificationModal = styled.div<{ isOpen: boolean }>`
+  display: ${props => props.isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+`;
+
+const RoleNotificationContent = styled.div<{ $isRTL: boolean }>`
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+`;
+
+const RoleNotificationTitle = styled.h3<{ $isRTL: boolean }>`
+  margin: 0 0 16px 0;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const RoleNotificationMessage = styled.p<{ $isRTL: boolean }>`
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
+  font-size: 16px;
+  line-height: 1.6;
+  color: #34495e;
+  margin-bottom: 16px;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const AuthoritiesList = styled.ul<{ $isRTL: boolean }>`
+  margin: 16px 0;
+  padding: ${props => props.$isRTL ? '0 20px 0 0' : '0 0 0 20px'};
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
+`;
+
+const AuthorityListItem = styled.li<{ $isRTL: boolean }>`
+  font-size: 14px;
+  color: #34495e;
+  margin-bottom: 8px;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+`;
+
+const NotificationButton = styled.button`
+  background: #d4a015;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: block;
+  margin: 20px auto 0;
+  
+  &:hover {
+    background: #b8901d;
+  }
+`;
+
 interface EditTeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -588,6 +666,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [currentUserAuthorities, setCurrentUserAuthorities] = useState<string[]>([]);
 
   // Function to translate subject names for display
   const translateSubject = (subject: string): string => {
@@ -604,7 +683,17 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
       'Fitness': t('subjects.fitness'),
       'Scouting': t('subjects.scouting'),
       'Nanny': t('subjects.nanny'),
-      'History': t('subjects.history')
+      'History': t('subjects.history'),
+      'Canteen': t('subjects.canteen'),
+      'Floor Admin': t('subjects.floorAdmin'),
+      'Sales': t('subjects.sales'),
+      'HR': t('subjects.hr'),
+      'Mentor': t('subjects.mentor'),
+      'KG Manager': t('subjects.kgManager'),
+      'Logistics': t('subjects.logistics'),
+      'Assistant': t('subjects.assistant'),
+      'Childcare': t('subjects.childcare'),
+      'Security': t('subjects.security')
     };
     return subjectMap[subject] || subject;
   };
@@ -637,6 +726,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState('');
   const recordsPerPage = 10;
+  const [showRoleNotification, setShowRoleNotification] = useState(false);
+  const [pendingRole, setPendingRole] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -699,6 +790,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
       if (response.ok) {
         const userData = await response.json();
         setCurrentUserRole(userData.role || '');
+        setCurrentUserAuthorities(userData.authorities || []);
       }
     } catch (error) {
       console.error('Error fetching current user role:', error);
@@ -848,13 +940,11 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
     setError('');
   };
 
-  // Handle role change and automatically update authorities
-  const handleRoleChange = (role: string) => {
-    let authorities: string[] = [];
-    
+  // Get default authorities for a role
+  const getDefaultAuthoritiesForRole = (role: string): string[] => {
     switch (role) {
       case 'ADMIN':
-        authorities = [
+        return [
           'Access Manager Portal',
           'Access Teacher Portal',
           'Add new teachers',
@@ -870,34 +960,43 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
           'Promote/Demote Users',
           'System Administration'
         ];
-        break;
       case 'MANAGER':
-        authorities = [
+        return [
           'Access Manager Portal',
           'Access Teacher Portal',
           'View Teachers Info',
           'Accept and Reject Employee Requests',
+          'Accept and Reject Teachers\' Requests',
           'Download Reports',
           'View Analytics',
           'Submit Own Requests'
         ];
-        break;
       case 'EMPLOYEE':
       default:
-        authorities = [
+        return [
           'Access Teacher Portal',
           'Submit Requests',
           'View Own Data',
           'Check In/Out'
         ];
-        break;
     }
+  };
 
+  // Handle role change and show notification
+  const handleRoleChange = (role: string) => {
+    setPendingRole(role);
+    setShowRoleNotification(true);
+  };
+
+  // Apply role change after notification
+  const applyRoleChange = () => {
+    // Only update the role, don't change authorities
+    // This allows admins to customize authorities after selecting a role
     setFormData(prev => ({
       ...prev,
-      systemRole: role,
-      authorities: authorities
+      systemRole: pendingRole
     }));
+    setShowRoleNotification(false);
   };
 
   const handleAuthorityChange = (authority: string, checked: boolean) => {
@@ -1015,9 +1114,13 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
 
   if (!isOpen || !teacher) return null;
 
+  // Check if current user can edit teachers
+  const canEdit = currentUserAuthorities.includes('Edit Existing Teachers') || currentUserRole === 'ADMIN';
+
   return (
-    <ModalOverlay onClick={handleOverlayClick}>
-      <ModalContent $isRTL={isRTL}>
+    <>
+      <ModalOverlay onClick={handleOverlayClick}>
+        <ModalContent $isRTL={isRTL}>
                  <ModalHeader>
            <Logo>
              <LogoImage src="/logo-page.png" alt="Genius Smart Education" />
@@ -1028,16 +1131,18 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
            <CloseButton onClick={onClose}>×</CloseButton>
          </ModalHeader>
         
-        <TabContainer>
+        <TabContainer $isRTL={isRTL}>
           <Tab
             $isActive={activeTab === 'personal'}
             onClick={() => setActiveTab('personal')}
+            $isRTL={isRTL}
           >
             {t('editTeacher.personalInfo')}
           </Tab>
           <Tab
             $isActive={activeTab === 'activity'}
             onClick={() => setActiveTab('activity')}
+            $isRTL={isRTL}
           >
             {t('editTeacher.activity')}
           </Tab>
@@ -1046,14 +1151,32 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
         <ModalBody>
           {activeTab === 'personal' && (
             <form onSubmit={handleSubmit}>
+              {!canEdit && (
+                <div style={{ 
+                  padding: '12px 16px', 
+                  backgroundColor: '#fff3cd', 
+                  color: '#856404', 
+                  borderRadius: '8px', 
+                  marginBottom: '20px',
+                  fontFamily: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif",
+                  direction: isRTL ? 'rtl' : 'ltr',
+                  textAlign: isRTL ? 'right' : 'left'
+                }}>
+                  {isRTL 
+                    ? 'أنت في وضع العرض فقط. ليس لديك صلاحية تعديل معلومات المعلمين.'
+                    : 'You are in view-only mode. You do not have permission to edit teacher information.'}
+                </div>
+              )}
               <FormGrid>
                 <FormField>
                   <Label $isRTL={isRTL}>{t('addTeacher.firstName')}</Label>
                   <Input
                     type="text"
                     placeholder="Ahmed"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                                      value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                   />
                 </FormField>
                 
@@ -1062,8 +1185,10 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   <Input
                     type="text"
                     placeholder="Hassan"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                                      value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                   />
                 </FormField>
               </FormGrid>
@@ -1075,6 +1200,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   placeholder="01000022230"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                 />
               </FormFieldFull>
 
@@ -1085,6 +1212,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   placeholder={t('settings.general.emailPlaceholder')}
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                 />
               </FormFieldFull>
 
@@ -1095,6 +1224,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   placeholder={t('settings.general.addressPlaceholder')}
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                 />
               </FormFieldFull>
 
@@ -1105,6 +1236,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   placeholder={t('editTeacher.passwordPlaceholder')}
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                 />
               </FormFieldFull>
 
@@ -1114,6 +1247,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   <Select
                     value={formData.birthDay}
                     onChange={(e) => handleInputChange('birthDay', e.target.value)}
+                    disabled={!canEdit}
+                    $isRTL={isRTL}
                   >
                     <option value="">{t('addTeacher.day')}</option>
                     {dayOptions.map(day => (
@@ -1126,6 +1261,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   <Select
                     value={formData.birthMonth}
                     onChange={(e) => handleInputChange('birthMonth', e.target.value)}
+                    disabled={!canEdit}
+                    $isRTL={isRTL}
                   >
                     <option value="">{t('addTeacher.month')}</option>
                     {monthOptions.map(month => (
@@ -1138,6 +1275,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                   <Select
                     value={formData.birthYear}
                     onChange={(e) => handleInputChange('birthYear', e.target.value)}
+                    disabled={!canEdit}
+                    $isRTL={isRTL}
                   >
                     <option value="">{t('addTeacher.year')}</option>
                     {yearOptions.map(year => (
@@ -1153,8 +1292,10 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                  <FormField>
                    <Label $isRTL={isRTL}>{t('addTeacher.subject')}</Label>
                    <Select
-                     value={formData.subject}
-                     onChange={(e) => handleInputChange('subject', e.target.value)}
+                                       value={formData.subject}
+                  onChange={(e) => handleInputChange('subject', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                    >
                      <option value="">{t('addTeacher.selectSubject')}</option>
                                          {subjects.map(subject => (
@@ -1168,8 +1309,10 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                  <FormField>
                    <Label $isRTL={isRTL}>{t('addTeacher.roleType')}</Label>
                    <Select
-                     value={formData.workType}
-                     onChange={(e) => handleInputChange('workType', e.target.value)}
+                                       value={formData.workType}
+                  onChange={(e) => handleInputChange('workType', e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                    >
                      <option value="Full-time">{t('addTeacher.fullTime')}</option>
                      <option value="Part-time">{t('addTeacher.partTime')}</option>
@@ -1185,6 +1328,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                      <Select
                        value={formData.systemRole}
                        onChange={(e) => handleRoleChange(e.target.value)}
+                       $isRTL={isRTL}
                      >
                        <option value="">{t('addTeacher.selectSystemRole')}</option>
                        <option value="ADMIN">
@@ -1238,6 +1382,8 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
                 <Select
                   value={formData.systemRole}
                   onChange={(e) => handleRoleChange(e.target.value)}
+                  disabled={!canEdit}
+                  $isRTL={isRTL}
                 >
                   <option value="ADMIN">{isRTL ? 'مدير عام' : 'Admin'}</option>
                   <option value="MANAGER">{isRTL ? 'مدير' : 'Manager'}</option>
@@ -1248,58 +1394,66 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
               <AuthoritiesContainer>
                 <Label $isRTL={isRTL}>{t('addTeacher.authorities')}</Label>
                  <AuthoritiesGrid>
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('managerPortal')}
-                       onChange={(e) => handleAuthorityChange('managerPortal', e.target.checked)}
-                     />
-                     {t('authorities.managerPortal')}
-                   </AuthorityItem>
-                   
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('addTeachers')}
-                       onChange={(e) => handleAuthorityChange('addTeachers', e.target.checked)}
-                     />
-                     {t('authorities.addTeachers')}
-                   </AuthorityItem>
-                   
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('editTeachers')}
-                       onChange={(e) => handleAuthorityChange('editTeachers', e.target.checked)}
-                     />
-                     {t('authorities.editTeachers')}
-                   </AuthorityItem>
-                   
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('manageRequests')}
-                       onChange={(e) => handleAuthorityChange('manageRequests', e.target.checked)}
-                     />
-                     {t('authorities.manageRequests')}
-                   </AuthorityItem>
-                   
-                   <AuthorityItem $isRTL={isRTL}>
-                     <AuthorityCheckbox
-                       type="checkbox"
-                       checked={formData.authorities.includes('downloadReports')}
-                       onChange={(e) => handleAuthorityChange('downloadReports', e.target.checked)}
-                     />
-                     {t('authorities.downloadReports')}
-                   </AuthorityItem>
+                                     <AuthorityItem $isRTL={isRTL}>
+                    <AuthorityCheckbox
+                      type="checkbox"
+                      checked={formData.authorities.includes('Access Manager Portal')}
+                      onChange={(e) => handleAuthorityChange('Access Manager Portal', e.target.checked)}
+                      disabled={!canEdit || currentUserRole !== 'ADMIN'}
+                    />
+                    {isRTL ? 'الوصول إلى بوابة المدير والمتابعات الداخلية' : 'Access to Manager Portal and Internal Tracking'}
+                  </AuthorityItem>
+                  
+                  <AuthorityItem $isRTL={isRTL}>
+                    <AuthorityCheckbox
+                      type="checkbox"
+                      checked={formData.authorities.includes('Add new teachers')}
+                      onChange={(e) => handleAuthorityChange('Add new teachers', e.target.checked)}
+                      disabled={!canEdit || currentUserRole !== 'ADMIN'}
+                    />
+                    {isRTL ? 'إضافة معلمين جدد' : 'Add New Teachers'}
+                  </AuthorityItem>
+                  
+                  <AuthorityItem $isRTL={isRTL}>
+                    <AuthorityCheckbox
+                      type="checkbox"
+                      checked={formData.authorities.includes('Edit Existing Teachers')}
+                      onChange={(e) => handleAuthorityChange('Edit Existing Teachers', e.target.checked)}
+                      disabled={!canEdit || currentUserRole !== 'ADMIN'}
+                    />
+                    {isRTL ? 'تعديل معلومات المعلمين الحاليين' : 'Edit Existing Teachers Info'}
+                  </AuthorityItem>
+                  
+                  <AuthorityItem $isRTL={isRTL}>
+                    <AuthorityCheckbox
+                      type="checkbox"
+                      checked={formData.authorities.includes('Accept and Reject Teachers\' Requests') || 
+                              formData.authorities.includes('Accept and Reject Employee Requests')}
+                      onChange={(e) => handleAuthorityChange('Accept and Reject Teachers\' Requests', e.target.checked)}
+                      disabled={!canEdit || currentUserRole !== 'ADMIN'}
+                    />
+                    {isRTL ? 'قبول ورفض طلبات المعلمين' : 'Accept and Reject Teachers\' Requests'}
+                  </AuthorityItem>
+                  
+                  <AuthorityItem $isRTL={isRTL}>
+                    <AuthorityCheckbox
+                      type="checkbox"
+                      checked={formData.authorities.includes('Download Reports')}
+                      onChange={(e) => handleAuthorityChange('Download Reports', e.target.checked)}
+                      disabled={!canEdit || currentUserRole !== 'ADMIN'}
+                    />
+                    {isRTL ? 'تحميل التقارير' : 'Download Reports'}
+                  </AuthorityItem>
                  </AuthoritiesGrid>
                </AuthoritiesContainer>
 
               {error && <ErrorMessage>{error}</ErrorMessage>}
 
-              <EditButton type="submit" disabled={loading}>
-                {loading ? t('common.loading') : t('editTeacher.save')}
-              </EditButton>
+              {canEdit && (
+                <EditButton type="submit" disabled={loading}>
+                  {loading ? t('common.loading') : t('editTeacher.save')}
+                </EditButton>
+              )}
             </form>
           )}
 
@@ -1404,6 +1558,86 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ isOpen, onClose, on
         </ModalBody>
       </ModalContent>
     </ModalOverlay>
+    
+    {/* Role Notification Modal */}
+    <RoleNotificationModal isOpen={showRoleNotification} onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        applyRoleChange();
+      }
+    }}>
+      <RoleNotificationContent $isRTL={isRTL}>
+        <RoleNotificationTitle $isRTL={isRTL}>
+          {isRTL ? 'تنبيه تغيير الصلاحيات' : 'Role Permissions Notification'}
+        </RoleNotificationTitle>
+        
+        <RoleNotificationMessage $isRTL={isRTL}>
+          {isRTL 
+            ? `بتحديد دور "${pendingRole === 'ADMIN' ? 'مدير عام' : pendingRole === 'MANAGER' ? 'مدير' : 'موظف'}" لهذا الموظف، سيحصل على الصلاحيات التالية:`
+            : `By selecting the role "${pendingRole}" for this employee, they will be granted the following authorities:`}
+        </RoleNotificationMessage>
+        
+        <AuthoritiesList $isRTL={isRTL}>
+          {pendingRole === 'ADMIN' && (
+            <>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'الوصول إلى جميع الصفحات والإعدادات' : 'Access to all pages and settings'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'إضافة وتعديل وحذف المعلمين' : 'Add, edit and delete teachers'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'إدارة صلاحيات المستخدمين' : 'Manage user authorities'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'قبول ورفض جميع الطلبات' : 'Accept and reject all requests'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'عرض جميع التحليلات والتقارير' : 'View all analytics and reports'}</AuthorityListItem>
+            </>
+          )}
+          {pendingRole === 'MANAGER' && (
+            <>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'الوصول إلى بوابة المدير والمتابعات الداخلية' : 'Access to Manager Portal and Internal Tracking'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'عرض معلومات المعلمين' : 'View Teachers Info'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'قبول ورفض طلبات المعلمين' : 'Accept and Reject Teachers\' Requests'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'تحميل التقارير' : 'Download Reports'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'عرض التحليلات' : 'View Analytics'}</AuthorityListItem>
+            </>
+          )}
+          {pendingRole === 'EMPLOYEE' && (
+            <>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'الوصول إلى بوابة المعلم فقط' : 'Access to Teacher Portal only'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'تقديم الطلبات' : 'Submit Requests'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'عرض البيانات الشخصية' : 'View Own Data'}</AuthorityListItem>
+              <AuthorityListItem $isRTL={isRTL}>{isRTL ? 'تسجيل الدخول والخروج' : 'Check In/Out'}</AuthorityListItem>
+            </>
+          )}
+        </AuthoritiesList>
+        
+        <RoleNotificationMessage $isRTL={isRTL}>
+          {isRTL 
+            ? 'يمكنك التحكم في صلاحيات محددة داخل الدور باستخدام مربعات الاختيار أدناه.'
+            : 'You can control specific authorities within the role using the checkboxes below.'}
+        </RoleNotificationMessage>
+        
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+          <NotificationButton 
+            onClick={() => {
+              // Apply role with default authorities
+              const defaultAuthorities = getDefaultAuthoritiesForRole(pendingRole);
+              setFormData(prev => ({
+                ...prev,
+                systemRole: pendingRole,
+                authorities: defaultAuthorities
+              }));
+              setShowRoleNotification(false);
+            }}
+            style={{ backgroundColor: '#2196F3' }}
+          >
+            {isRTL ? 'تطبيق الصلاحيات الافتراضية' : 'Apply Default Authorities'}
+          </NotificationButton>
+          
+          <NotificationButton 
+            onClick={applyRoleChange}
+            style={{ backgroundColor: '#4CAF50' }}
+          >
+            {isRTL ? 'الاحتفاظ بالصلاحيات المخصصة' : 'Keep Custom Authorities'}
+          </NotificationButton>
+        </div>
+      </RoleNotificationContent>
+    </RoleNotificationModal>
+    </>
   );
 };
 

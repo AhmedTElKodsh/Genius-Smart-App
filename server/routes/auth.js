@@ -141,13 +141,14 @@ router.post('/manager/signin', async (req, res) => {
       });
     }
 
-    // Generate JWT token
+    // Generate JWT token with authorities
     const token = jwt.sign(
       { 
         userId: user.id,
         email: user.email,
         role: user.role,
-        roleLevel: user.roleLevel
+        roleLevel: user.roleLevel,
+        authorities: user.authorities || []
       },
       process.env.JWT_SECRET || 'genius-smart-secret-key',
       { expiresIn: '24h' }

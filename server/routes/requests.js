@@ -94,8 +94,8 @@ function getRequestsData() {
       return JSON.parse(data);
     }
     
-    // If JSON doesn't exist, process from CSV
-    return processCSVData();
+    // If JSON doesn't exist, return empty array instead of processing CSV
+    return [];
     
   } catch (error) {
     console.error('Error reading requests data:', error);
@@ -285,18 +285,39 @@ router.get('/stats', (req, res) => {
   }
 });
 
-// GET /api/requests - Get all pending requests
-router.get('/', (req, res) => {
+// GET /api/requests - Get all pending requests (filtered by user role)
+router.get('/', extractUserAndRole, (req, res) => {
   try {
     const allRequests = getRequestsData();
+    const userRole = req.user ? req.user.role : 'EMPLOYEE';
+    
+    // Get teachers data to check their roles
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = fs.readFileSync(teachersPath, 'utf8');
+    const teachers = JSON.parse(teachersData);
     
     // Filter to only show pending requests (not processed)
-    const pendingRequests = allRequests.filter(request => {
+    let pendingRequests = allRequests.filter(request => {
       // Show requests that don't have a result or status, or have pending status
       const hasResult = request.result && request.result.trim() !== '';
       const hasStatus = request.status && ['approved', 'rejected'].includes(request.status.toLowerCase());
       return !hasResult && !hasStatus;
     });
+    
+    // Apply role-based filtering
+    if (userRole !== 'ADMIN') {
+      // Managers can only see requests from non-Admin users
+      pendingRequests = pendingRequests.filter(request => {
+        // Check if request has submitterRole field (new requests)
+        if (request.submitterRole) {
+          return request.submitterRole !== 'ADMIN';
+        }
+        // For older requests without submitterRole, check teacher data
+        const teacher = teachers.find(t => t.id === request.teacherId);
+        return teacher && teacher.role !== 'ADMIN';
+      });
+    }
+    // Admins can see all requests
     
     res.json({
       success: true,
@@ -319,7 +340,29 @@ router.get('/', (req, res) => {
 router.put('/:id', 
   extractUserAndRole, 
   requireManagerPortalAccess,
-  requireAuthority('Accept and Reject Employee Requests'),
+  (req, res, next) => {
+    // Check for either specific employee request authority or the general all requests authority
+    console.log('Authority check for user:', req.user.name);
+    console.log('User role:', req.user.role, req.user.roleName);
+    console.log('User authorities:', req.user.authorities);
+    
+    const hasEmployeeRequestAuth = req.user.authorities && req.user.authorities.includes('Accept and Reject Employee Requests');
+    const hasAllRequestAuth = req.user.authorities && req.user.authorities.includes('Accept and Reject All Requests');
+    
+    console.log('Has Employee Request Auth:', hasEmployeeRequestAuth);
+    console.log('Has All Request Auth:', hasAllRequestAuth);
+    
+    if (!hasEmployeeRequestAuth && !hasAllRequestAuth) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Missing required authority: Accept and Reject Employee Requests',
+        userAuthorities: req.user.authorities || [],
+        userRole: req.user.roleName,
+        requiredAuthority: 'Accept and Reject Employee Requests or Accept and Reject All Requests'
+      });
+    }
+    next();
+  },
   preventSelfApproval,
   auditAction('APPROVE_REQUEST', 'request'),
   async (req, res) => {
@@ -667,6 +710,13 @@ router.post('/', async (req, res) => {
       durationDisplay = `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}`;
     }
 
+    // Get the teacher/submitter's role
+    const teachersPath = path.join(__dirname, '..', 'data', 'teachers.json');
+    const teachersData = fs.readFileSync(teachersPath, 'utf8');
+    const teachers = JSON.parse(teachersData);
+    const submitter = teachers.find(t => t.id === teacherId);
+    const submitterRole = submitter ? submitter.role : 'EMPLOYEE';
+    
     // Create new request object matching existing structure
     const newRequest = {
       id: newId,
@@ -684,7 +734,8 @@ router.post('/', async (req, res) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       subject: subject || '',
-      hours: (type === 'lateArrival' || type === 'earlyLeave') ? hours : undefined // Include hours for hour-based requests
+      hours: (type === 'lateArrival' || type === 'earlyLeave') ? hours : undefined, // Include hours for hour-based requests
+      submitterRole: submitterRole // Add submitter's role
     };
 
     // Add to requests array
@@ -1006,6 +1057,59 @@ router.get('/non-admin-handled',
     res.status(500).json({
       success: false,
       message: 'Failed to fetch non-admin handled requests',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/requests/all-handled - Get all handled requests by managers (Admin only)
+router.get('/all-handled', 
+  extractUserAndRole, 
+  requireRole(ROLES.ADMIN),
+  (req, res) => {
+  try {
+    const allRequests = getRequestsData();
+    
+    // Filter all requests that were approved/rejected by managers (not just non-admin)
+    const handledRequests = allRequests.filter(request => {
+      // Check if request was approved/rejected
+      const isHandled = request.status && ['approved', 'rejected'].includes(request.status.toLowerCase());
+      // Check if it was handled by a manager (has approver info)
+      const handledByManager = request.approverRole === 'MANAGER';
+      
+      return isHandled && handledByManager;
+    });
+
+    // Group by handler
+    const groupedByHandler = handledRequests.reduce((acc, request) => {
+      const handlerKey = request.approverName || 'Unknown Manager';
+      if (!acc[handlerKey]) {
+        acc[handlerKey] = {
+          managerId: request.approvedBy,
+          managerName: request.approverName,
+          managerRole: request.approverRole,
+          requests: []
+        };
+      }
+      acc[handlerKey].requests.push({
+        ...request,
+        canBeRevoked: request.approverRole !== 'ADMIN' // Admin can revoke non-admin decisions
+      });
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      message: 'All handled requests retrieved successfully',
+      data: groupedByHandler,
+      totalCount: handledRequests.length
+    });
+    
+  } catch (error) {
+    console.error('Error fetching all handled requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch all handled requests',
       error: error.message
     });
   }

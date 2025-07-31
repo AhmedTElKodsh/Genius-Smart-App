@@ -1,0 +1,14 @@
+[
+  {
+    "id": "attendance-test-001",
+    "teacherId": "3b4b2e1d-d3a3-4087-a2dc-b2a7cd23d1c8",
+    "name": "إبراهيم حمدي",
+    "date": "July 31, 2025",
+    "dateISO": "2025-07-31",
+    "attendance": "Present",
+    "checkInTime": "8:00:00",
+    "checkOutTime": "16:00:00",
+    "totalHours": 8,
+    "subject": "الرياضيات"
+  }
+]

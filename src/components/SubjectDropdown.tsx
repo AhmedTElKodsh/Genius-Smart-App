@@ -96,7 +96,7 @@ const SubjectDropdown: React.FC<SubjectDropdownProps> = ({
   subjects,
   selectedSubject,
   onSubjectChange,
-  placeholder = "All Subjects"
+  placeholder = "All Departments"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

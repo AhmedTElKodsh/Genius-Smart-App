@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Favicon</title>
+</head>
+<body>
+    <h1>Favicon Generator - White G in Yellow Circle</h1>
+    <p>Open this file in a browser, then right-click on the images below and save them as PNG files.</p>
+    
+    <h2>32x32 Favicon:</h2>
+    <canvas id="canvas32" width="32" height="32"></canvas>
+    
+    <h2>64x64 Icon:</h2>
+    <canvas id="canvas64" width="64" height="64"></canvas>
+    
+    <h2>128x128 Icon:</h2>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+    
+    <h2>256x256 Icon:</h2>
+    <canvas id="canvas256" width="256" height="256"></canvas>
+    
+    <script>
+    function drawFavicon(canvasId, size) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        
+        // Draw yellow circle
+        ctx.fillStyle = '#D6B10E';
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw white G
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${size * 0.625}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('G', size/2, size/2 + size*0.0625);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `favicon-${size}.png`;
+        link.innerHTML = `<br>Download ${size}x${size} PNG`;
+        link.href = canvas.toDataURL();
+        canvas.parentNode.appendChild(link);
+    }
+    
+    // Generate all sizes
+    drawFavicon('canvas32', 32);
+    drawFavicon('canvas64', 64);
+    drawFavicon('canvas128', 128);
+    drawFavicon('canvas256', 256);
+    </script>
+</body>
+</html>

@@ -123,9 +123,10 @@ const LogoutButton = styled.button<{ $isRTL: boolean }>`
 
 interface SidebarProps {
   onAddTeacher?: () => void;
+  canAddTeachers?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher, canAddTeachers = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, isRTL } = useLanguage();
@@ -188,9 +189,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddTeacher }) => {
         </NavItem>
       </Navigation>
 
-      <AddTeacherButton $isRTL={isRTL} onClick={onAddTeacher}>
-        {t('nav.addTeacher')}
-      </AddTeacherButton>
+      {canAddTeachers && (
+        <AddTeacherButton $isRTL={isRTL} onClick={onAddTeacher}>
+          {t('nav.addTeacher')}
+        </AddTeacherButton>
+      )}
 
       <LogoutButton $isRTL={isRTL} onClick={handleLogout}>
         <span className="icon">🚪</span>

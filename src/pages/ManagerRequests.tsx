@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { format, parseISO, isToday, isThisWeek, isThisMonth, differenceInDays } from 'date-fns';
+import { format, parseISO, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import Sidebar from '../components/Sidebar';
 import AddTeacherModal from '../components/AddTeacherModal';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useTheme } from '../contexts/ThemeContext';
+
 
 // Global styles for toast animations
 const GlobalStyles = createGlobalStyle`
@@ -368,13 +368,15 @@ const Requests: React.FC = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
-  const [showDelayed, setShowDelayed] = useState(false);
+
   const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'reject'>('accept');
   const [requestToConfirm, setRequestToConfirm] = useState<Request | null>(null);
   const [nonAdminHandled, setNonAdminHandled] = useState<any>({});
   const [showNonAdminHandled, setShowNonAdminHandled] = useState(false);
+  const [allHandledRequests, setAllHandledRequests] = useState<any>({});
+  const [showManagerActivity, setShowManagerActivity] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const { t, isRTL } = useLanguage();
 
@@ -418,7 +420,7 @@ const Requests: React.FC = () => {
           console.error('Failed to fetch requests');
         }
         
-        // If admin, also fetch non-admin handled requests
+        // If admin, also fetch non-admin handled requests and all handled requests
         if (isAdmin) {
           const nonAdminResponse = await fetch('http://localhost:5000/api/requests/non-admin-handled', {
             headers: {
@@ -430,6 +432,19 @@ const Requests: React.FC = () => {
           if (nonAdminResponse.ok) {
             const nonAdminResult = await nonAdminResponse.json();
             setNonAdminHandled(nonAdminResult.data || {});
+          }
+          
+          // Fetch all handled requests by managers
+          const allHandledResponse = await fetch('http://localhost:5000/api/requests/all-handled', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (allHandledResponse.ok) {
+            const allHandledResult = await allHandledResponse.json();
+            setAllHandledRequests(allHandledResult.data || {});
           }
         }
       } catch (error) {
@@ -471,12 +486,10 @@ const Requests: React.FC = () => {
     const today: Request[] = [];
     const thisWeek: Request[] = [];
     const thisMonth: Request[] = [];
-    const delayed: Request[] = [];
 
     requests.forEach(request => {
       try {
         const appliedDate = parseISO(request.appliedDate);
-        const daysDifference = differenceInDays(new Date(), appliedDate);
 
         if (isToday(appliedDate)) {
           today.push(request);
@@ -484,21 +497,19 @@ const Requests: React.FC = () => {
           thisWeek.push(request);
         } else if (isThisMonth(appliedDate)) {
           thisMonth.push(request);
-        } else if (daysDifference > 30) {
-          delayed.push(request);
         } else {
-          thisMonth.push(request); // Within last 30 days
+          thisMonth.push(request); // Put all older requests in thisMonth
         }
       } catch (error) {
         console.error('Error parsing date:', request.appliedDate, error);
-        delayed.push(request); // Put invalid dates in delayed
+        thisMonth.push(request); // Put invalid dates in thisMonth
       }
     });
 
-    return { today, thisWeek, thisMonth, delayed };
+    return { today, thisWeek, thisMonth };
   };
 
-  const { today, thisWeek, thisMonth, delayed } = categorizeRequests(filteredRequests);
+  const { today, thisWeek, thisMonth } = categorizeRequests(filteredRequests);
 
   // Helper function to translate request types
   const translateRequestType = (requestType: string) => {
@@ -731,47 +742,94 @@ const Requests: React.FC = () => {
         {/* This Month */}
         {thisMonth.length > 0 && renderRequestsList(thisMonth, t('common.thisMonth'))}
         
-        {/* Delayed Requests (visible to all managers) */}
-        {delayed.length > 0 && !isAdmin && (
+        {/* Manager Activity Tracking (visible to admins only) */}
+        {isAdmin && Object.keys(allHandledRequests).length > 0 && (
           <CategorySection>
             <CategoryHeader 
-              $isDelayed={true}
-              onClick={() => setShowDelayed(!showDelayed)}
+              $isDelayed={false}
+              onClick={() => setShowManagerActivity(!showManagerActivity)}
             >
-              {t('common.delayed')} ({delayed.length}) {showDelayed ? '▼' : '▶'}
+              {isRTL ? 'تتبع نشاط المديرين' : 'Manager Activity Tracking'} ({Object.values(allHandledRequests).reduce((total: number, manager: any) => total + (manager.requests ? manager.requests.length : 0), 0)}) {showManagerActivity ? '▼' : '▶'}
             </CategoryHeader>
-            {showDelayed && (
-              <RequestsList>
-                {delayed.map(request => (
-                  <RequestItem key={request.id} onClick={() => handleRequestClick(request)}>
-                    <RequestRow>
-                      <TeacherName $isRTL={isRTL}>{request.name}</TeacherName>
-                      
-                      <RequestDetails>
-                        <RequestLabel $isRTL={isRTL}>{t('requests.appliedDuration')}</RequestLabel>
-                        <RequestValue $isRTL={isRTL}>{request.duration}</RequestValue>
-                      </RequestDetails>
-                      
-                      <RequestType $isRTL={isRTL}>{translateRequestType(request.requestType)}</RequestType>
-                      
-                      <ActionButtons onClick={(e) => e.stopPropagation()}>
-                        <ActionButton 
-                          $type="accept" 
-                          onClick={() => handleRequestAction('accept', request)}
-                        >
-                          {t('common.accept')}
-                        </ActionButton>
-                        <ActionButton 
-                          $type="reject"
-                          onClick={() => handleRequestAction('reject', request)}
-                        >
-                          {t('common.reject')}
-                        </ActionButton>
-                      </ActionButtons>
-                    </RequestRow>
-                  </RequestItem>
+            {showManagerActivity && (
+              <div style={{ padding: '10px 0' }}>
+                <p style={{ 
+                  color: '#666', 
+                  fontSize: '14px', 
+                  marginBottom: '15px',
+                  paddingLeft: isRTL ? '0' : '10px',
+                  paddingRight: isRTL ? '10px' : '0'
+                }}>
+                  {isRTL 
+                    ? 'عرض جميع الطلبات التي تمت الموافقة عليها أو رفضها من قبل المديرين'
+                    : 'Showing all requests that have been accepted or rejected by managers'}
+                </p>
+                {Object.entries(allHandledRequests).map(([managerName, managerData]: any) => (
+                  <div key={managerData.managerId} style={{ marginBottom: '20px' }}>
+                    <h4 style={{ 
+                      fontFamily: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif",
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#333',
+                      marginBottom: '10px',
+                      paddingLeft: isRTL ? '0' : '10px',
+                      paddingRight: isRTL ? '10px' : '0',
+                      borderBottom: '1px solid #eee',
+                      paddingBottom: '5px'
+                    }}>
+                      {managerName} ({managerData.requests.length} {isRTL ? 'طلبات' : 'requests'})
+                    </h4>
+                    <RequestsList>
+                      {managerData.requests.map((request: any) => (
+                        <RequestItem key={request.id} style={{ 
+                          opacity: 0.9,
+                          borderLeft: `3px solid ${request.status === 'approved' ? '#4CAF50' : '#f44336'}`,
+                          marginBottom: '8px'
+                        }}>
+                          <RequestRow>
+                            <TeacherName $isRTL={isRTL}>{request.teacherName || request.name}</TeacherName>
+                            
+                            <RequestDetails>
+                              <RequestLabel $isRTL={isRTL}>{t('requests.requestType')}</RequestLabel>
+                              <RequestValue $isRTL={isRTL}>{translateRequestType(request.requestType)}</RequestValue>
+                            </RequestDetails>
+                            
+                            <RequestDetails>
+                              <RequestLabel $isRTL={isRTL}>{t('requests.appliedDuration')}</RequestLabel>
+                              <RequestValue $isRTL={isRTL}>{request.duration}</RequestValue>
+                            </RequestDetails>
+                            
+                            <div style={{ 
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: isRTL ? 'flex-start' : 'flex-end',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              minWidth: '120px'
+                            }}>
+                              <span style={{ 
+                                fontSize: '13px', 
+                                color: request.status === 'approved' ? '#4CAF50' : '#f44336',
+                                fontWeight: '600'
+                              }}>
+                                {request.status === 'approved' 
+                                  ? (isRTL ? 'تمت الموافقة' : 'Approved')
+                                  : (isRTL ? 'تم الرفض' : 'Rejected')}
+                              </span>
+                              <span style={{ 
+                                fontSize: '11px',
+                                color: '#666'
+                              }}>
+                                {new Date(request.approvedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </RequestRow>
+                        </RequestItem>
+                      ))}
+                    </RequestsList>
+                  </div>
                 ))}
-              </RequestsList>
+              </div>
             )}
           </CategorySection>
         )}

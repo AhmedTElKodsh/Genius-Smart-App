@@ -13,32 +13,10 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/logo-page.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo-page.png", 
-      "sizes": "512x512",
-      "type": "image/png"
     }
   ],
   "categories": ["education", "productivity", "business"],
   "lang": "en-US",
   "dir": "ltr",
-  "screenshots": [
-    {
-      "src": "/logo-page.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/logo-page.png",
-      "sizes": "750x1334",
-      "type": "image/png"
-    }
-  ]
+  "screenshots": []
 }

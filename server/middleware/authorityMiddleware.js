@@ -39,26 +39,41 @@ const checkAuthority = (requiredAuthority) => {
         });
       }
 
-      const managers = loadManagers();
-      const manager = managers.find(m => m.email.toLowerCase() === managerEmail.toLowerCase());
+      // Load teachers data instead of managers
+      const teachersPath = path.join(__dirname, '../data/teachers.json');
+      const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+      const currentUser = teachersData.find(t => t.email.toLowerCase() === managerEmail.toLowerCase());
       
-      if (!manager) {
+      if (!currentUser) {
         return res.status(401).json({
           success: false,
-          message: 'Manager not found'
+          message: 'User not found'
         });
       }
 
-      // Check if manager has the required authority
-      if (!manager.authorities || !manager.authorities[requiredAuthority]) {
+      // Map the required authority to actual authority strings
+      const authorityMap = {
+        'canAddTeachers': 'Add new teachers',
+        'canEditTeachers': 'Edit Existing Teachers',
+        'canDeleteTeachers': 'Delete Teachers',
+        'canManageRequests': 'Accept and Reject Teachers\' Requests',
+        'canDownloadReports': 'Download Reports',
+        'canAccessPortal': 'Access Manager Portal'
+      };
+
+      const requiredAuthorityString = authorityMap[requiredAuthority] || requiredAuthority;
+
+      // Check if user has the required authority
+      if (!currentUser.authorities || !currentUser.authorities.includes(requiredAuthorityString)) {
         return res.status(403).json({
           success: false,
           message: `Access denied. Required authority: ${requiredAuthority}`
         });
       }
 
-      // Store manager info for use in route handlers
-      req.currentManager = manager;
+      // Store user info for use in route handlers
+      req.currentManager = currentUser;
+      req.currentUser = currentUser;
       next();
     } catch (error) {
       console.error('Authority check error:', error);
@@ -136,25 +151,28 @@ const checkPortalAccess = (req, res, next) => {
       });
     }
 
-    const managers = loadManagers();
-    const manager = managers.find(m => m.email.toLowerCase() === managerEmail.toLowerCase());
+    // Load teachers data instead of managers
+    const teachersPath = path.join(__dirname, '../data/teachers.json');
+    const teachersData = JSON.parse(fs.readFileSync(teachersPath, 'utf8'));
+    const currentUser = teachersData.find(t => t.email.toLowerCase() === managerEmail.toLowerCase());
     
-    if (!manager) {
+    if (!currentUser) {
       return res.status(401).json({
         success: false,
-        message: 'Manager not found'
+        message: 'User not found'
       });
     }
 
     // Check basic portal access
-    if (!manager.authorities || !manager.authorities.canAccessPortal) {
+    if (!currentUser.authorities || !currentUser.authorities.includes('Access Manager Portal')) {
       return res.status(403).json({
         success: false,
         message: 'Portal access denied'
       });
     }
 
-    req.currentManager = manager;
+    req.currentManager = currentUser;
+    req.currentUser = currentUser;
     next();
   } catch (error) {
     console.error('Portal access check error:', error);

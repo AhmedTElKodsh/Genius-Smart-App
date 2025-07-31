@@ -237,6 +237,20 @@ npm run test:coverage # Coverage report
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the `/docs` directory:
+
+- **[Documentation Index](docs/INDEX.md)** - Complete guide to all documentation
+- **Setup Guides** - `/docs/setup/`
+- **Feature Documentation** - `/docs/features/`
+- **Implementation Details** - `/docs/implementation/`
+- **Bug Fixes & Solutions** - `/docs/fixes/`
+- **UI/UX Guidelines** - `/docs/ui/`
+- **System Architecture** - `/docs/system/`
+- **Database Documentation** - `/docs/database/`
+- **Authentication Guides** - `/docs/authentication/`
+
 ## 🤝 Contributing
 
 1. Fork the repository

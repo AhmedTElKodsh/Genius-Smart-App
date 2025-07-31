@@ -101,11 +101,27 @@ const writeTeachers = (teachers) => {
   fs.writeFileSync(teachersFilePath, JSON.stringify(teachers, null, 2), 'utf8');
 };
 
-// GET /api/teachers - Get all teachers with optional filtering
+// GET /api/teachers - Get all teachers with optional filtering (filtered by user role)
 router.get('/', (req, res) => {
   try {
     const teachers = readTeachers();
     const attendance = readAttendance();
+    
+    // Extract user role from token
+    let userRole = 'EMPLOYEE';
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token && token.startsWith('gse_')) {
+      const parts = token.split('_');
+      if (parts.length >= 3) {
+        const userId = parts.slice(1, -1).join('_');
+        const user = teachers.find(t => t.id === userId);
+        if (user) {
+          userRole = user.role || 'EMPLOYEE';
+        }
+      }
+    }
     
     // Apply filters
     let filteredTeachers = teachers;
@@ -138,6 +154,13 @@ router.get('/', (req, res) => {
         teacher.department.toLowerCase().includes(searchTerm)
       );
     }
+    
+    // Apply role-based filtering
+    if (userRole !== 'ADMIN') {
+      // Managers can only see non-Admin users
+      filteredTeachers = filteredTeachers.filter(teacher => teacher.role !== 'ADMIN');
+    }
+    // Admins can see all users
     
     // Add current month attendance data to each teacher
     const currentMonth = 'May'; // Based on user requirement
@@ -420,7 +443,7 @@ router.get('/reports', (req, res) => {
   }
 });
 
-// GET /api/teachers/:id - Get specific teacher by ID
+// GET /api/teachers/:id - Get specific teacher by ID (filtered by user role)
 router.get('/:id', (req, res) => {
   try {
     const teachers = readTeachers();
@@ -432,6 +455,30 @@ router.get('/:id', (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Teacher not found'
+      });
+    }
+    
+    // Extract user role from token
+    let userRole = 'EMPLOYEE';
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token && token.startsWith('gse_')) {
+      const parts = token.split('_');
+      if (parts.length >= 3) {
+        const userId = parts.slice(1, -1).join('_');
+        const user = teachers.find(t => t.id === userId);
+        if (user) {
+          userRole = user.role || 'EMPLOYEE';
+        }
+      }
+    }
+    
+    // Check if Manager is trying to view an Admin
+    if (userRole === 'MANAGER' && teacher.role === 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: Managers cannot view Admin user details'
       });
     }
     
@@ -523,7 +570,7 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
   }
 });
 
-// PUT /api/teachers/:id - Update teacher (Admin only)
+// PUT /api/teachers/:id - Update teacher (Admin only, Managers can't edit Admin users)
 router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, (req, res) => {
   try {
     const teachers = readTeachers();
@@ -533,6 +580,18 @@ router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, (req, res) =>
       return res.status(404).json({
         success: false,
         error: 'Teacher not found'
+      });
+    }
+    
+    // Get current user's role
+    const currentUser = teachers.find(t => t.email === req.managerEmail);
+    const currentUserRole = currentUser ? currentUser.role : 'EMPLOYEE';
+    
+    // Check if Manager is trying to edit an Admin
+    if (currentUserRole === 'MANAGER' && teachers[teacherIndex].role === 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: Managers cannot edit Admin users'
       });
     }
     
@@ -562,7 +621,7 @@ router.put('/:id', extractManagerEmail, checkEditTeacherAuthority, (req, res) =>
   }
 });
 
-// DELETE /api/teachers/:id - Delete teacher (Admin only)
+// DELETE /api/teachers/:id - Delete teacher (Admin only, Managers can't delete Admin users)
 router.delete('/:id', extractManagerEmail, checkEditTeacherAuthority, (req, res) => {
   try {
     const teachers = readTeachers();
@@ -572,6 +631,18 @@ router.delete('/:id', extractManagerEmail, checkEditTeacherAuthority, (req, res)
       return res.status(404).json({
         success: false,
         error: 'Teacher not found'
+      });
+    }
+    
+    // Get current user's role
+    const currentUser = teachers.find(t => t.email === req.managerEmail);
+    const currentUserRole = currentUser ? currentUser.role : 'EMPLOYEE';
+    
+    // Check if Manager is trying to delete an Admin
+    if (currentUserRole === 'MANAGER' && teachers[teacherIndex].role === 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: Managers cannot delete Admin users'
       });
     }
     
@@ -662,7 +733,9 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       subject,
       workType,
       password,
-      birthdate
+      birthdate,
+      systemRole,
+      authorities
     } = req.body;
 
     // Validate required fields
@@ -709,6 +782,64 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       age--;
     }
 
+    // Process authorities based on systemRole or provided authorities
+    let processedAuthorities = [];
+    let role = systemRole || 'EMPLOYEE';
+    let roleLevel = 1;
+    let roleName = 'Employee';
+    let roleNameAr = 'موظف';
+    
+    // Get current user's role
+    const currentUser = teachers.find(t => t.email === req.managerEmail);
+    const currentUserRole = currentUser ? currentUser.role : 'EMPLOYEE';
+    
+    // Check if Manager is trying to create an Admin
+    if (currentUserRole === 'MANAGER' && role === 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: Managers cannot create Admin users'
+      });
+    }
+    
+    if (role === 'ADMIN') {
+      roleLevel = 3;
+      roleName = 'Admin';
+      roleNameAr = 'مدير عام';
+      processedAuthorities = [
+        'Access Manager Portal',
+        'Access Teacher Portal',
+        'Add new teachers',
+        'Edit Existing Teachers',
+        'Delete Teachers',
+        'Accept and Reject All Requests',
+        'Download Reports',
+        'View All Analytics',
+        'System Administration'
+      ];
+    } else if (role === 'MANAGER') {
+      roleLevel = 2;
+      roleName = 'Manager';
+      roleNameAr = 'مدير';
+      processedAuthorities = [
+        'Access Manager Portal',
+        'Access Teacher Portal',
+        'View Teachers Info',
+        'Accept and Reject Employee Requests',
+        'Accept and Reject Teachers\' Requests',
+        'Download Reports',
+        'View Analytics',
+        'Submit Own Requests'
+      ];
+    } else {
+      // Employee role - use provided authorities or default
+      processedAuthorities = authorities || [
+        'Access Teacher Portal',
+        'Submit Requests',
+        'View Own Data',
+        'Check In/Out'
+      ];
+    }
+
     // Create new teacher object
     const newTeacher = {
       id: uuidv4(),
@@ -727,7 +858,20 @@ router.post('/', extractManagerEmail, checkAddTeacherAuthority, async (req, res)
       plainPassword: password, // Store for reference (remove in production)
       status: 'Active',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      role: role,
+      roleLevel: roleLevel,
+      roleName: roleName,
+      roleNameAr: roleNameAr,
+      authorities: processedAuthorities,
+      canAccessManagerPortal: roleLevel >= 2,
+      canAccessTeacherPortal: true,
+      canApproveRequests: roleLevel >= 2,
+      employmentDate: req.body.employmentDate || new Date().toISOString().split('T')[0],
+      allowedAbsenceDays: req.body.allowedAbsenceDays || 20,
+      totalAbsenceDays: 0,
+      remainingLateEarlyHours: 8,
+      totalLateEarlyHours: 8
     };
 
     // Add to teachers array

@@ -4,9 +4,21 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Styled Components
-const Container = styled.div`
+const Container = styled.div<{ isOpen?: boolean }>`
   position: relative;
   display: inline-block;
+  ${props => props.isOpen && `z-index: 1000;`}
+`;
+
+const Backdrop = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 99998;
+  display: ${props => props.isOpen ? 'block' : 'none'};
 `;
 
 const TriggerButton = styled.button<{ isDarkMode: boolean; isActive: boolean }>`
@@ -25,10 +37,10 @@ const TriggerButton = styled.button<{ isDarkMode: boolean; isActive: boolean }>`
   }
 `;
 
-const DropdownContainer = styled.div<{ isOpen: boolean; isDarkMode: boolean; isRTL: boolean }>`
-  position: absolute;
-  top: calc(100% + 8px);
-  ${props => props.isRTL ? 'left: 0' : 'right: 0'};
+const DropdownContainer = styled.div<{ isOpen: boolean; isDarkMode: boolean; isRTL: boolean; top: number; left: number }>`
+  position: fixed;
+  top: ${props => props.top}px;
+  left: ${props => props.left}px;
   background: ${props => props.isDarkMode ? '#2d2d2d' : '#ffffff'};
   border: 1px solid ${props => props.isDarkMode ? '#555' : '#e0e0e0'};
   border-radius: 12px;
@@ -36,11 +48,46 @@ const DropdownContainer = styled.div<{ isOpen: boolean; isDarkMode: boolean; isR
   padding: 20px;
   width: 720px;
   max-width: 90vw;
-  max-height: 500px;
+  max-height: 90vh;
+  min-height: 700px;
+  height: auto;
   overflow-y: auto;
-  z-index: 9999;
+  overflow-x: hidden;
+  z-index: 99999;
   display: ${props => props.isOpen ? 'block' : 'none'};
   direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+  
+  /* Custom scrollbar styles */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.isDarkMode ? '#1a1a1a' : '#f1f1f1'};
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.isDarkMode ? '#555' : '#888'};
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${props => props.isDarkMode ? '#666' : '#999'};
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: 650px;
+    max-height: 95vh;
+  }
+  
+  @media (max-height: 800px) {
+    min-height: 600px;
+    max-height: 95vh;
+    padding: 16px;
+  }
 `;
 
 const PeriodSelectorContainer = styled.div<{ isRTL: boolean }>`
@@ -54,7 +101,8 @@ const PeriodSelectorContainer = styled.div<{ isRTL: boolean }>`
 const PeriodSection = styled.div<{ isDarkMode: boolean }>`
   background: ${props => props.isDarkMode ? '#404040' : '#f8f9fa'};
   border-radius: 8px;
-  padding: 16px;
+  padding: 20px;
+  min-height: 320px;
 `;
 
 const PeriodTitle = styled.h4<{ isDarkMode: boolean; isRTL: boolean }>`
@@ -283,7 +331,9 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
   const [comparisonQuickSelect, setComparisonQuickSelect] = useState<string>('thisWeek');
   const [currentMonthBase, setCurrentMonthBase] = useState(new Date());
   const [currentMonthComparison, setCurrentMonthComparison] = useState(new Date());
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Define translations
   const translations = {
@@ -312,15 +362,100 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleDocumentClick = (event: MouseEvent) => {
+      // Don't do anything if dropdown is not open
+      if (!isOpen) return;
+      
+      const target = event.target as HTMLElement;
+      const dropdown = document.querySelector('[data-dropdown="comparison-picker"]');
+      const button = buttonRef.current;
+      
+      // Check if the target or any parent has data-prevent-close attribute
+      let currentElement = target;
+      while (currentElement) {
+        if (currentElement.getAttribute && currentElement.getAttribute('data-prevent-close') === 'true') {
+          return; // Don't close the dropdown
+        }
+        currentElement = currentElement.parentElement as HTMLElement;
+      }
+      
+      // Check if click originated from inside dropdown or button
+      const isClickInsideDropdown = dropdown && dropdown.contains(target);
+      const isClickOnButton = button && button.contains(target);
+      
+      // Only close if click is truly outside both dropdown and button
+      if (!isClickInsideDropdown && !isClickOnButton) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    // Add listener with a delay to ensure all internal handlers run first
+    const timer = setTimeout(() => {
+      if (isOpen) {
+        document.addEventListener('mousedown', handleDocumentClick);
+      }
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleDocumentClick);
+    };
+  }, [isOpen]);
+
+  // Calculate dropdown position and handle scroll
+  useEffect(() => {
+    const updatePosition = () => {
+      if (isOpen && buttonRef.current) {
+        const buttonRect = buttonRef.current.getBoundingClientRect();
+        const dropdownWidth = 720;
+        const dropdownHeight = 700; // Increased to match min-height
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        let left = buttonRect.left;
+        let top = buttonRect.bottom + 8;
+        
+        // Check if dropdown would go below viewport
+        if (top + dropdownHeight > viewportHeight) {
+          // Position above the button if there's room
+          if (buttonRect.top - dropdownHeight - 8 > 0) {
+            top = buttonRect.top - dropdownHeight - 8;
+          } else {
+            // Otherwise, position at the bottom of viewport with some margin
+            top = viewportHeight - dropdownHeight - 20;
+          }
+        }
+        
+        // Adjust horizontal position to keep dropdown within viewport
+        if (isRTL) {
+        // For RTL, align to the left edge of the button
+        if (left + dropdownWidth > viewportWidth) {
+          left = viewportWidth - dropdownWidth - 20;
+        }
+      } else {
+        // For LTR, align to the right edge of the button
+        left = buttonRect.right - dropdownWidth;
+        if (left < 0) {
+          left = 20;
+        }
+      }
+      
+      setDropdownPosition({ top, left });
+      }
+    };
+    
+    // Update position on open and when scrolling/resizing
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [isOpen, isRTL]);
 
   // Initialize with default periods
   useEffect(() => {
@@ -328,7 +463,28 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
     handleQuickSelect('thisWeek', 'comparison');
   }, []);
 
-  const handleQuickSelect = (type: string, period: 'base' | 'comparison') => {
+  // Helper to prevent all event propagation
+  const preventEventDefaults = (event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+      if (event.nativeEvent) {
+        event.nativeEvent.stopImmediatePropagation();
+      }
+    }
+  };
+
+  // Create a click handler that prevents all defaults
+  const createSafeClickHandler = (handler: Function) => {
+    return (e: React.MouseEvent) => {
+      preventEventDefaults(e);
+      handler(e);
+    };
+  };
+
+  const handleQuickSelect = (type: string, period: 'base' | 'comparison', event?: React.MouseEvent) => {
+    // Prevent the click from bubbling up and closing the dropdown
+    preventEventDefaults(event);
     const now = new Date();
     let start = new Date();
     let end = new Date();
@@ -380,7 +536,10 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
     }
   };
 
-  const handleDayClick = (date: Date, period: 'base' | 'comparison') => {
+  const handleDayClick = (date: Date, period: 'base' | 'comparison', event?: React.MouseEvent) => {
+    // Prevent the click from bubbling up and closing the dropdown
+    preventEventDefaults(event);
+    
     const currentRange = period === 'base' ? basePeriod : comparisonPeriod;
     
     if (!currentRange.start || (currentRange.start && currentRange.end)) {
@@ -435,7 +594,9 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
     return `${formatDate(range.start)} - ${formatDate(range.end)}`;
   };
 
-  const navigateMonth = (direction: number, period: 'base' | 'comparison') => {
+  const navigateMonth = (direction: number, period: 'base' | 'comparison', event?: React.MouseEvent) => {
+    // Prevent the click from bubbling up and closing the dropdown
+    preventEventDefaults(event);
     if (period === 'base') {
       const newMonth = new Date(currentMonthBase);
       newMonth.setMonth(newMonth.getMonth() + direction);
@@ -492,15 +653,25 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
     const dateRange = period === 'base' ? basePeriod : comparisonPeriod;
     
     return (
-      <CalendarContainer isDarkMode={isDarkMode}>
-        <CalendarHeader isDarkMode={isDarkMode} isRTL={isRTL}>
-          <NavButton isDarkMode={isDarkMode} onClick={() => navigateMonth(-1, period)}>
+                <CalendarContainer 
+            isDarkMode={isDarkMode}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
+            }}
+          >
+            <CalendarHeader isDarkMode={isDarkMode} isRTL={isRTL}>
+          <NavButton isDarkMode={isDarkMode} onClick={(e) => navigateMonth(-1, period, e)}>
             {isRTL ? '›' : '‹'}
           </NavButton>
           <MonthYear isDarkMode={isDarkMode}>
             {translations.months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </MonthYear>
-          <NavButton isDarkMode={isDarkMode} onClick={() => navigateMonth(1, period)}>
+          <NavButton isDarkMode={isDarkMode} onClick={(e) => navigateMonth(1, period, e)}>
             {isRTL ? '‹' : '›'}
           </NavButton>
         </CalendarHeader>
@@ -530,7 +701,7 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
                 isInRange={isDateInRange(date, dateRange)}
                 isWeekend={isWeekend}
                 isToday={isToday}
-                onClick={() => handleDayClick(date, period)}
+                onClick={(e) => handleDayClick(date, period, e)}
               >
                 {date.getDate()}
               </DayCell>
@@ -542,8 +713,11 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
   };
 
   return (
-    <Container ref={dropdownRef}>
+    <>
+      {/* Backdrop removed to fix click issues - using proper click outside handler instead */}
+      <Container ref={dropdownRef} isOpen={isOpen}>
       <TriggerButton
+        ref={buttonRef}
         isDarkMode={isDarkMode}
         isActive={isActive}
         onClick={() => setIsOpen(!isOpen)}
@@ -551,7 +725,27 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
         {isActive ? translations.hideComparison : translations.comparePeriods}
       </TriggerButton>
 
-      <DropdownContainer isOpen={isOpen} isDarkMode={isDarkMode} isRTL={isRTL}>
+            <DropdownContainer 
+        isOpen={isOpen}
+        isDarkMode={isDarkMode}
+        isRTL={isRTL}
+        top={dropdownPosition.top}
+        left={dropdownPosition.left}
+        data-dropdown="comparison-picker"
+        data-prevent-close="true"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+      >
         <PeriodSelectorContainer isRTL={isRTL}>
           <PeriodSection isDarkMode={isDarkMode}>
             <PeriodTitle isDarkMode={isDarkMode} isRTL={isRTL}>
@@ -563,21 +757,45 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'today'}
-                  onClick={() => handleQuickSelect('today', 'base')}
+                  onClick={(e) => handleQuickSelect('today', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.today}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'thisWeek'}
-                  onClick={() => handleQuickSelect('thisWeek', 'base')}
+                  onClick={(e) => handleQuickSelect('thisWeek', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisWeek}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'thisMonth'}
-                  onClick={() => handleQuickSelect('thisMonth', 'base')}
+                  onClick={(e) => handleQuickSelect('thisMonth', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisMonth}
                 </QuickSelectButton>
@@ -586,21 +804,45 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'lastMonth'}
-                  onClick={() => handleQuickSelect('lastMonth', 'base')}
+                  onClick={(e) => handleQuickSelect('lastMonth', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.lastMonth}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'thisQuarter'}
-                  onClick={() => handleQuickSelect('thisQuarter', 'base')}
+                  onClick={(e) => handleQuickSelect('thisQuarter', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisQuarter}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={baseQuickSelect === 'thisYear'}
-                  onClick={() => handleQuickSelect('thisYear', 'base')}
+                  onClick={(e) => handleQuickSelect('thisYear', 'base', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisYear}
                 </QuickSelectButton>
@@ -620,21 +862,45 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'today'}
-                  onClick={() => handleQuickSelect('today', 'comparison')}
+                  onClick={(e) => handleQuickSelect('today', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.today}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'thisWeek'}
-                  onClick={() => handleQuickSelect('thisWeek', 'comparison')}
+                  onClick={(e) => handleQuickSelect('thisWeek', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisWeek}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'thisMonth'}
-                  onClick={() => handleQuickSelect('thisMonth', 'comparison')}
+                  onClick={(e) => handleQuickSelect('thisMonth', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisMonth}
                 </QuickSelectButton>
@@ -643,21 +909,45 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'lastMonth'}
-                  onClick={() => handleQuickSelect('lastMonth', 'comparison')}
+                  onClick={(e) => handleQuickSelect('lastMonth', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.lastMonth}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'thisQuarter'}
-                  onClick={() => handleQuickSelect('thisQuarter', 'comparison')}
+                  onClick={(e) => handleQuickSelect('thisQuarter', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisQuarter}
                 </QuickSelectButton>
                 <QuickSelectButton
                   isDarkMode={isDarkMode}
                   isActive={comparisonQuickSelect === 'thisYear'}
-                  onClick={() => handleQuickSelect('thisYear', 'comparison')}
+                  onClick={(e) => handleQuickSelect('thisYear', 'comparison', e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
                   {translations.thisYear}
                 </QuickSelectButton>
@@ -691,6 +981,7 @@ const ComparisonDateRangePicker: React.FC<ComparisonDateRangePickerProps> = ({
         </ButtonContainer>
       </DropdownContainer>
     </Container>
+    </>
   );
 };
 

@@ -451,6 +451,36 @@ const ImmediateRequestsChart: React.FC<ImmediateRequestsChartProps> = ({ data, l
   const { t, isRTL } = useLanguage();
   const [filter, setFilter] = useState<'all' | 'tomorrow' | 'day-after'>('all');
 
+  // Function to translate subject names for display
+  const translateSubject = (subject: string): string => {
+    const subjectMap: Record<string, string> = {
+          'Management': t('subjects.management'),
+      'Quran': t('subjects.quran'),
+      'Arabic': t('subjects.arabic'),
+      'Math': t('subjects.math'),
+      'English': t('subjects.english'),
+      'Science': t('subjects.science'),
+      'Art': t('subjects.art'),
+      'Programming': t('subjects.programming'),
+      'Social studies': t('subjects.socialStudies'),
+      'Fitness': t('subjects.fitness'),
+      'Scouting': t('subjects.scouting'),
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history'),
+      'Canteen': t('subjects.canteen'),
+      'Floor Admin': t('subjects.floorAdmin'),
+      'Sales': t('subjects.sales'),
+      'HR': t('subjects.hr'),
+      'Mentor': t('subjects.mentor'),
+      'KG Manager': t('subjects.kgManager'),
+      'Logistics': t('subjects.logistics'),
+      'Assistant': t('subjects.assistant'),
+      'Childcare': t('subjects.childcare'),
+      'Security': t('subjects.security')
+    };
+    return subjectMap[subject] || subject;
+  };
+
   if (loading) {
     return (
       <ChartContainer>
@@ -584,7 +614,7 @@ const ImmediateRequestsChart: React.FC<ImmediateRequestsChartProps> = ({ data, l
               <RequestInfo $isRTL={isRTL}>
                 <TeacherName>{request.teacherName}</TeacherName>
                 <RequestDetails>
-                  {request.subject} • <RequestType $type={request.requestType}>{request.requestType}</RequestType>
+                  {translateSubject(request.subject)} • <RequestType $type={request.requestType}>{request.requestType}</RequestType>
                 </RequestDetails>
                 {request.reason && (
                   <RequestDetails>

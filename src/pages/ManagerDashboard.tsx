@@ -8,6 +8,7 @@ import TodayCheckInChart from '../components/TodayCheckInChart';
 import TodayAbsencesChart from '../components/TodayAbsencesChart';
 import ImmediateRequestsChart from '../components/ImmediateRequestsChart';
 import AddTeacherModal from '../components/AddTeacherModal';
+import ServerStatus from '../components/ServerStatus';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const DashboardContainer = styled.div`
@@ -245,7 +246,7 @@ const Dashboard: React.FC = () => {
   // Function to translate subject names for display
   const translateSubject = (subject: string): string => {
     const subjectMap: Record<string, string> = {
-      'Management': t('subjects.management'),
+          'Management': t('subjects.management'),
       'Quran': t('subjects.quran'),
       'Arabic': t('subjects.arabic'),
       'Math': t('subjects.math'),
@@ -256,7 +257,18 @@ const Dashboard: React.FC = () => {
       'Social studies': t('subjects.socialStudies'),
       'Fitness': t('subjects.fitness'),
       'Scouting': t('subjects.scouting'),
-      'Nanny': t('subjects.nanny')
+      'Nanny': t('subjects.nanny'),
+      'History': t('subjects.history'),
+      'Canteen': t('subjects.canteen'),
+      'Floor Admin': t('subjects.floorAdmin'),
+      'Sales': t('subjects.sales'),
+      'HR': t('subjects.hr'),
+      'Mentor': t('subjects.mentor'),
+      'KG Manager': t('subjects.kgManager'),
+      'Logistics': t('subjects.logistics'),
+      'Assistant': t('subjects.assistant'),
+      'Childcare': t('subjects.childcare'),
+      'Security': t('subjects.security')
     };
     return subjectMap[subject] || subject;
   };
@@ -279,6 +291,19 @@ const Dashboard: React.FC = () => {
         setSubjects(subjectOptions);
       } catch (err) {
         console.error('Error fetching subjects:', err);
+        
+        // Use mock subjects data if server is down
+        if (err instanceof TypeError && err.message === 'Failed to fetch') {
+          const mockSubjects: Subject[] = [
+            { value: 'mathematics', label: 'Mathematics', arabicName: 'رياضيات' },
+            { value: 'science', label: 'Science', arabicName: 'علوم' },
+            { value: 'english', label: 'English', arabicName: 'لغة إنجليزية' },
+            { value: 'arabic', label: 'Arabic', arabicName: 'لغة عربية' },
+            { value: 'history', label: 'History', arabicName: 'تاريخ' },
+            { value: 'geography', label: 'Geography', arabicName: 'جغرافيا' },
+          ];
+          setSubjects(mockSubjects);
+        }
       }
     };
 
@@ -347,26 +372,51 @@ const Dashboard: React.FC = () => {
         setDashboardData(transformedData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
         
-        // Fallback data if API fails
-        const fallbackData: DashboardData = {
-          ageDistribution: {
-            under24: 0,
-            between24And32: 0,
-            above32: 0,
-            total: 0,
-          },
-          weeklyAttendance: [
-            { day: 'Sun', onTime: 0, late: 0, absent: 0 },
-            { day: 'Mon', onTime: 0, late: 0, absent: 0 },
-            { day: 'Tue', onTime: 0, late: 0, absent: 0 },
-            { day: 'Wed', onTime: 0, late: 0, absent: 0 },
-            { day: 'Thu', onTime: 0, late: 0, absent: 0 },
-          ]
-        };
-        
-        setDashboardData(fallbackData);
+        // Check if it's a connection error
+        if (err instanceof TypeError && err.message === 'Failed to fetch') {
+          setError('Unable to connect to server. Using demo data.');
+          
+          // Use realistic mock data
+          const mockData: DashboardData = {
+            ageDistribution: {
+              under24: 12,
+              between24And32: 25,
+              above32: 18,
+              total: 55,
+            },
+            weeklyAttendance: [
+              { day: 'Sun', onTime: 42, late: 8, absent: 5 },
+              { day: 'Mon', onTime: 45, late: 6, absent: 4 },
+              { day: 'Tue', onTime: 43, late: 7, absent: 5 },
+              { day: 'Wed', onTime: 44, late: 5, absent: 6 },
+              { day: 'Thu', onTime: 46, late: 4, absent: 5 },
+            ]
+          };
+          
+          setDashboardData(mockData);
+        } else {
+          setError('Failed to load dashboard data. Please try again.');
+          
+          // Empty fallback data for other errors
+          const fallbackData: DashboardData = {
+            ageDistribution: {
+              under24: 0,
+              between24And32: 0,
+              above32: 0,
+              total: 0,
+            },
+            weeklyAttendance: [
+              { day: 'Sun', onTime: 0, late: 0, absent: 0 },
+              { day: 'Mon', onTime: 0, late: 0, absent: 0 },
+              { day: 'Tue', onTime: 0, late: 0, absent: 0 },
+              { day: 'Wed', onTime: 0, late: 0, absent: 0 },
+              { day: 'Thu', onTime: 0, late: 0, absent: 0 },
+            ]
+          };
+          
+          setDashboardData(fallbackData);
+        }
       } finally {
         setLoading(false);
       }
@@ -448,11 +498,137 @@ const Dashboard: React.FC = () => {
 
       } catch (err) {
         console.error('Error fetching new charts data:', err);
-        setChartsErrors(prev => ({
-          checkIns: 'Failed to load check-ins data',
-          absences: 'Failed to load absences data',
-          immediateRequests: 'Failed to load immediate requests data'
-        }));
+        
+        // Use mock data if server is down
+        if (err instanceof TypeError && err.message === 'Failed to fetch') {
+          // Mock check-ins data with proper structure
+          const mockCheckInData: TodayCheckInData = {
+            total: 45,
+            onTime: 38,
+            late: 7,
+            checkedOut: 5,
+            teachers: [
+              {
+                id: '6',
+                name: 'علي حسين',
+                subject: 'Quran',
+                checkInTime: '07:45 AM',
+                checkOutTime: null,
+                status: 'on-time',
+                workType: 'Full-time'
+              },
+              {
+                id: '7',
+                name: 'نور الدين',
+                subject: 'Art',
+                checkInTime: '08:10 AM',
+                checkOutTime: null,
+                status: 'late',
+                workType: 'Full-time'
+              },
+              {
+                id: '8',
+                name: 'ليلى عبدالله',
+                subject: 'Social studies',
+                checkInTime: '07:30 AM',
+                checkOutTime: '03:00 PM',
+                status: 'checked-out',
+                workType: 'Full-time'
+              },
+              {
+                id: '9',
+                name: 'كريم سالم',
+                subject: 'Fitness',
+                checkInTime: '07:55 AM',
+                checkOutTime: null,
+                status: 'on-time',
+                workType: 'Part-time'
+              },
+              {
+                id: '10',
+                name: 'مريم أحمد',
+                subject: 'History',
+                checkInTime: '08:05 AM',
+                checkOutTime: null,
+                status: 'late',
+                workType: 'Full-time'
+              }
+            ]
+          };
+          setTodayCheckInData(mockCheckInData);
+          
+          // Mock absences data with proper structure
+          const mockAbsencesData: TodayAbsencesData = {
+            totalAbsent: 5,
+            authorizedAbsence: 2,
+            unauthorizedNoRequest: 2,
+            unauthorizedRejected: 1,
+            absentTeachers: [
+              {
+                id: '1',
+                name: 'أحمد محمد',
+                subject: 'Math',
+                absenceType: 'authorized',
+                checkInTime: null,
+                workType: 'Full-time'
+              },
+              {
+                id: '2',
+                name: 'فاطمة علي',
+                subject: 'Arabic',
+                absenceType: 'unauthorized-no-request',
+                checkInTime: null,
+                workType: 'Full-time'
+              },
+              {
+                id: '3',
+                name: 'محمد حسن',
+                subject: 'Science',
+                absenceType: 'authorized',
+                checkInTime: null,
+                workType: 'Full-time'
+              },
+              {
+                id: '4',
+                name: 'سارة أحمد',
+                subject: 'English',
+                absenceType: 'unauthorized-no-request',
+                checkInTime: null,
+                workType: 'Full-time'
+              },
+              {
+                id: '5',
+                name: 'عمر خالد',
+                subject: 'Programming',
+                absenceType: 'unauthorized-rejected',
+                checkInTime: null,
+                workType: 'Full-time'
+              }
+            ],
+            date: format(new Date(), 'dd/MM/yyyy')
+          };
+          setTodayAbsencesData(mockAbsencesData);
+          
+          // Mock immediate requests data
+          setImmediateRequestsData({
+            total: 3,
+            pending: 2,
+            approved: 1,
+            urgent: 1
+          });
+          
+          setChartsErrors(prev => ({
+            checkIns: null,
+            absences: null,
+            immediateRequests: null
+          }));
+        } else {
+          setChartsErrors(prev => ({
+            checkIns: 'Failed to load check-ins data',
+            absences: 'Failed to load absences data',
+            immediateRequests: 'Failed to load immediate requests data'
+          }));
+        }
       } finally {
         setChartsLoading({
           checkIns: false,
@@ -569,6 +745,7 @@ const Dashboard: React.FC = () => {
         onClose={handleCloseModal}
         onSuccess={handleTeacherAdded}
       />
+      <ServerStatus />
     </DashboardContainer>
   );
 };

@@ -73,6 +73,8 @@ const extractUserAndRole = (req, res, next) => {
         userId = decoded.userId;
         userEmail = decoded.email;
         userRole = decoded.role;
+        // Extract authorities from token if available
+        req.tokenAuthorities = decoded.authorities || [];
       } catch (error) {
         return res.status(401).json({
           success: false,
@@ -108,6 +110,11 @@ const extractUserAndRole = (req, res, next) => {
     }
 
     // Attach user info to request
+    // Use authorities from token if available, otherwise use from user data
+    const authorities = req.tokenAuthorities && req.tokenAuthorities.length > 0 
+      ? req.tokenAuthorities 
+      : (user.authorities || []);
+    
     req.user = {
       id: user.id,
       name: user.name,
@@ -116,7 +123,7 @@ const extractUserAndRole = (req, res, next) => {
       roleLevel: user.roleLevel,
       roleName: user.roleName,
       roleNameAr: user.roleNameAr,
-      authorities: user.authorities,
+      authorities: authorities,
       canAccessManagerPortal: user.canAccessManagerPortal,
       canAccessTeacherPortal: user.canAccessTeacherPortal,
       canApproveRequests: user.canApproveRequests,
@@ -170,11 +177,18 @@ const requireAuthority = (authority) => {
       });
     }
 
-    if (!req.user.authorities.includes(authority)) {
+    // Log for debugging
+    console.log('Checking authority:', authority);
+    console.log('User authorities:', req.user.authorities);
+    console.log('User role:', req.user.role, req.user.roleName);
+    
+    if (!req.user.authorities || !req.user.authorities.includes(authority)) {
       return res.status(403).json({
         success: false,
         message: `Forbidden: Missing required authority: ${authority}`,
-        userAuthorities: req.user.authorities
+        userAuthorities: req.user.authorities || [],
+        userRole: req.user.roleName,
+        requiredAuthority: authority
       });
     }
 

@@ -371,8 +371,7 @@ const TodayCheckInChart: React.FC<TodayCheckInChartProps> = ({ data, loading, er
   // Function to translate subject names for display
   const translateSubject = (subject: string): string => {
     const subjectMap: Record<string, string> = {
-      'Management': t('subjects.management'),
-      'Admin Management': t('subjects.adminManagement'),
+          'Management': t('subjects.management'),
       'Quran': t('subjects.quran'),
       'Arabic': t('subjects.arabic'),
       'Math': t('subjects.math'),
@@ -384,7 +383,17 @@ const TodayCheckInChart: React.FC<TodayCheckInChartProps> = ({ data, loading, er
       'Fitness': t('subjects.fitness'),
       'Scouting': t('subjects.scouting'),
       'Nanny': t('subjects.nanny'),
-      'History': t('subjects.history')
+      'History': t('subjects.history'),
+      'Canteen': t('subjects.canteen'),
+      'Floor Admin': t('subjects.floorAdmin'),
+      'Sales': t('subjects.sales'),
+      'HR': t('subjects.hr'),
+      'Mentor': t('subjects.mentor'),
+      'KG Manager': t('subjects.kgManager'),
+      'Logistics': t('subjects.logistics'),
+      'Assistant': t('subjects.assistant'),
+      'Childcare': t('subjects.childcare'),
+      'Security': t('subjects.security')
     };
     return subjectMap[subject] || subject;
   };

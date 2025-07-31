@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Hours Check Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .current-time {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+        .timer-button {
+            background: #DAA520;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .timer-button:hover {
+            background: #B8860B;
+        }
+        .notification {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+        }
+        .notification.show {
+            display: block;
+        }
+        .notification-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .notification-message {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .ok-button {
+            background: #DAA520;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .ok-button:hover {
+            background: #B8860B;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .overlay.show {
+            display: block;
+        }
+        .test-controls {
+            margin: 20px 0;
+        }
+        .time-input {
+            padding: 5px;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        .set-time-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .success-message {
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>School Hours Check Test</h1>
+    
+    <div class="test-section">
+        <h2>Current Time</h2>
+        <div class="current-time" id="currentTime"></div>
+        
+        <div class="test-controls">
+            <label>Test with different time:</label>
+            <input type="number" id="hourInput" class="time-input" min="0" max="23" value="7" />
+            <span>:</span>
+            <input type="number" id="minuteInput" class="time-input" min="0" max="59" value="0" />
+            <button class="set-time-button" onclick="setTestTime()">Set Test Time</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Teacher Check-In Test</h2>
+        <p>Click the timer button to test the check-in functionality:</p>
+        <button class="timer-button" onclick="handleTimerClick()">
+            ▶️ Start Timer
+        </button>
+        <div id="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Scenarios</h2>
+        <ul>
+            <li><strong>Before 8:00 AM:</strong> Should show notification that school opens at 8:00 AM</li>
+            <li><strong>At or after 8:00 AM:</strong> Should proceed with normal check-in process</li>
+        </ul>
+    </div>
+    
+    <!-- Notification Modal -->
+    <div class="overlay" id="overlay"></div>
+    <div class="notification" id="notification">
+        <div class="notification-icon">🕐</div>
+        <div class="notification-message" id="notificationMessage">
+            The school opens at 8:00 AM. Please try again later.
+        </div>
+        <button class="ok-button" onclick="closeNotification()">OK</button>
+    </div>
+    
+    <script>
+        let testHour = null;
+        let testMinute = null;
+        
+        function updateCurrentTime() {
+            const now = new Date();
+            if (testHour !== null) {
+                now.setHours(testHour, testMinute || 0, 0, 0);
+            }
+            
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        function setTestTime() {
+            testHour = parseInt(document.getElementById('hourInput').value);
+            testMinute = parseInt(document.getElementById('minuteInput').value);
+            updateCurrentTime();
+        }
+        
+        function handleTimerClick() {
+            const now = new Date();
+            if (testHour !== null) {
+                now.setHours(testHour, testMinute || 0, 0, 0);
+            }
+            
+            const currentHour = now.getHours();
+            const resultDiv = document.getElementById('result');
+            
+            if (currentHour < 8) {
+                // Show notification
+                document.getElementById('overlay').classList.add('show');
+                document.getElementById('notification').classList.add('show');
+                resultDiv.innerHTML = '<p style="color: #ff6b6b;">❌ Check-in blocked - School not open yet</p>';
+            } else {
+                // Allow check-in
+                resultDiv.innerHTML = '<p class="success-message">✅ Check-in allowed - Proceeding with location verification...</p>';
+            }
+        }
+        
+        function closeNotification() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('notification').classList.remove('show');
+        }
+        
+        // Update time every second
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+    </script>
+</body>
+</html>

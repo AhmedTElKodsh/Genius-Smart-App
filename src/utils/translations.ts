@@ -89,6 +89,9 @@ export const translations = {
     notifications: "Notifications",
     profile: "Profile",
     
+    // School Hours
+    schoolNotOpenYet: "The school opens at 8:00 AM. Please try again later.",
+    
 
     
     // Day names
@@ -157,6 +160,8 @@ export const translations = {
     dateValidationWarning: "Requests must be submitted at least 2 working days in advance. For urgent requests, please contact the manager directly.",
     absenceAdvanceNotice: "Absence requests must be submitted at least 24 hours in advance.",
     sameDayAllowed: "Late Arrival and Early Leave requests can be submitted on the same day.",
+    sameDayAfter1PM: "Late Arrival and Early Leave requests for the same day cannot be submitted after 1:00 PM.",
+    pastDateError: "You cannot select a past date. Please select today or a future date.",
 
     // Employment validation errors
     employmentValidation: {
@@ -399,6 +404,9 @@ export const translations = {
     notifications: "الإشعارات",
     profile: "الملف الشخصي",
     
+    // School Hours
+    schoolNotOpenYet: "المدرسة تفتح في الساعة 8:00 صباحاً. الرجاء المحاولة لاحقاً.",
+    
 
     
     // Day names
@@ -461,6 +469,8 @@ export const translations = {
     dateValidationWarning: "يجب إرسال الطلبات على الأقل يومين عمل في المستقبل. للطلبات الطارئة، يرجى الاتصال بالمدير مباشرة.",
     absenceAdvanceNotice: "يجب تقديم طلبات الغياب قبل 24 ساعة على الأقل.",
     sameDayAllowed: "يمكن تقديم طلبات التأخير والمغادرة المبكرة في نفس اليوم.",
+    sameDayAfter1PM: "لا يمكن تقديم طلبات التأخير أو المغادرة المبكرة لنفس اليوم بعد الساعة 1:00 ظهراً.",
+    pastDateError: "لا يمكنك اختيار تاريخ سابق. يرجى اختيار اليوم أو تاريخ مستقبلي.",
 
     // Employment validation errors
     employmentValidation: {
@@ -488,15 +498,7 @@ export const translations = {
       quarter: "هذا الربع",
       year: "هذا العام"
     },
-    
-    // Date Range translations for Arabic
-    today: "اليوم",
-    thisWeek: "هذا الأسبوع",
-    thisMonth: "هذا الشهر",
-    thisQuarter: "هذا الربع",
-    thisYear: "هذا العام",
 
-                 
     // Review text
     reviewAttendance: "راجع حضورك الآن!",
 

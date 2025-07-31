@@ -437,6 +437,59 @@ const NotificationIcon = styled.span<{ isRTL?: boolean }>`
   margin-left: ${props => props.isRTL ? '8px' : '0'};
 `;
 
+// School Hours Modal styles
+const SchoolHoursModal = styled.div<{ isOpen: boolean }>`
+  display: ${props => props.isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const SchoolHoursModalContent = styled.div<{ isDarkMode: boolean; isRTL: boolean }>`
+  background: ${props => props.isDarkMode ? '#2a2a2a' : 'white'};
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  direction: ${props => props.isRTL ? 'rtl' : 'ltr'};
+`;
+
+const SchoolHoursIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+`;
+
+const SchoolHoursMessage = styled.p<{ isDarkMode: boolean; isRTL: boolean }>`
+  color: ${props => props.isDarkMode ? '#ffffff' : '#2c3e50'};
+  font-size: 16px;
+  font-family: ${props => props.isRTL ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif"};
+  margin-bottom: 24px;
+  line-height: 1.5;
+`;
+
+const SchoolHoursButton = styled.button<{ isDarkMode: boolean; isRTL: boolean }>`
+  background: ${props => props.isDarkMode ? '#DAA520' : '#DAA520'};
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: ${props => props.isRTL ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif"};
+  cursor: pointer;
+  transition: background 0.3s ease;
+  
+  &:hover {
+    background: #B8860B;
+  }
+`;
+
 const DatePickerModal = styled.div<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -687,6 +740,7 @@ const TeacherHomeAdvanced: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [latestNotification, setLatestNotification] = useState<any>(null);
   const [showNotification, setShowNotification] = useState(true);
+  const [showSchoolHoursNotification, setShowSchoolHoursNotification] = useState(false);
 
   // Get current date info
   const today = new Date();
@@ -915,6 +969,16 @@ const TeacherHomeAdvanced: React.FC = () => {
         }
       });
     } else {
+      // Check if current time is before 8:00 AM
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      if (currentHour < 8) {
+        // Show notification that school is not open yet
+        setShowSchoolHoursNotification(true);
+        return;
+      }
+      
       // If not running, this is a checkin - show location modal first
       setShowLocationModal(true);
     }
@@ -1523,6 +1587,23 @@ const TeacherHomeAdvanced: React.FC = () => {
         dateRange={getCurrentDateRange()}
         filter={filterPeriod}
       />
+
+      {/* School Hours Notification Modal */}
+      <SchoolHoursModal isOpen={showSchoolHoursNotification}>
+        <SchoolHoursModalContent isDarkMode={isDarkMode} isRTL={isRTL}>
+          <SchoolHoursIcon>🕐</SchoolHoursIcon>
+          <SchoolHoursMessage isDarkMode={isDarkMode} isRTL={isRTL}>
+            {t.schoolNotOpenYet}
+          </SchoolHoursMessage>
+          <SchoolHoursButton 
+            isDarkMode={isDarkMode} 
+            isRTL={isRTL}
+            onClick={() => setShowSchoolHoursNotification(false)}
+          >
+            {isRTL ? 'حسناً' : 'OK'}
+          </SchoolHoursButton>
+        </SchoolHoursModalContent>
+      </SchoolHoursModal>
     </Container>
   );
 };

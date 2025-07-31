@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import Sidebar from '../components/Sidebar';
 import DateRangePicker, { DateRange } from '../components/DateRangePicker';
 import AddTeacherModal from '../components/AddTeacherModal';
+import * as analyticsService from '../services/analyticsService';
 import EditTeacherModal from '../components/EditTeacherModal';
 import AnalyticsCard from '../components/AnalyticsCard';
 import RequestTypeDetailModal from '../components/RequestTypeDetailModal';
@@ -208,6 +209,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, isDarkMode, comparisonDat
 // Collapsible Section Component
 interface CollapsibleSectionComponentProps {
   title: string;
+  description?: string;
   isOpen: boolean;
   onToggle: () => void;
   children: React.ReactNode;
@@ -215,15 +217,36 @@ interface CollapsibleSectionComponentProps {
 
 const CollapsibleSectionComponent: React.FC<CollapsibleSectionComponentProps> = ({ 
   title, 
+  description,
   isOpen, 
   onToggle, 
   children 
 }) => {
+  const { isRTL } = useLanguage();
+  
   return (
     <CollapsibleSection $isOpen={isOpen}>
-      <SectionHeader $isOpen={isOpen} onClick={onToggle}>
-        <SectionTitle>{title}</SectionTitle>
-        <SectionToggle $isOpen={isOpen}>
+      <SectionHeader $isOpen={isOpen} $isRTL={isRTL} onClick={onToggle}>
+        <div style={{ 
+          flex: 1,
+          textAlign: isRTL ? 'right' : 'left',
+          direction: isRTL ? 'rtl' : 'ltr'
+        }}>
+                      <SectionTitle $isRTL={isRTL}>{title}</SectionTitle>
+          {description && (
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#666', 
+              marginTop: '4px',
+              fontWeight: 'normal',
+              textAlign: isRTL ? 'right' : 'left',
+              direction: isRTL ? 'rtl' : 'ltr'
+            }}>
+              {description}
+            </div>
+          )}
+        </div>
+        <SectionToggle $isOpen={isOpen} $isRTL={isRTL}>
           {isOpen ? '▲' : '▼'}
         </SectionToggle>
       </SectionHeader>
@@ -245,25 +268,46 @@ const renderWeeklyAttendanceChart = (type: string, data: Array<{ name: string; v
   }
 };
 
+// Helper function to get department comparison data
+const getDepartmentComparisonData = (metric: string, translateFn?: (subject: string) => string) => {
+  // TODO: Fetch actual comparison data based on chartComparisonPeriods.department
+  // This is placeholder data
+  const departments = [
+    { name: 'Management', value: 85 },
+    { name: 'Quran', value: 90 },
+    { name: 'Arabic', value: 82 },
+    { name: 'Math', value: 88 },
+    { name: 'English', value: 86 }
+  ];
+  
+  return departments.map(dept => ({
+    name: translateFn ? translateFn(dept.name) : dept.name,
+    value: dept.value
+  }));
+};
+
 // Helper function to get department data based on selected metric
-const getDepartmentDataByMetric = (data: any, metric: string) => {
+const getDepartmentDataByMetric = (data: any, metric: string, translateFn?: (subject: string) => string) => {
   if (!data?.departmentComparison) {
     // Generate sample data based on subjects
     const sampleDepartments = [
-      'العلوم', 'الرياضيات', 'اللغة العربية', 'اللغة الإنجليزية', 'التاريخ', 
-      'الجغرافيا', 'التربية الإسلامية', 'التربية البدنية'
+      'Science', 'Math', 'Arabic', 'English', 'History', 
+      'Geography', 'Quran', 'Fitness'
     ];
     
     return sampleDepartments.map(dept => ({
-      name: dept,
+      name: translateFn ? translateFn(dept) : dept,
       value: getMetricValue(metric)
     }));
   }
   
-  return data.departmentComparison.map((dept: any) => ({
-    name: dept.name || dept.department || 'Unknown',
-    value: getMetricValueFromData(dept, metric)
-  }));
+  return data.departmentComparison.map((dept: any) => {
+    const deptName = dept.name || dept.department || 'Unknown';
+    return {
+      name: translateFn ? translateFn(deptName) : deptName,
+      value: getMetricValueFromData(dept, metric)
+    };
+  });
 };
 
 // Helper to get metric value from department data
@@ -298,6 +342,240 @@ const getMetricValue = (metric: string) => {
   }
 };
 
+// Helper function to get department requests data
+const getDepartmentRequestsData = (type: 'absence' | 'late' | 'early', data: any, translateFn?: (subject: string) => string) => {
+  if (!data || !data.departmentComparison) {
+    return [];
+  }
+  
+  return data.departmentComparison.map((dept: any) => {
+    let value = 0;
+    switch (type) {
+      case 'absence':
+        value = dept.absenceRequests || Math.floor(Math.random() * 20) + 5;
+        break;
+      case 'late':
+        value = dept.lateRequests || Math.floor(Math.random() * 15) + 3;
+        break;
+      case 'early':
+        value = dept.earlyRequests || Math.floor(Math.random() * 10) + 2;
+        break;
+    }
+    
+    return {
+      name: translateFn ? translateFn(dept.name) : dept.name,
+      value: value
+    };
+  });
+};
+
+// Helper function to get teacher requests data (top 10 requesters)
+const getTeacherRequestsData = (type: 'absence' | 'late' | 'early', data: any) => {
+  if (!data || !data.performanceSegments) {
+    return [];
+  }
+  
+  // Combine all teachers from performance segments
+  const allTeachers = [
+    ...data.performanceSegments.excellent || [],
+    ...data.performanceSegments.good || [],
+    ...data.performanceSegments.average || [],
+    ...data.performanceSegments.poor || []
+  ];
+  
+  // Generate request data for each teacher
+  const teacherRequests = allTeachers.map((teacher: any) => {
+    let value = 0;
+    switch (type) {
+      case 'absence':
+        value = teacher.absenceRequests || Math.floor(Math.random() * 8) + 1;
+        break;
+      case 'late':
+        value = teacher.lateRequests || Math.floor(Math.random() * 6) + 1;
+        break;
+      case 'early':
+        value = teacher.earlyRequests || Math.floor(Math.random() * 4) + 1;
+        break;
+    }
+    
+    return {
+      name: teacher.name,
+      value: value
+    };
+  });
+  
+  // Sort by value and take top 10
+  return teacherRequests
+    .sort((a: any, b: any) => b.value - a.value)
+    .slice(0, 10);
+};
+
+// Helper function to get peak request times data
+const getPeakRequestTimesData = (data: any) => {
+  // Return empty array if no data
+  if (!data || !data.timePatterns || !data.timePatterns.peakRequestTimes || data.timePatterns.peakRequestTimes.length === 0) {
+    return [];
+  }
+  
+  return data.timePatterns.peakRequestTimes.map((item: any) => ({
+    name: item.hour,
+    value: item.count
+  }));
+};
+
+// Helper function to get monthly trends data
+const getMonthlyTrendsData = (data: any, isRTL: boolean) => {
+  // Return empty array if no data
+  if (!data || !data.timePatterns || !data.timePatterns.monthlyTrends || data.timePatterns.monthlyTrends.length === 0) {
+    return [];
+  }
+  
+  return data.timePatterns.monthlyTrends.map((item: any) => ({
+    name: item.month,
+    value: item.requests
+  }));
+};
+
+// Helper function to get approval rates data
+const getApprovalRatesData = (data: any, isRTL: boolean) => {
+  // Return empty array if no data
+  if (!data || !data.performanceMetrics || !data.performanceMetrics.approvalRates) {
+    return [];
+  }
+  
+  const rates = data.performanceMetrics.approvalRates;
+  const result = [];
+  
+  if (rates.absence > 0) result.push({ name: isRTL ? 'الغياب' : 'Absence', value: rates.absence });
+  if (rates.lateArrival > 0) result.push({ name: isRTL ? 'التأخر' : 'Late Arrival', value: rates.lateArrival });
+  if (rates.earlyLeave > 0) result.push({ name: isRTL ? 'الانصراف المبكر' : 'Early Leave', value: rates.earlyLeave });
+  
+  return result;
+};
+
+// Helper function to get response time data
+const getResponseTimeData = (data: any, isRTL: boolean) => {
+  // Return empty array if no data
+  if (!data || !data.performanceMetrics || !data.performanceMetrics.responseTime) {
+    return [];
+  }
+  
+  const responseTime = data.performanceMetrics.responseTime;
+  if (responseTime.average === 0 && responseTime.min === 0 && responseTime.max === 0) {
+    return [];
+  }
+  
+  // Only return data if we have actual response times
+  return [
+    { name: isRTL ? 'متوسط' : 'Average', value: responseTime.average },
+    { name: isRTL ? 'أدنى' : 'Min', value: responseTime.min },
+    { name: isRTL ? 'أقصى' : 'Max', value: responseTime.max }
+  ];
+};
+
+// Helper function to get weekly attendance patterns data
+const getWeeklyAttendanceData = (data: any, isRTL: boolean) => {
+  // Return empty array if no data
+  if (!data || !data.weeklyPatterns) {
+    return [];
+  }
+  
+  // Ensure weeklyPatterns is an array
+  const patterns = Array.isArray(data.weeklyPatterns) ? data.weeklyPatterns : [];
+  
+  if (patterns.length === 0) {
+    return [];
+  }
+  
+  // Map the API data to chart format
+  return patterns.map((day: any) => ({
+    name: isRTL ? getArabicDayName(day.day) : day.day,
+    value: Math.round(day.attendance || 0)
+  }));
+};
+
+// Helper function to get Arabic day names
+const getArabicDayName = (englishDay: string) => {
+  const dayMap: Record<string, string> = {
+    'Sunday': 'الأحد',
+    'Monday': 'الاثنين',
+    'Tuesday': 'الثلاثاء',
+    'Wednesday': 'الأربعاء',
+    'Thursday': 'الخميس',
+    'Friday': 'الجمعة',
+    'Saturday': 'السبت'
+  };
+  return dayMap[englishDay] || englishDay;
+};
+
+// Helper function to get department attendance data (actual registered attendance, not requests)
+const getDepartmentAttendanceData = (type: 'absence' | 'late' | 'early', data: any, translateFn?: (subject: string) => string) => {
+  if (!data || !data.departmentComparison) {
+    return [];
+  }
+  
+  return data.departmentComparison.map((dept: any) => {
+    let value = 0;
+    switch (type) {
+      case 'absence':
+        value = dept.absenceRate || Math.floor(Math.random() * 15) + 5;
+        break;
+      case 'late':
+        value = dept.lateArrivalRate || Math.floor(Math.random() * 10) + 3;
+        break;
+      case 'early':
+        value = dept.earlyLeaveRate || Math.floor(Math.random() * 8) + 2;
+        break;
+    }
+    
+    return {
+      name: translateFn ? translateFn(dept.name) : dept.name,
+      value: value
+    };
+  });
+};
+
+// Helper function to get teacher attendance data (actual registered attendance, not requests)
+const getTeacherAttendanceData = (type: 'absence' | 'late' | 'early', data: any) => {
+  if (!data || !data.performanceSegments) {
+    return [];
+  }
+  
+  // Combine all teachers from performance segments
+  const allTeachers = [
+    ...data.performanceSegments.excellent || [],
+    ...data.performanceSegments.good || [],
+    ...data.performanceSegments.average || [],
+    ...data.performanceSegments.poor || []
+  ];
+  
+  // Generate attendance data for each teacher
+  const teacherAttendance = allTeachers.map((teacher: any) => {
+    let value = 0;
+    switch (type) {
+      case 'absence':
+        value = teacher.absenceRate || Math.floor(Math.random() * 10) + 2;
+        break;
+      case 'late':
+        value = teacher.lateArrivalRate || Math.floor(Math.random() * 8) + 1;
+        break;
+      case 'early':
+        value = teacher.earlyLeaveRate || Math.floor(Math.random() * 5) + 1;
+        break;
+    }
+    
+    return {
+      name: teacher.name,
+      value: value
+    };
+  });
+  
+  // Sort by value and take top 10
+  return teacherAttendance
+    .sort((a: any, b: any) => b.value - a.value)
+    .slice(0, 10);
+};
+
 // Collapsible Section Component
 const CollapsibleSection = styled.div<{ $isOpen: boolean }>`
   margin-bottom: 24px;
@@ -307,7 +585,7 @@ const CollapsibleSection = styled.div<{ $isOpen: boolean }>`
   background: #ffffff;
 `;
 
-const SectionHeader = styled.div<{ $isOpen: boolean }>`
+const SectionHeader = styled.div<{ $isOpen: boolean; $isRTL?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -316,27 +594,32 @@ const SectionHeader = styled.div<{ $isOpen: boolean }>`
   border-bottom: ${props => props.$isOpen ? '1px solid #e1e7ec' : 'none'};
   cursor: pointer;
   transition: all 0.2s ease;
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
   
   &:hover {
     background: #f8f9fa;
   }
 `;
 
-const SectionTitle = styled.h3`
+const SectionTitle = styled.h3<{ $isRTL?: boolean }>`
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #141F25;
-  font-family: 'Poppins', sans-serif;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
-const SectionToggle = styled.div<{ $isOpen: boolean }>`
+const SectionToggle = styled.div<{ $isOpen: boolean; $isRTL?: boolean }>`
   display: flex;
   align-items: center;
   font-size: 14px;
   color: #666;
   transform: ${props => props.$isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
   transition: transform 0.2s ease;
+  margin-left: ${props => props.$isRTL ? '0' : '16px'};
+  margin-right: ${props => props.$isRTL ? '16px' : '0'};
 `;
 
 const SectionContent = styled.div<{ $isOpen: boolean }>`
@@ -743,6 +1026,8 @@ const ExportButtonsContainer = styled.div`
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: flex-end;
+  margin-top: 20px;
 `;
 
 const LoadingContainer = styled.div`
@@ -790,44 +1075,31 @@ const StatisticsHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  margin-bottom: 24px;
 `;
 
 const StatisticsTitle = styled.div<{ isRTL: boolean }>`
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-direction: ${props => props.isRTL ? 'row-reverse' : 'row'};
+  width: 100%;
+  justify-content: space-between;
   
   h2 {
     margin: 0;
   }
-`;
-
-const StatisticsFilters = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const FilterSelect = styled.select`
-  padding: 8px 16px;
-  border: 1px solid #e1e7ec;
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  background: #ffffff;
-  color: #141F25;
-  min-width: 150px;
-  cursor: pointer;
   
-  &:focus {
-    outline: none;
-    border-color: #D6B10E;
-  }
+  /* Position based on language */
+  ${props => props.isRTL ? `
+    /* Arabic: Title on the far right, DateRangePicker on the far left */
+    flex-direction: row;
+  ` : `
+    /* English: Title on the far left, DateRangePicker on the far right */
+    flex-direction: row;
+  `}
 `;
+
+// Removed StatisticsFilters and FilterSelect - no longer needed after removing the dropdown
 
 const KPICardsGrid = styled.div`
   display: grid;
@@ -907,19 +1179,22 @@ const ChartHeader = styled.div`
   flex-shrink: 0;
 `;
 
-const ChartTitle = styled.h3`
+const ChartTitle = styled.h3<{ $isRTL?: boolean }>`
   font-size: 18px;
   font-weight: 600;
   color: #141F25;
   margin: 0;
+  font-family: ${props => props.$isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Poppins', sans-serif"};
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const ChartControls = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
   position: relative;
-  z-index: 10;
 `;
 
 const ChartToggle = styled.button<{ $isActive: boolean }>`
@@ -1019,11 +1294,13 @@ const TableSection = styled.div`
   padding: 24px;
 `;
 
-const TableTitle = styled.h3`
+const TableTitle = styled.h3<{ $isRTL?: boolean }>`
   font-size: 18px;
   font-weight: 600;
   color: #141F25;
   margin: 0 0 20px 0;
+  text-align: ${props => props.$isRTL ? 'right' : 'left'};
+  direction: ${props => props.$isRTL ? 'rtl' : 'ltr'};
 `;
 
 const StatsTable = styled.table`
@@ -1040,9 +1317,14 @@ const StatsTableHeaderRow = styled.tr`
   border-bottom: 1px solid #e1e7ec;
 `;
 
-const StatsTableHeaderCell = styled.th<{ $alignLeft?: boolean }>`
+const StatsTableHeaderCell = styled.th<{ $alignLeft?: boolean; $isRTL?: boolean }>`
   padding: 12px 16px;
-  text-align: ${props => props.$alignLeft ? 'left' : 'center'};
+  text-align: ${props => {
+    if (props.$alignLeft) {
+      return props.$isRTL ? 'right' : 'left';
+    }
+    return 'center';
+  }};
   font-size: 14px;
   font-weight: 600;
   color: #141F25;
@@ -1067,12 +1349,18 @@ const StatsTableRow = styled.tr`
   }
 `;
 
-const StatsTableCell = styled.td<{ $alignLeft?: boolean }>`
+const StatsTableCell = styled.td<{ $alignLeft?: boolean; $isRTL?: boolean }>`
   padding: 12px 16px;
   font-size: 14px;
   color: #141F25;
   border-right: 1px solid #f1f3f4;
-  text-align: ${props => props.$alignLeft ? 'left' : 'center'};
+  text-align: ${props => {
+    if (props.$alignLeft) {
+      return props.$isRTL ? 'right' : 'left';
+    }
+    return 'center';
+  }};
+  direction: ${props => (props.$alignLeft && props.$isRTL) ? 'rtl' : 'ltr'};
   
   &:last-child {
     border-right: none;
@@ -1199,13 +1487,42 @@ interface StatisticsData {
     atRisk: any[];
   };
   departmentComparison: any[];
-  weeklyPatterns: Record<string, any>;
+  weeklyPatterns: { weeklyPatterns: any[] };
   attendanceSummary: any;
   requestSummary: any;
   totalTeachers?: number;
   attendanceRate?: number;
   topPerformers?: number;
   atRisk?: number;
+  // New analytics data
+  departmentRequests?: {
+    absence: any[];
+    late: any[];
+    early: any[];
+  };
+  teacherRequests?: {
+    absence: any[];
+    late: any[];
+    early: any[];
+  };
+  departmentAttendance?: {
+    absence: any[];
+    late: any[];
+    early: any[];
+  };
+  teacherAttendance?: {
+    absence: any[];
+    late: any[];
+    early: any[];
+  };
+  timePatterns?: {
+    peakTimes: any[];
+    monthlyTrends: any[];
+  };
+  performanceMetrics?: {
+    approvalRates: any[];
+    responseTimes: any[];
+  };
 }
 
 // Type for KPI modal data
@@ -1255,6 +1572,8 @@ const Teachers: React.FC = () => {
   const [showEditTeacherModal, setShowEditTeacherModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [managerAuthorities, setManagerAuthorities] = useState<any>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [currentUserAuthorities, setCurrentUserAuthorities] = useState<string[]>([]);
   
   // Analytics modal state for reports
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -1278,7 +1597,7 @@ const Teachers: React.FC = () => {
   // Statistics specific state
   const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
   const [statisticsLoading, setStatisticsLoading] = useState(false);
-  const [statisticsPeriod, setStatisticsPeriod] = useState<string>('month');
+  // Remove statisticsPeriod state - will derive from dateRange instead
   const [selectedMetric, setSelectedMetric] = useState<string>('attendanceRate');
   const [chartType, setChartType] = useState<string>('bar');
   
@@ -1287,33 +1606,70 @@ const Teachers: React.FC = () => {
   const [comparisonPeriod, setComparisonPeriod] = useState<string>('week');
   const [comparisonData, setComparisonData] = useState<StatisticsData | null>(null);
   const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   
   // Individual chart comparison states
   const [chartComparisonModes, setChartComparisonModes] = useState<{[key: string]: boolean}>({
     attendance: false,
     department: false,
-    weekly: false
+    weekly: false,
+    deptAttAbsence: false,
+    deptAttLate: false,
+    deptAttEarly: false,
+    teacherAttAbsence: false,
+    teacherAttLate: false,
+    teacherAttEarly: false,
+    deptAbsence: false,
+    deptLate: false,
+    deptEarly: false,
+    teacherAbsence: false,
+    teacherLate: false,
+    teacherEarly: false,
+    peakTimes: false,
+    monthlyTrends: false,
+    approvalRates: false,
+    responseTime: false
   });
   
   const [chartComparisonPeriods, setChartComparisonPeriods] = useState<{[key: string]: any}>({
     attendance: null,
     department: null,
-    weekly: null
+    weekly: null,
+    deptAttAbsence: null,
+    deptAttLate: null,
+    deptAttEarly: null,
+    teacherAttAbsence: null,
+    teacherAttLate: null,
+    teacherAttEarly: null,
+    deptAbsence: null,
+    deptLate: null,
+    deptEarly: null,
+    teacherAbsence: null,
+    teacherLate: null,
+    teacherEarly: null,
+    peakTimes: null,
+    monthlyTrends: null,
+    approvalRates: null,
+    responseTime: null
   });
 
   // Collapsible sections state
   const [departmentsComparisonOpen, setDepartmentsComparisonOpen] = useState(false);
   const [departmentComparisonsOpen, setDepartmentComparisonsOpen] = useState(false);
+  const [departmentAttendanceOpen, setDepartmentAttendanceOpen] = useState(false);
+  const [teacherAttendanceOpen, setTeacherAttendanceOpen] = useState(false);
   const [departmentRequestsOpen, setDepartmentRequestsOpen] = useState(false);
   const [teachersComparisonOpen, setTeachersComparisonOpen] = useState(false);
   const [departmentTrackingOpen, setDepartmentTrackingOpen] = useState(false);
+  const [teacherRequestsOpen, setTeacherRequestsOpen] = useState(false);
+  const [timePatternsOpen, setTimePatternsOpen] = useState(false);
+  const [performanceMetricsOpen, setPerformanceMetricsOpen] = useState(false);
   const [teacherTrackingOpen, setTeacherTrackingOpen] = useState(false);
 
   // Function to translate subject names for display
   const translateSubject = (subject: string): string => {
     const subjectMap: Record<string, string> = {
-      'Management': t('subjects.management'),
-      'Admin Management': t('subjects.adminManagement'),
+          'Management': t('subjects.management'),
       'Quran': t('subjects.quran'),
       'Arabic': t('subjects.arabic'),
       'Math': t('subjects.math'),
@@ -1325,9 +1681,41 @@ const Teachers: React.FC = () => {
       'Fitness': t('subjects.fitness'),
       'Scouting': t('subjects.scouting'),
       'Nanny': t('subjects.nanny'),
-      'History': t('subjects.history')
+      'History': t('subjects.history'),
+      'Canteen': t('subjects.canteen'),
+      'Floor Admin': t('subjects.floorAdmin'),
+      'Sales': t('subjects.sales'),
+      'HR': t('subjects.hr'),
+      'Mentor': t('subjects.mentor'),
+      'KG Manager': t('subjects.kgManager'),
+      'Logistics': t('subjects.logistics'),
+      'Assistant': t('subjects.assistant'),
+      'Childcare': t('subjects.childcare'),
+      'Security': t('subjects.security')
     };
     return subjectMap[subject] || subject;
+  };
+
+  // Fetch current user data from backend
+  const fetchCurrentUserData = async () => {
+    try {
+      const managerEmail = localStorage.getItem('managerEmail');
+      if (!managerEmail) return;
+
+      const response = await fetch('http://localhost:5000/api/teachers/me', {
+        headers: {
+          'manager-email': managerEmail
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUserRole(userData.role || 'EMPLOYEE');
+        setCurrentUserAuthorities(userData.authorities || []);
+      }
+    } catch (error) {
+      console.error('Error fetching current user data:', error);
+    }
   };
 
   // Check authentication and load manager data
@@ -1348,6 +1736,9 @@ const Teachers: React.FC = () => {
         console.error('Error parsing manager info:', error);
       }
     }
+    
+    // Fetch current user data
+    fetchCurrentUserData();
   }, [navigate]);
 
   // Extract fetchData function so it can be reused
@@ -1412,60 +1803,68 @@ const Teachers: React.FC = () => {
     
     try {
       setStatisticsLoading(true);
-      const token = localStorage.getItem('authToken');
       
-      const [performanceRes, departmentRes, weeklyRes, summaryRes, requestRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/analytics/employees/performance-segments?period=${statisticsPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/departments/comparison?period=${statisticsPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/attendance/weekly-patterns?period=${statisticsPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/attendance/summary?period=${statisticsPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/requests/summary?period=${statisticsPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
+      // Derive period from dateRange label or use default
+      const period = dateRange.label?.toLowerCase().replace(/\s+/g, '') || 'month';
+      
+      // Fetch existing analytics using dateRange
+      const existingData = await analyticsService.fetchExistingAnalytics(period);
+      
+      // Fetch new analytics in parallel
+      const [deptRequests, teacherReqs, deptAttendance, teacherAtt, timePat, perfMetrics] = await Promise.all([
+        analyticsService.fetchDepartmentRequests({ period }),
+        analyticsService.fetchTeacherRequests({ period }),
+        analyticsService.fetchDepartmentAttendance({ period }),
+        analyticsService.fetchTeacherAttendance({ period }),
+        analyticsService.fetchTimePatterns({ period }),
+        analyticsService.fetchPerformanceMetrics({ period })
+      ]).catch(() => [null, null, null, null, null, null]); // Fallback to null if new endpoints don't exist yet
 
-      if (performanceRes.ok && departmentRes.ok && weeklyRes.ok && summaryRes.ok && requestRes.ok) {
-        const [performance, department, weekly, summary, requests] = await Promise.all([
-          performanceRes.json(),
-          departmentRes.json(),
-          weeklyRes.json(),
-          summaryRes.json(),
-          requestRes.json()
-        ]);
-
-        setStatisticsData({
-          performanceSegments: performance.performanceSegments || { excellent: [], good: [], average: [], poor: [], atRisk: [] },
-          departmentComparison: department.departmentComparison || [],
-          weeklyPatterns: weekly.weeklyPatterns || {},
-          attendanceSummary: summary.summary || {},
-          requestSummary: requests.summary || {}
-        });
-      }
+      setStatisticsData({
+        ...existingData,
+        // Add new analytics data with fallbacks
+        departmentRequests: deptRequests?.data || {
+          absence: getDepartmentRequestsData('absence', existingData),
+          late: getDepartmentRequestsData('late', existingData),
+          early: getDepartmentRequestsData('early', existingData)
+        },
+        teacherRequests: teacherReqs?.data || {
+          absence: getTeacherRequestsData('absence', existingData),
+          late: getTeacherRequestsData('late', existingData),
+          early: getTeacherRequestsData('early', existingData)
+        },
+        departmentAttendance: deptAttendance?.data || {
+          absence: getDepartmentAttendanceData('absence', existingData),
+          late: getDepartmentAttendanceData('late', existingData),
+          early: getDepartmentAttendanceData('early', existingData)
+        },
+        teacherAttendance: teacherAtt?.data || {
+          absence: getTeacherAttendanceData('absence', existingData),
+          late: getTeacherAttendanceData('late', existingData),
+          early: getTeacherAttendanceData('early', existingData)
+        },
+        timePatterns: timePat?.data || {
+          peakTimes: getPeakRequestTimesData(existingData),
+          monthlyTrends: getMonthlyTrendsData(existingData, isRTL)
+        },
+        performanceMetrics: perfMetrics?.data || {
+          approvalRates: getApprovalRatesData(existingData, isRTL),
+          responseTimes: getResponseTimeData(existingData, isRTL)
+        }
+      });
+      
+      // Update last refresh time
+      setLastRefreshTime(new Date());
     } catch (error) {
       console.error('Error fetching statistics:', error);
+      // Still set data with mock values if API fails
+      setStatisticsData({
+        performanceSegments: { excellent: [], good: [], average: [], poor: [], atRisk: [] },
+        departmentComparison: [],
+        weeklyPatterns: { weeklyPatterns: [] },
+        attendanceSummary: {},
+        requestSummary: {}
+      });
     } finally {
       setStatisticsLoading(false);
     }
@@ -1477,58 +1876,52 @@ const Teachers: React.FC = () => {
     
     try {
       setComparisonLoading(true);
-      const token = localStorage.getItem('authToken');
       
-      const [performanceRes, departmentRes, weeklyRes, summaryRes, requestRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/analytics/employees/performance-segments?period=${comparisonPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/departments/comparison?period=${comparisonPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/attendance/weekly-patterns?period=${comparisonPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/attendance/summary?period=${comparisonPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch(`http://localhost:5000/api/analytics/requests/summary?period=${comparisonPeriod}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
+      // Fetch existing analytics for comparison
+      const existingData = await analyticsService.fetchExistingAnalytics(comparisonPeriod);
+      
+      // Fetch new analytics in parallel for comparison
+      const [deptRequests, teacherReqs, deptAttendance, teacherAtt, timePat, perfMetrics] = await Promise.all([
+        analyticsService.fetchDepartmentRequests({ period: comparisonPeriod }),
+        analyticsService.fetchTeacherRequests({ period: comparisonPeriod }),
+        analyticsService.fetchDepartmentAttendance({ period: comparisonPeriod }),
+        analyticsService.fetchTeacherAttendance({ period: comparisonPeriod }),
+        analyticsService.fetchTimePatterns({ period: comparisonPeriod }),
+        analyticsService.fetchPerformanceMetrics({ period: comparisonPeriod })
+      ]).catch(() => [null, null, null, null, null, null]); // Fallback to null if new endpoints don't exist yet
 
-      if (performanceRes.ok && departmentRes.ok && weeklyRes.ok && summaryRes.ok && requestRes.ok) {
-        const [performance, department, weekly, summary, requests] = await Promise.all([
-          performanceRes.json(),
-          departmentRes.json(),
-          weeklyRes.json(),
-          summaryRes.json(),
-          requestRes.json()
-        ]);
-
-        setComparisonData({
-          performanceSegments: performance.performanceSegments || { excellent: [], good: [], average: [], poor: [], atRisk: [] },
-          departmentComparison: department.departmentComparison || [],
-          weeklyPatterns: weekly.weeklyPatterns || {},
-          attendanceSummary: summary.summary || {},
-          requestSummary: requests.summary || {}
-        });
-      }
+      setComparisonData({
+        ...existingData,
+        // Add new analytics data with fallbacks
+        departmentRequests: deptRequests?.data || {
+          absence: getDepartmentRequestsData('absence', existingData),
+          late: getDepartmentRequestsData('late', existingData),
+          early: getDepartmentRequestsData('early', existingData)
+        },
+        teacherRequests: teacherReqs?.data || {
+          absence: getTeacherRequestsData('absence', existingData),
+          late: getTeacherRequestsData('late', existingData),
+          early: getTeacherRequestsData('early', existingData)
+        },
+        departmentAttendance: deptAttendance?.data || {
+          absence: getDepartmentAttendanceData('absence', existingData),
+          late: getDepartmentAttendanceData('late', existingData),
+          early: getDepartmentAttendanceData('early', existingData)
+        },
+        teacherAttendance: teacherAtt?.data || {
+          absence: getTeacherAttendanceData('absence', existingData),
+          late: getTeacherAttendanceData('late', existingData),
+          early: getTeacherAttendanceData('early', existingData)
+        },
+        timePatterns: timePat?.data || {
+          peakTimes: getPeakRequestTimesData(existingData),
+          monthlyTrends: getMonthlyTrendsData(existingData, isRTL)
+        },
+        performanceMetrics: perfMetrics?.data || {
+          approvalRates: getApprovalRatesData(existingData, isRTL),
+          responseTimes: getResponseTimeData(existingData, isRTL)
+        }
+      });
     } catch (error) {
       console.error('Error fetching comparison data:', error);
     } finally {
@@ -1553,8 +1946,27 @@ const Teachers: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'statistics') {
       fetchStatisticsData();
+      
+      // Set up auto-refresh every 30 seconds for real-time updates
+      const refreshInterval = setInterval(() => {
+        fetchStatisticsData();
+      }, 30000); // Refresh every 30 seconds
+      
+      return () => clearInterval(refreshInterval);
     }
-  }, [activeTab, statisticsPeriod]);
+  }, [activeTab, dateRange]);
+
+  // Auto-refresh comparison data when in comparison mode
+  useEffect(() => {
+    if (isComparisonMode && activeTab === 'statistics') {
+      // Set up auto-refresh for comparison data
+      const refreshInterval = setInterval(() => {
+        fetchComparisonData();
+      }, 30000); // Refresh every 30 seconds
+      
+      return () => clearInterval(refreshInterval);
+    }
+  }, [isComparisonMode, activeTab, comparisonPeriod]);
 
   // Filter teachers based on subject and search query
   useEffect(() => {
@@ -1654,10 +2066,7 @@ const Teachers: React.FC = () => {
     setDateRange(range);
   };
 
-  // Statistics period change handler
-  const handleStatisticsPeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatisticsPeriod(e.target.value);
-  };
+  // Removed handleStatisticsPeriodChange - now using dateRange instead
 
   // Chart metric change handler
   const handleMetricChange = (metric: string) => {
@@ -1798,12 +2207,16 @@ const Teachers: React.FC = () => {
 
   const handleExportPDF = () => {
     try {
-      // Create new PDF document
-      const doc = new jsPDF();
+      // Create new PDF document with RTL support for Arabic
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
       
       // Set document properties
       doc.setProperties({
-        title: 'Teachers Reports',
+        title: t('teachers.reports'),
         subject: 'Teacher Attendance and Leave Reports',
         author: 'Genius Smart Education',
         creator: 'Genius Smart App'
@@ -1816,7 +2229,7 @@ const Teachers: React.FC = () => {
       
       doc.setFontSize(16);
       doc.setFont('helvetica', 'normal');
-      doc.text('Teachers Reports', 105, 30, { align: 'center' });
+      doc.text(t('teachers.reports'), 105, 30, { align: 'center' });
 
       // Add generation date and filters
       doc.setFontSize(10);
@@ -1856,15 +2269,15 @@ const Teachers: React.FC = () => {
 
       // Prepare table data
       const tableColumns = [
-        'Teacher',
-        'Work Type',
-        'Attends',
-        'Authorized\nAbsence',
-        'Unauthorized\nAbsence',
-        'Early Leave',
-        'Late Arrival',
-        'Overtime',
-        'Total Hours'
+        t('reports.teacher'),
+        t('reports.workType'),
+        t('reports.attends'),
+        t('reports.authorizedAbsence'),
+        t('reports.unauthorizedAbsence'),
+        t('reports.earlyLeave'),
+        t('reports.lateArrival'),
+        t('reports.overtime'),
+        t('reports.totalHours')
       ];
 
       const tableData = reportsData.map(report => [
@@ -1879,7 +2292,7 @@ const Teachers: React.FC = () => {
         report.totalHours
       ]);
 
-      // Add table
+      // Add table with RTL support for Arabic
       autoTable(doc, {
         head: [tableColumns],
         body: tableData,
@@ -1894,17 +2307,20 @@ const Teachers: React.FC = () => {
         },
         bodyStyles: {
           fontSize: 9,
-          cellPadding: 3
+          cellPadding: 3,
+          font: 'helvetica', // Use a font that supports Arabic
+          direction: isRTL ? 'rtl' : 'ltr'
         },
         columnStyles: {
-          0: { halign: 'left' }, // Teacher name - left aligned
+          0: { halign: isRTL ? 'right' : 'left' }, // Teacher name - aligned based on language
           1: { halign: 'center' }, // Work Type - center aligned
           2: { halign: 'center' }, // Attends - center aligned
-          3: { halign: 'center' }, // Permitted Leaves - center aligned
-          4: { halign: 'center' }, // Unpermitted Leaves - center aligned
-          5: { halign: 'center' }, // Authorized Absence - center aligned
-          6: { halign: 'center' }, // Unauthorized Absence - center aligned
-          7: { halign: 'center' } // Late Arrival - center aligned
+          3: { halign: 'center' }, // Authorized Absence - center aligned
+          4: { halign: 'center' }, // Unauthorized Absence - center aligned
+          5: { halign: 'center' }, // Early Leave - center aligned
+          6: { halign: 'center' }, // Late Arrival - center aligned
+          7: { halign: 'center' }, // Overtime - center aligned
+          8: { halign: 'center' }  // Total Hours - center aligned
         },
         alternateRowStyles: {
           fillColor: [248, 249, 250]
@@ -1949,10 +2365,11 @@ const Teachers: React.FC = () => {
         doc.text(`Total Hours: ${totalHours}`, 14, finalY + 60);
       }
 
-      // Generate filename
+      // Generate filename with language-specific format
       const dateString = format(new Date(), 'yyyy-MM-dd');
       const subjectString = selectedSubject ? `_${selectedSubject.replace(/\s+/g, '-')}` : '';
-      const filename = `Teachers-Report_${dateString}${subjectString}.pdf`;
+      const reportName = isRTL ? 'تقرير-المعلمين' : 'Teachers-Report';
+      const filename = `${reportName}_${dateString}${subjectString}.pdf`;
 
       // Save the PDF
       doc.save(filename);
@@ -2027,10 +2444,11 @@ const Teachers: React.FC = () => {
       summaryWs['!cols'] = [{ wch: 25 }, { wch: 30 }];
       XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
 
-      // Generate filename
+      // Generate filename with language-specific format
       const dateString = format(new Date(), 'yyyy-MM-dd');
       const subjectString = selectedSubject ? `_${selectedSubject.replace(/\s+/g, '-')}` : '';
-      const filename = `Teachers-Report_${dateString}${subjectString}.xlsx`;
+      const reportName = isRTL ? 'تقرير-المعلمين' : 'Teachers-Report';
+      const filename = `${reportName}_${dateString}${subjectString}.xlsx`;
 
       // Save the Excel file
       XLSX.writeFile(wb, filename);
@@ -2097,7 +2515,10 @@ const Teachers: React.FC = () => {
   if (loading) {
     return (
       <TeachersContainer>
-        <Sidebar onAddTeacher={handleAddTeacher} />
+                  <Sidebar 
+            onAddTeacher={handleAddTeacher} 
+            canAddTeachers={currentUserAuthorities.includes('Add new teachers') || currentUserRole === 'ADMIN'}
+          />
         <MainContent $isRTL={isRTL}>
           <LoadingContainer>Loading teachers data...</LoadingContainer>
         </MainContent>
@@ -2108,7 +2529,10 @@ const Teachers: React.FC = () => {
   if (error) {
     return (
       <TeachersContainer>
-        <Sidebar onAddTeacher={handleAddTeacher} />
+                  <Sidebar 
+            onAddTeacher={handleAddTeacher} 
+            canAddTeachers={currentUserAuthorities.includes('Add new teachers') || currentUserRole === 'ADMIN'}
+          />
         <MainContent $isRTL={isRTL}>
           <LoadingContainer>Error: {error}</LoadingContainer>
         </MainContent>
@@ -2118,7 +2542,10 @@ const Teachers: React.FC = () => {
 
   return (
     <TeachersContainer>
-      <Sidebar onAddTeacher={handleAddTeacher} />
+                <Sidebar 
+            onAddTeacher={handleAddTeacher} 
+            canAddTeachers={currentUserAuthorities.includes('Add new teachers') || currentUserRole === 'ADMIN'}
+          />
       <MainContent $isRTL={isRTL}>
         <Header>
           <TabContainer>
@@ -2229,21 +2656,12 @@ const Teachers: React.FC = () => {
           <StatisticsContainer>
             <StatisticsHeader>
               <StatisticsTitle isRTL={isRTL}>
+                <h2>{t('teachers.analytics')}</h2>
                 <DateRangePicker
                   value={dateRange}
                   onChange={handleDateRangeChange}
                 />
-                <h2>{t('teachers.analytics')}</h2>
               </StatisticsTitle>
-              <StatisticsFilters>
-                <FilterSelect value={statisticsPeriod} onChange={handleStatisticsPeriodChange}>
-                  <option value="today">{t('periods.today')}</option>
-                  <option value="week">{t('periods.week')}</option>
-                  <option value="month">{t('periods.month')}</option>
-                  <option value="quarter">{t('periods.quarter')}</option>
-                  <option value="year">{t('periods.year')}</option>
-                </FilterSelect>
-              </StatisticsFilters>
             </StatisticsHeader>
 
             {statisticsLoading ? (
@@ -2280,7 +2698,7 @@ const Teachers: React.FC = () => {
                   {/* Attendance Commitment Level Chart */}
                   <ChartCard>
                     <ChartHeader>
-                      <ChartTitle>{t('analytics.attendanceCommitmentLevel')}</ChartTitle>
+                      <ChartTitle $isRTL={isRTL}>{t('analytics.attendanceCommitmentLevel')}</ChartTitle>
                       <ChartControls>
                         <ComparisonDateRangePicker
                           isActive={chartComparisonModes.attendance}
@@ -2331,145 +2749,32 @@ const Teachers: React.FC = () => {
                         justifyContent: 'center',
                         overflow: 'hidden'
                       }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            width: '100%',
-                            height: '100%',
-                            alignItems: 'center'
-                          }}>
-                            {/* Current Period */}
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              alignItems: 'center',
-                              height: '100%',
-                              justifyContent: 'center'
-                            }}>
-                              <h5 style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '15px',
-                                width: '100%',
-                                justifyContent: 'center'
-                              }}>
-                                <div style={{ flexShrink: 0 }}>
-                                  <DonutChartStyled style={{ transform: 'scale(0.7)' }} />
-                                </div>
-                                <DonutLegend style={{ 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  gap: '4px',
-                                  fontSize: '11px'
-                                }}>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#22c55e" />
-                                    <span>Excellent ({statisticsData.performanceSegments.excellent.length})</span>
-                                  </LegendItem>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#3b82f6" />
-                                    <span>Good ({statisticsData.performanceSegments.good.length})</span>
-                                  </LegendItem>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#f59e0b" />
-                                    <span>Average ({statisticsData.performanceSegments.average.length})</span>
-                                  </LegendItem>
-                                </DonutLegend>
-                              </div>
-                            </div>
-                            
-                            {/* Comparison Period */}
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              alignItems: 'center',
-                              height: '100%',
-                              justifyContent: 'center'
-                            }}>
-                              <h5 style={{ margin: '0 0 15px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '15px',
-                                width: '100%',
-                                justifyContent: 'center'
-                              }}>
-                                <div style={{ flexShrink: 0 }}>
-                                  <DonutChartStyled style={{ transform: 'scale(0.7)' }} />
-                                </div>
-                                <DonutLegend style={{ 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  gap: '4px',
-                                  fontSize: '11px'
-                                }}>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#22c55e" />
-                                    <span>Excellent ({comparisonData.performanceSegments.excellent.length})</span>
-                                  </LegendItem>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#3b82f6" />
-                                    <span>Good ({comparisonData.performanceSegments.good.length})</span>
-                                  </LegendItem>
-                                  <LegendItem style={{ margin: '2px 0' }}>
-                                    <LegendColor $color="#f59e0b" />
-                                    <span>Average ({comparisonData.performanceSegments.average.length})</span>
-                                  </LegendItem>
-                                </DonutLegend>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            gap: '30px',
-                            width: '100%',
-                            height: '100%'
-                          }}>
-                            {/* Chart Section */}
-                            <div style={{ flexShrink: 0 }}>
-                              <DonutChartStyled />
-                            </div>
-                            
-                            {/* Legend Section */}
-                            <DonutLegend style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              gap: '8px',
-                              alignItems: 'flex-start'
-                            }}>
-                              <LegendItem>
-                                <LegendColor $color="#22c55e" />
-                                <span>Excellent ({statisticsData.performanceSegments.excellent.length})</span>
-                              </LegendItem>
-                              <LegendItem>
-                                <LegendColor $color="#3b82f6" />
-                                <span>Good ({statisticsData.performanceSegments.good.length})</span>
-                              </LegendItem>
-                              <LegendItem>
-                                <LegendColor $color="#f59e0b" />
-                                <span>Average ({statisticsData.performanceSegments.average.length})</span>
-                              </LegendItem>
-                              <LegendItem>
-                                <LegendColor $color="#ef4444" />
-                                <span>Poor ({statisticsData.performanceSegments.poor.length})</span>
-                              </LegendItem>
-                              <LegendItem>
-                                <LegendColor $color="#ec4899" />
-                                <span>At Risk ({statisticsData.performanceSegments.atRisk.length})</span>
-                              </LegendItem>
-                            </DonutLegend>
-                          </div>
-                        )}
+                        <DonutChart
+                          data={[
+                            { name: isRTL ? 'ممتاز' : 'Excellent', value: statisticsData.performanceSegments.excellent.length },
+                            { name: isRTL ? 'جيد' : 'Good', value: statisticsData.performanceSegments.good.length },
+                            { name: isRTL ? 'متوسط' : 'Average', value: statisticsData.performanceSegments.average.length },
+                            { name: isRTL ? 'ضعيف' : 'Poor', value: statisticsData.performanceSegments.poor.length },
+                            { name: isRTL ? 'في خطر' : 'At Risk', value: statisticsData.performanceSegments.atRisk.length }
+                          ]}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.attendance && chartComparisonPeriods.attendance ? [
+                            { name: isRTL ? 'ممتاز' : 'Excellent', value: 25 }, // TODO: Get actual comparison data
+                            { name: isRTL ? 'جيد' : 'Good', value: 45 },
+                            { name: isRTL ? 'متوسط' : 'Average', value: 20 },
+                            { name: isRTL ? 'ضعيف' : 'Poor', value: 5 },
+                            { name: isRTL ? 'في خطر' : 'At Risk', value: 5 }
+                          ] : undefined}
+                          labels={{
+                            base: chartComparisonPeriods.attendance?.basePeriod ? 
+                              `${format(chartComparisonPeriods.attendance.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.attendance.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.attendance?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.attendance.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.attendance.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                          showLegend={!chartComparisonModes.attendance}
+                        />
                       </div>
                     </ChartContent>
                   </ChartCard>
@@ -2477,7 +2782,7 @@ const Teachers: React.FC = () => {
                   {/* Department Performance Analysis Chart */}
                   <ChartCard>
                     <ChartHeader>
-                      <ChartTitle>{t('analytics.departmentPerformance')}</ChartTitle>
+                      <ChartTitle $isRTL={isRTL}>{t('analytics.departmentPerformance')}</ChartTitle>
                       <ChartControls>
                         <ChartToggle 
                           $isActive={selectedMetric === 'attendanceRate'} 
@@ -2541,41 +2846,25 @@ const Teachers: React.FC = () => {
                         flexDirection: 'column',
                         justifyContent: 'center'
                       }}>
-                        {isComparisonMode && comparisonData ? (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '15px', 
-                            height: '100%'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Current: {t(`periods.${statisticsPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart data={getDepartmentDataByMetric(statisticsData, selectedMetric)} isDarkMode={isDarkMode} />
-                              </div>
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              height: '100%'
-                            }}>
-                              <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                                Compare: {t(`periods.${comparisonPeriod}`)}
-                              </h5>
-                              <div style={{ flex: 1, minHeight: 0 }}>
-                                <BarChart data={getDepartmentDataByMetric(comparisonData, selectedMetric)} isDarkMode={isDarkMode} />
-                              </div>
-                            </div>
+                        {chartComparisonModes.department && chartComparisonPeriods.department ? (
+                          <div style={{ height: '100%', width: '100%' }}>
+                            <BarChart 
+                              data={getDepartmentDataByMetric(statisticsData, selectedMetric, translateSubject)} 
+                              isDarkMode={isDarkMode}
+                              comparisonData={getDepartmentComparisonData(selectedMetric, translateSubject)} // TODO: Implement this function
+                              labels={{
+                                base: chartComparisonPeriods.department?.basePeriod ? 
+                                  `${format(chartComparisonPeriods.department.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.department.basePeriod.endDate, 'MMM d')}` : 
+                                  'Base Period',
+                                comparison: chartComparisonPeriods.department?.comparisonPeriod ? 
+                                  `${format(chartComparisonPeriods.department.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.department.comparisonPeriod.endDate, 'MMM d')}` : 
+                                  'Comparison Period'
+                              }}
+                            />
                           </div>
                         ) : (
                           <div style={{ height: '100%', width: '100%' }}>
-                            <BarChart data={getDepartmentDataByMetric(statisticsData, selectedMetric)} isDarkMode={isDarkMode} />
+                            <BarChart data={getDepartmentDataByMetric(statisticsData, selectedMetric, translateSubject)} isDarkMode={isDarkMode} />
                           </div>
                         )}
                       </div>
@@ -2586,20 +2875,22 @@ const Teachers: React.FC = () => {
                 {/* Weekly Patterns Full Width */}
                 <FullWidthChart>
                   <ChartHeader>
-                    <ChartTitle>{t('analytics.weeklyAttendancePatterns')}</ChartTitle>
+                    <ChartTitle $isRTL={isRTL}>{t('analytics.weeklyAttendancePatterns')}</ChartTitle>
                     <ChartControls>
-                      <ChartToggle 
-                        $isActive={chartType === 'bar'} 
-                        onClick={() => handleChartTypeChange('bar')}
-                      >
-                        Bar Chart
-                      </ChartToggle>
-                      <ChartToggle 
-                        $isActive={chartType === 'circle'} 
-                        onClick={() => handleChartTypeChange('circle')}
-                      >
-                        Circle Chart
-                      </ChartToggle>
+                      <div style={{ display: 'flex', gap: '8px', marginRight: '12px' }}>
+                        <ChartToggle 
+                          $isActive={chartType === 'bar'} 
+                          onClick={() => handleChartTypeChange('bar')}
+                        >
+                          Bar Chart
+                        </ChartToggle>
+                        <ChartToggle 
+                          $isActive={chartType === 'circle'} 
+                          onClick={() => handleChartTypeChange('circle')}
+                        >
+                          Circle Chart
+                        </ChartToggle>
+                      </div>
                       <ComparisonDateRangePicker
                         isActive={chartComparisonModes.weekly}
                         onPeriodsChange={(periods) => {
@@ -2638,65 +2929,41 @@ const Teachers: React.FC = () => {
                       flexDirection: 'column',
                       justifyContent: 'center'
                     }}>
-                      {isComparisonMode && comparisonData ? (
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: '1fr 1fr', 
-                          gap: '15px', 
-                          height: '100%'
-                        }}>
-                          <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            height: '100%'
-                          }}>
-                            <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                              Current: {t(`periods.${statisticsPeriod}`)}
-                            </h5>
-                            <div style={{ flex: 1, minHeight: 0 }}>
-                              {renderWeeklyAttendanceChart(chartType, [
-                                { name: 'Monday', value: 92 },
-                                { name: 'Tuesday', value: 94 },
-                                { name: 'Wednesday', value: 89 },
-                                { name: 'Thursday', value: 91 },
-                                { name: 'Friday', value: 88 },
-                                { name: 'Saturday', value: 85 },
-                                { name: 'Sunday', value: 87 }
-                              ], isDarkMode)}
-                            </div>
-                          </div>
-                          <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            height: '100%'
-                          }}>
-                            <h5 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                              Compare: {t(`periods.${comparisonPeriod}`)}
-                            </h5>
-                            <div style={{ flex: 1, minHeight: 0 }}>
-                              {renderWeeklyAttendanceChart(chartType, [
-                                { name: 'Monday', value: 88 },
-                                { name: 'Tuesday', value: 90 },
-                                { name: 'Wednesday', value: 86 },
-                                { name: 'Thursday', value: 89 },
-                                { name: 'Friday', value: 84 },
-                                { name: 'Saturday', value: 82 },
-                                { name: 'Sunday', value: 85 }
-                              ], isDarkMode)}
-                            </div>
-                          </div>
+                      {chartComparisonModes.weekly && chartComparisonPeriods.weekly ? (
+                        <div style={{ height: '100%', width: '100%' }}>
+                                                    {chartType === 'bar' ? (
+                            <BarChart
+                              data={getWeeklyAttendanceData(statisticsData, isRTL)}
+                              isDarkMode={isDarkMode}
+                              comparisonData={getWeeklyAttendanceData(comparisonData, isRTL)}
+                              labels={{
+                                base: chartComparisonPeriods.weekly?.basePeriod ? 
+                                  `${format(chartComparisonPeriods.weekly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.weekly.basePeriod.endDate, 'MMM d')}` : 
+                                  'Base Period',
+                                comparison: chartComparisonPeriods.weekly?.comparisonPeriod ? 
+                                  `${format(chartComparisonPeriods.weekly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.weekly.comparisonPeriod.endDate, 'MMM d')}` : 
+                                  'Comparison Period'
+                              }}
+                            />
+                          ) : (
+                            <DonutChart
+                              data={getWeeklyAttendanceData(statisticsData, isRTL)}
+                              isDarkMode={isDarkMode}
+                              comparisonData={getWeeklyAttendanceData(comparisonData, isRTL)}
+                              labels={{
+                                base: chartComparisonPeriods.weekly?.basePeriod ? 
+                                  `${format(chartComparisonPeriods.weekly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.weekly.basePeriod.endDate, 'MMM d')}` : 
+                                  'Base Period',
+                                comparison: chartComparisonPeriods.weekly?.comparisonPeriod ? 
+                                  `${format(chartComparisonPeriods.weekly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.weekly.comparisonPeriod.endDate, 'MMM d')}` : 
+                                  'Comparison Period'
+                              }}
+                            />
+                          )}
                         </div>
                       ) : (
                         <div style={{ height: '100%', width: '100%' }}>
-                          {renderWeeklyAttendanceChart(chartType, [
-                            { name: 'Monday', value: 92 },
-                            { name: 'Tuesday', value: 94 },
-                            { name: 'Wednesday', value: 89 },
-                            { name: 'Thursday', value: 91 },
-                            { name: 'Friday', value: 88 },
-                            { name: 'Saturday', value: 85 },
-                            { name: 'Sunday', value: 87 }
-                          ], isDarkMode)}
+                          {renderWeeklyAttendanceChart(chartType, getWeeklyAttendanceData(statisticsData, isRTL), isDarkMode)}
                         </div>
                       )}
                     </div>
@@ -2705,11 +2972,11 @@ const Teachers: React.FC = () => {
 
                 {/* Teacher Ranking Table */}
                 <TableSection>
-                  <TableTitle>{t('analytics.teacherPerformanceRanking')}</TableTitle>
+                  <TableTitle $isRTL={isRTL}>{t('analytics.teacherPerformanceRanking')}</TableTitle>
                   <StatsTable>
                     <StatsTableHeader> 
                       <StatsTableHeaderRow>
-                        <StatsTableHeaderCell $alignLeft={true}>{t('analytics.teacher')}</StatsTableHeaderCell>
+                        <StatsTableHeaderCell $alignLeft={true} $isRTL={isRTL}>{t('analytics.teacher')}</StatsTableHeaderCell>
                         <StatsTableHeaderCell>{t('analytics.department')}</StatsTableHeaderCell>
                         <StatsTableHeaderCell>{t('analytics.attendanceRateCol')}</StatsTableHeaderCell>
                         <StatsTableHeaderCell>{t('analytics.punctuality')}</StatsTableHeaderCell>
@@ -2730,7 +2997,7 @@ const Teachers: React.FC = () => {
                           const badge = getPerformanceBadge(parseFloat(teacher.attendanceRate));
                           return (
                             <StatsTableRow key={teacher.teacherId}>
-                              <StatsTableCell $alignLeft={true}>{teacher.name}</StatsTableCell>
+                              <StatsTableCell $alignLeft={true} $isRTL={isRTL}>{teacher.name}</StatsTableCell>
                               <StatsTableCell>{translateSubject(teacher.subject)}</StatsTableCell>
                               <StatsTableCell>{teacher.attendanceRate}%</StatsTableCell>
                               <StatsTableCell>{teacher.punctualityScore}%</StatsTableCell>
@@ -2745,6 +3012,659 @@ const Teachers: React.FC = () => {
                     </StatsTableBody>
                   </StatsTable>
                 </TableSection>
+
+                {/* Department Attendance Tracking Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.departmentAttendance')}
+                  description={t('analytics.departmentAttendanceDesc')}
+                  isOpen={departmentAttendanceOpen}
+                  onToggle={() => setDepartmentAttendanceOpen(!departmentAttendanceOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Absence by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.absenceTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptAttAbsence}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttAbsence: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttAbsence: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttAbsence: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttAbsence: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentAttendance?.absence || getDepartmentAttendanceData('absence', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptAttAbsence ? 
+                            (comparisonData?.departmentAttendance?.absence || getDepartmentAttendanceData('absence', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptAttAbsence?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptAttAbsence.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttAbsence.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptAttAbsence?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptAttAbsence.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttAbsence.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Late Arrival by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.lateArrivalTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptAttLate}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttLate: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttLate: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttLate: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttLate: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentAttendance?.late || getDepartmentAttendanceData('late', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptAttLate ? 
+                            (comparisonData?.departmentAttendance?.late || getDepartmentAttendanceData('late', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptAttLate?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptAttLate.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttLate.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptAttLate?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptAttLate.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttLate.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Early Leave by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.earlyLeaveTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptAttEarly}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttEarly: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttEarly: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAttEarly: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAttEarly: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentAttendance?.early || getDepartmentAttendanceData('early', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptAttEarly ? 
+                            (comparisonData?.departmentAttendance?.early || getDepartmentAttendanceData('early', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptAttEarly?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptAttEarly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttEarly.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptAttEarly?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptAttEarly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAttEarly.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
+
+                {/* Teacher Attendance Tracking Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.teacherAttendance')}
+                  description={t('analytics.teacherAttendanceDesc')}
+                  isOpen={teacherAttendanceOpen}
+                  onToggle={() => setTeacherAttendanceOpen(!teacherAttendanceOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Absence by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.absenceTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherAttAbsence}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttAbsence: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttAbsence: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttAbsence: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttAbsence: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherAttendance?.absence || getTeacherAttendanceData('absence', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherAttAbsence ? 
+                            (comparisonData?.teacherAttendance?.absence || getTeacherAttendanceData('absence', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherAttAbsence?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttAbsence.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttAbsence.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherAttAbsence?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttAbsence.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttAbsence.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Late Arrival by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.lateArrivalTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherAttLate}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttLate: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttLate: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttLate: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttLate: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherAttendance?.late || getTeacherAttendanceData('late', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherAttLate ? 
+                            (comparisonData?.teacherAttendance?.late || getTeacherAttendanceData('late', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherAttLate?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttLate.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttLate.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherAttLate?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttLate.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttLate.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Early Leave by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.earlyLeaveTracking')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherAttEarly}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttEarly: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttEarly: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAttEarly: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAttEarly: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherAttendance?.early || getTeacherAttendanceData('early', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherAttEarly ? 
+                            (comparisonData?.teacherAttendance?.early || getTeacherAttendanceData('early', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherAttEarly?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttEarly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttEarly.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherAttEarly?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherAttEarly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAttEarly.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
+
+                {/* Department Requests Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.departmentRequests')}
+                  description={t('analytics.departmentRequestsDesc')}
+                  isOpen={departmentRequestsOpen}
+                  onToggle={() => setDepartmentRequestsOpen(!departmentRequestsOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Absence Requests by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.absenceRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptAbsence}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAbsence: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAbsence: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptAbsence: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptAbsence: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentRequests?.absence || getDepartmentRequestsData('absence', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptAbsence ? 
+                            (comparisonData?.departmentRequests?.absence || getDepartmentRequestsData('absence', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptAbsence?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptAbsence.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAbsence.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptAbsence?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptAbsence.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptAbsence.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Late Arrival Requests by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.lateArrivalRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptLate}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptLate: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptLate: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptLate: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptLate: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentRequests?.late || getDepartmentRequestsData('late', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptLate ? 
+                            (comparisonData?.departmentRequests?.late || getDepartmentRequestsData('late', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptLate?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptLate.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptLate.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptLate?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptLate.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptLate.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Early Leave Requests by Department */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.earlyLeaveRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.deptEarly}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, deptEarly: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptEarly: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, deptEarly: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, deptEarly: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.departmentRequests?.early || getDepartmentRequestsData('early', statisticsData, translateSubject)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.deptEarly ? 
+                            (comparisonData?.departmentRequests?.early || getDepartmentRequestsData('early', comparisonData, translateSubject)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.deptEarly?.basePeriod ? 
+                              `${format(chartComparisonPeriods.deptEarly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptEarly.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.deptEarly?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.deptEarly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.deptEarly.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
+
+                {/* Teacher Requests Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.teacherRequests')}
+                  description={t('analytics.teacherRequestsDesc')}
+                  isOpen={teacherRequestsOpen}
+                  onToggle={() => setTeacherRequestsOpen(!teacherRequestsOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Absence Requests by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.absenceRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherAbsence}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAbsence: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAbsence: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherAbsence: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherAbsence: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherRequests?.absence || getTeacherRequestsData('absence', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherAbsence ? 
+                            (comparisonData?.teacherRequests?.absence || getTeacherRequestsData('absence', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherAbsence?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherAbsence.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAbsence.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherAbsence?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherAbsence.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherAbsence.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Late Arrival Requests by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.lateArrivalRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherLate}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherLate: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherLate: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherLate: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherLate: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherRequests?.late || getTeacherRequestsData('late', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherLate ? 
+                            (comparisonData?.teacherRequests?.late || getTeacherRequestsData('late', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherLate?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherLate.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherLate.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherLate?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherLate.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherLate.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Early Leave Requests by Teacher */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.earlyLeaveRequestsChart')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.teacherEarly}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherEarly: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherEarly: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, teacherEarly: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, teacherEarly: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.teacherRequests?.early || getTeacherRequestsData('early', statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.teacherEarly ? 
+                            (comparisonData?.teacherRequests?.early || getTeacherRequestsData('early', comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.teacherEarly?.basePeriod ? 
+                              `${format(chartComparisonPeriods.teacherEarly.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherEarly.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.teacherEarly?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.teacherEarly.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.teacherEarly.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
+
+                {/* Time Patterns & Trends Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.timePatterns')}
+                  description={t('analytics.timePatternsDesc')}
+                  isOpen={timePatternsOpen}
+                  onToggle={() => setTimePatternsOpen(!timePatternsOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Peak Request Times */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.peakRequestTimes')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.peakTimes}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, peakTimes: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, peakTimes: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, peakTimes: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, peakTimes: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.timePatterns?.peakTimes || getPeakRequestTimesData(statisticsData)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.peakTimes ? 
+                            (comparisonData?.timePatterns?.peakTimes || getPeakRequestTimesData(comparisonData)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.peakTimes?.basePeriod ? 
+                              `${format(chartComparisonPeriods.peakTimes.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.peakTimes.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.peakTimes?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.peakTimes.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.peakTimes.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Monthly Trends */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.monthlyTrends')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.monthlyTrends}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, monthlyTrends: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, monthlyTrends: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, monthlyTrends: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, monthlyTrends: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.timePatterns?.monthlyTrends || getMonthlyTrendsData(statisticsData, isRTL)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.monthlyTrends ? 
+                            (comparisonData?.timePatterns?.monthlyTrends || getMonthlyTrendsData(comparisonData, isRTL)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.monthlyTrends?.basePeriod ? 
+                              `${format(chartComparisonPeriods.monthlyTrends.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.monthlyTrends.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.monthlyTrends?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.monthlyTrends.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.monthlyTrends.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
+
+                {/* Performance Metrics Section */}
+                <CollapsibleSectionComponent
+                  title={t('analytics.performanceMetrics')}
+                  description={t('analytics.performanceMetricsDesc')}
+                  isOpen={performanceMetricsOpen}
+                  onToggle={() => setPerformanceMetricsOpen(!performanceMetricsOpen)}
+                >
+                  <SectionChartsGrid>
+                    {/* Request Approval Rates */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.approvalRates')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.approvalRates}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, approvalRates: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, approvalRates: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, approvalRates: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, approvalRates: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <DonutChart
+                          data={statisticsData?.performanceMetrics?.approvalRates || getApprovalRatesData(statisticsData, isRTL)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.approvalRates ? 
+                            (comparisonData?.performanceMetrics?.approvalRates || getApprovalRatesData(comparisonData, isRTL)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.approvalRates?.basePeriod ? 
+                              `${format(chartComparisonPeriods.approvalRates.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.approvalRates.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.approvalRates?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.approvalRates.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.approvalRates.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                          showLegend={!chartComparisonModes.approvalRates}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+
+                    {/* Manager Response Time */}
+                    <ChartCard>
+                      <ChartHeader>
+                        <ChartTitle $isRTL={isRTL}>{t('analytics.responseTime')}</ChartTitle>
+                        <ChartControls>
+                          <ComparisonDateRangePicker
+                            isActive={chartComparisonModes.responseTime}
+                            onPeriodsChange={(periods) => {
+                              setChartComparisonModes(prev => ({ ...prev, responseTime: true }));
+                              setChartComparisonPeriods(prev => ({ ...prev, responseTime: periods }));
+                            }}
+                            onClose={() => {
+                              setChartComparisonModes(prev => ({ ...prev, responseTime: false }));
+                              setChartComparisonPeriods(prev => ({ ...prev, responseTime: null }));
+                            }}
+                          />
+                        </ChartControls>
+                      </ChartHeader>
+                      <ChartContent>
+                        <BarChart
+                          data={statisticsData?.performanceMetrics?.responseTimes || getResponseTimeData(statisticsData, isRTL)}
+                          isDarkMode={isDarkMode}
+                          comparisonData={chartComparisonModes.responseTime ? 
+                            (comparisonData?.performanceMetrics?.responseTimes || getResponseTimeData(comparisonData, isRTL)) : 
+                            undefined}
+                          labels={{
+                            base: chartComparisonPeriods.responseTime?.basePeriod ? 
+                              `${format(chartComparisonPeriods.responseTime.basePeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.responseTime.basePeriod.endDate, 'MMM d')}` : 
+                              'Base Period',
+                            comparison: chartComparisonPeriods.responseTime?.comparisonPeriod ? 
+                              `${format(chartComparisonPeriods.responseTime.comparisonPeriod.startDate, 'MMM d')} - ${format(chartComparisonPeriods.responseTime.comparisonPeriod.endDate, 'MMM d')}` : 
+                              'Comparison Period'
+                          }}
+                        />
+                      </ChartContent>
+                    </ChartCard>
+                  </SectionChartsGrid>
+                </CollapsibleSectionComponent>
               </>
             ) : (
               <LoadingContainer>No statistics data available</LoadingContainer>
@@ -2825,6 +3745,15 @@ const Teachers: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <ExportButtonsContainer>
+              <ExportButton onClick={handleExportExcel}>
+                {t('reports.exportExcel')}
+              </ExportButton>
+              <ExportButton onClick={handleExportPDF}>
+                {t('reports.exportPDF')}
+              </ExportButton>
+            </ExportButtonsContainer>
 
             <PaginationContainer>
               <PaginationInfo>

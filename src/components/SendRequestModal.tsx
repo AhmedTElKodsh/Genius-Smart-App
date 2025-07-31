@@ -560,6 +560,8 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
   const [showReasonError, setShowReasonError] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [showWeekendWarning, setShowWeekendWarning] = useState(false);
+  const [showPastDateError, setShowPastDateError] = useState(false);
+  const [showSameDayAfter1PMError, setShowSameDayAfter1PMError] = useState(false);
   
   // Hour tracking for Late Arrival and Early Leave
   const [selectedHours, setSelectedHours] = useState<number>(0); // Start with 0 to show no preview initially
@@ -610,6 +612,7 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
     setSelectedType(type);
     // All types are now one day only
     setDuration('oneDay');
+    setFromDate(''); // Clear from date when switching types
     setToDate(''); // Clear to date since it's not needed
     
     // Reset hour selection when switching request types
@@ -636,6 +639,9 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
     setShowDateWarning(false);
     setShowEmploymentError(false);
     setShowHourError(false);
+    setShowPastDateError(false);
+    setShowSameDayAfter1PMError(false);
+    setShowWeekendWarning(false);
     
     // Reset hour selection
     setSelectedHours(0);
@@ -686,17 +692,39 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
 
   // Function to handle date validation and show warning if needed
   const handleDateChange = (date: string, isFromDate: boolean = true) => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    const now = new Date();
+    
+    // Reset time to start of day for date comparison
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    // Check if the date is in the past
+    if (selectedDate < today) {
+      setShowPastDateError(true);
+      setTimeout(() => setShowPastDateError(false), 4000);
+      return;
+    }
+    
     // Check if the date is an Egyptian weekend
     if (isEgyptianWeekend(date)) {
       setShowWeekendWarning(true);
-      // Auto-hide warning after 4 seconds
       setTimeout(() => setShowWeekendWarning(false), 4000);
+      return;
+    }
+    
+    // Check if it's same day after 1 PM for Late Arrival/Early Leave
+    if ((selectedType === 'lateArrival' || selectedType === 'earlyLeave') && 
+        selectedDate.getTime() === today.getTime() && 
+        now.getHours() >= 13) {
+      setShowSameDayAfter1PMError(true);
+      setTimeout(() => setShowSameDayAfter1PMError(false), 4000);
       return;
     }
 
     if (!isValidDate(date, selectedType)) {
       setShowDateWarning(true);
-      // Auto-hide warning after 4 seconds
       setTimeout(() => setShowDateWarning(false), 4000);
       return;
     }
@@ -1320,6 +1348,24 @@ const SendRequestModal: React.FC<SendRequestModalProps> = ({
           ? 'لا يمكن تقديم طلبات للأيام عطلة نهاية الأسبوع (الجمعة والسبت)'
           : 'Cannot submit requests for weekend days (Friday and Saturday)'
         }
+      </WarningModal>
+
+      {/* Past Date Error */}
+      <WarningModal
+        isVisible={showPastDateError}
+        isDarkMode={isDarkMode}
+        isRTL={isRTL}
+      >
+        {t.pastDateError}
+      </WarningModal>
+
+      {/* Same Day After 1 PM Error */}
+      <WarningModal
+        isVisible={showSameDayAfter1PMError}
+        isDarkMode={isDarkMode}
+        isRTL={isRTL}
+      >
+        {t.sameDayAfter1PM}
       </WarningModal>
 
       {/* Success Modal */}
