@@ -1,282 +1,220 @@
-# Genius Smart Attendance App
+# Genius Smart Attendance Management System
 
-A modern, responsive web-based attendance management system designed for educational institutions. This application provides secure authentication and management capabilities for both managers (administrators) and teachers.
+A comprehensive attendance management system for educational institutions with separate frontend and backend deployments.
 
-## 🌟 Features
+## Project Structure
 
-### Manager/Admin Features
-- **Role Selection Interface** - Clean landing page for choosing user role
-- **Secure Authentication** - Email/password login with validation
-- **Password Recovery** - Multi-step OTP-based password reset
-- **Responsive Design** - Optimized for desktop, tablet, and mobile devices
-- **Professional UI** - Modern design with educational institution branding
+```
+Genius-Smart-App/
+├── frontend/                 # React.js frontend application
+│   ├── src/                 # Source code
+│   ├── public/              # Static assets
+│   ├── package.json         # Frontend dependencies
+│   └── vite.config.ts       # Vite configuration
+├── backend/                 # Node.js/Express backend
+│   ├── server/              # Server code
+│   │   ├── routes/          # API routes
+│   │   ├── middleware/      # Express middleware
+│   │   ├── utils/           # Utility functions
+│   │   ├── data/            # JSON data files
+│   │   └── server.js        # Main server file
+│   ├── resources/           # Shared resources
+│   └── package.json         # Backend dependencies
+└── README.md               # This file
+```
 
-### Security Features
-- Form validation and error handling
-- Input sanitization
-- Secure session management
-- CSRF protection ready
-- Accessibility compliance (WCAG 2.1 AA)
-
-## 🚀 Getting Started
+## Development Setup
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- npm or yarn package manager
+- npm or yarn
 
-### Installation
+### Frontend Development
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The frontend will be available at `http://localhost:5173`
 
-1. **Clone the repository**
+### Backend Development
+```bash
+cd backend
+npm install
+npm run dev
+```
+The backend will be available at `http://localhost:5000`
+
+## Environment Configuration
+
+### Frontend Environment Variables
+Create a `.env.local` file in the frontend directory:
+```bash
+# For production deployment, set your backend URL
+VITE_BACKEND_URL=https://your-backend-domain.com
+
+# Clerk Authentication (if using)
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+```
+
+### Backend Environment Variables
+Create a `.env` file in the backend directory:
+```bash
+PORT=5000
+NODE_ENV=production
+
+# Email configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+
+# JWT Secret
+JWT_SECRET=your-jwt-secret
+
+# Clerk (if using)
+CLERK_SECRET_KEY=your_clerk_secret_key
+```
+
+## Production Deployment
+
+### Option 1: Same Domain Deployment
+If deploying both frontend and backend on the same domain:
+
+1. **Build Frontend:**
    ```bash
-   git clone https://github.com/your-org/genius-smart-app.git
-   cd genius-smart-app
+   cd frontend
+   npm run build
    ```
 
-2. **Install dependencies**
+2. **Deploy Backend with Static Files:**
    ```bash
-   npm install
+   cd backend
+   npm install --production
    ```
 
-3. **Start the development server**
-   ```bash
-   npm run dev
+3. **Configure Backend to Serve Frontend:**
+   Add to your `backend/server/server.js`:
+   ```javascript
+   // Serve static files from frontend build
+   app.use(express.static(path.join(__dirname, '../../frontend/build')));
+   
+   // Handle React routing
+   app.get('*', (req, res) => {
+     res.sendFile(path.join(__dirname, '../../frontend/build/index.html'));
+   });
    ```
 
-4. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+### Option 2: Separate Domain Deployment
+For deploying frontend and backend on different domains:
 
-### Available Scripts
+1. **Deploy Frontend:**
+   ```bash
+   cd frontend
+   # Set VITE_BACKEND_URL in your environment
+   export VITE_BACKEND_URL=https://your-backend-api.com
+   npm run build
+   # Deploy the 'build' folder to your static hosting service
+   ```
 
+2. **Deploy Backend:**
+   ```bash
+   cd backend
+   npm install --production
+   npm start
+   ```
+
+3. **Configure CORS:**
+   Update `backend/server/server.js` CORS settings:
+   ```javascript
+   app.use(cors({
+     origin: ['https://your-frontend-domain.com'],
+     credentials: true
+   }));
+   ```
+
+## Available Scripts
+
+### Frontend
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
-- `npm test` - Run tests
-- `npm run test:ui` - Run tests with UI
+- `npm run test` - Run tests
 
-## 🎯 User Flows
+### Backend
+- `npm start` - Start production server
+- `npm run dev` - Start development server with nodemon
+- `npm run test` - Run tests
 
-### Manager Authentication Flow
-1. **Role Selection** (`/`) - Choose "Manager/Admin" role
-2. **Sign In** (`/manager/signin`) - Enter credentials
-3. **Dashboard** (future) - Access management features
+## Features
 
-### Password Reset Flow
-1. **Forgot Password** - Click from sign-in page
-2. **Email Entry** (`/manager/reset-password`) - Enter registered email
-3. **OTP Verification** - Enter 6-digit code (Demo: `123456`)
-4. **New Password** - Set new secure password
-5. **Success** - Return to sign-in
+### Manager Portal
+- Teacher management (add, edit, delete)
+- Attendance analytics and reporting
+- Request management and approval
+- Real-time dashboard with insights
+- Multi-language support (English/Arabic)
 
-## 🔧 Technology Stack
+### Teacher Portal
+- Attendance tracking with geolocation
+- Request submission (absence, late arrival, early leave)
+- Personal dashboard and history
+- Notification system
+- Mobile-responsive design
 
-### Frontend
-- **React 18** - Modern React with hooks
-- **TypeScript** - Type-safe development
-- **Styled Components** - CSS-in-JS styling
-- **React Router** - Client-side routing
-- **React Hook Form** - Form handling and validation
-- **Vite** - Fast build tool and development server
+### Technical Features
+- **Authentication:** Multi-role authentication system
+- **Real-time:** Live updates for requests and notifications
+- **Responsive:** Mobile-first design for teachers
+- **Multilingual:** RTL support for Arabic interface
+- **Analytics:** Comprehensive reporting and insights
+- **Security:** Role-based access control and data validation
 
-### Design System
-- **Color Palette**: 
-  - Primary: `#D6B10E` (Golden yellow)
-  - Secondary: `#E6D693` (Light beige)
-  - Background: `#F3F1E4` (Cream)
-- **Typography**: System fonts for optimal readability
-- **Responsive**: Mobile-first design approach
+## API Documentation
 
-## 📱 Responsive Design
+The backend provides RESTful APIs for:
+- Authentication (`/api/auth`)
+- Teacher management (`/api/teachers`)
+- Attendance tracking (`/api/attendance`)
+- Request management (`/api/requests`)
+- Analytics and reporting (`/api/analytics`)
+- System settings (`/api/settings`)
 
-The application is fully responsive and optimized for:
+## Database
 
-- **Desktop** (1024px+) - Full layout with side-by-side sections
-- **Tablet** (768px-1023px) - Adapted layout for touch interaction
-- **Mobile** (480px-767px) - Stacked layout, touch-friendly controls
-- **Small Mobile** (<480px) - Compact design, optimized for small screens
+The application uses JSON files for data storage:
+- `teachers.json` - Teacher profiles and credentials
+- `requests.json` - Absence and request records
+- `attendance.json` - Daily attendance records
+- `subjects.json` - Department/subject information
+- `holidays.json` - Holiday calendar
 
-### Mobile Features
-- Touch-friendly button sizes (44px minimum)
-- Prevents zoom on iOS devices
-- Landscape orientation support
-- Swipe-friendly navigation
+## Security Considerations
 
-## 🔐 Demo Credentials
+- All API endpoints require authentication
+- Role-based access control for different user types
+- Input validation and sanitization
+- CORS configuration for cross-origin requests
+- Secure password handling with bcrypt
 
-For testing purposes, the application includes demo functionality:
+## Browser Support
 
-### Manager Sign-in
-- **Email**: Any valid email format
-- **Password**: Any password (6+ characters)
-- **Note**: Currently accepts any credentials for demo purposes
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
 
-### Password Reset
-- **Demo OTP**: `123456`
-- **Email**: Any valid email address
-- **Timer**: 5 minutes (300 seconds)
-
-## 🏗️ Project Structure
-
-```
-src/
-├── components/          # Reusable UI components
-│   └── ResponsiveLayout.tsx
-├── pages/              # Page components
-│   ├── RoleSelection.tsx
-│   ├── ManagerSignin.tsx
-│   └── ResetPassword.tsx
-├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-├── types/              # TypeScript type definitions
-├── App.tsx             # Main application component
-├── index.tsx           # Application entry point
-└── index.css           # Global styles
-```
-
-## 🎨 Design Principles
-
-### User Experience
-- **Intuitive Navigation** - Clear, logical flow between pages
-- **Immediate Feedback** - Real-time validation and loading states
-- **Error Handling** - Helpful error messages and recovery options
-- **Accessibility** - Keyboard navigation and screen reader support
-
-### Visual Design
-- **Professional Appearance** - Suitable for educational institutions
-- **Consistent Branding** - Unified color scheme and typography
-- **Modern Interface** - Clean, minimalist design approach
-- **Visual Hierarchy** - Clear information organization
-
-## 🔮 Future Enhancements
-
-### Phase 1: Core Features
-- [ ] Backend API integration
-- [ ] Real authentication system
-- [ ] Email service for OTP delivery
-- [ ] User session management
-
-### Phase 2: Teacher Features
-- [ ] Teacher authentication flow
-- [ ] Attendance recording interface
-- [ ] Student management
-- [ ] Class schedule integration
-
-### Phase 3: Advanced Features
-- [ ] Manager dashboard
-- [ ] Attendance analytics
-- [ ] Report generation
-- [ ] User management interface
-- [ ] Bulk operations
-
-### Phase 4: Enterprise Features
-- [ ] Multi-institution support
-- [ ] Advanced reporting
-- [ ] API for integrations
-- [ ] Mobile app companion
-
-## 🧪 Testing
-
-The application includes comprehensive testing setup:
-
-- **Unit Tests** - Component-level testing
-- **Integration Tests** - User flow testing
-- **Accessibility Tests** - WCAG compliance verification
-- **Cross-browser Testing** - Modern browser compatibility
-
-### Running Tests
-```bash
-npm test              # Run all tests
-npm run test:ui       # Interactive test UI
-npm run test:coverage # Coverage report
-```
-
-## 🔒 Security Considerations
-
-### Current Implementation
-- Client-side form validation
-- Input sanitization
-- XSS protection through React
-- Secure routing
-
-### Production Requirements
-- HTTPS enforcement
-- JWT token authentication
-- Rate limiting
-- CSRF protection
-- SQL injection prevention
-- Password complexity requirements
-
-## 📊 Performance
-
-### Optimization Features
-- Code splitting with React.lazy
-- Image optimization
-- Bundle size optimization
-- Tree shaking
-- Modern browser targeting
-
-### Performance Metrics
-- **First Contentful Paint** < 1.5s
-- **Largest Contentful Paint** < 2.5s
-- **Cumulative Layout Shift** < 0.1
-- **Lighthouse Score** > 95
-
-## 🌐 Browser Support
-
-### Primary Support
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-### Secondary Support
-- Mobile browsers
-- Tablet browsers
-- Graceful degradation for older browsers
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📚 Documentation
-
-Comprehensive documentation is available in the `/docs` directory:
-
-- **[Documentation Index](docs/INDEX.md)** - Complete guide to all documentation
-- **Setup Guides** - `/docs/setup/`
-- **Feature Documentation** - `/docs/features/`
-- **Implementation Details** - `/docs/implementation/`
-- **Bug Fixes & Solutions** - `/docs/fixes/`
-- **UI/UX Guidelines** - `/docs/ui/`
-- **System Architecture** - `/docs/system/`
-- **Database Documentation** - `/docs/database/`
-- **Authentication Guides** - `/docs/authentication/`
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Write comprehensive tests
-- Maintain responsive design
-- Follow accessibility guidelines
-- Update documentation
+## License
 
-## 📞 Support
+This project is proprietary software for Genius Smart Educational Institution.
 
-For questions, issues, or feature requests:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation
+## Support
 
-## 📈 Roadmap
-
-See our [Project Roadmap](ROADMAP.md) for detailed feature planning and timelines.
-
----
-
-**Built with ❤️ for educational institutions worldwide** 
+For technical support or questions, contact the development team.

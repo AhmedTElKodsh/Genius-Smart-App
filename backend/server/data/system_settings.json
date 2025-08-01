@@ -1,0 +1,33 @@
+{
+  "weekendDays": [
+    "Friday",
+    "Saturday"
+  ],
+  "holidays": [
+    {
+      "date": "2025-07-21",
+      "type": "custom"
+    },
+    {
+      "date": "2025-07-28",
+      "type": "custom"
+    },
+    {
+      "date": "2025-08-25",
+      "type": "custom"
+    },
+    {
+      "date": "2025-08-18",
+      "type": "custom"
+    },
+    {
+      "date": "2025-08-25",
+      "type": "custom"
+    },
+    {
+      "date": "2025-08-18",
+      "type": "custom"
+    }
+  ],
+  "updatedAt": "2025-08-01T12:06:43.920Z"
+}
